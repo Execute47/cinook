@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cinook — Design Directions</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; color: #f3f4f6; }
+
+    /* ── Header ── */
+    .header { padding: 32px 40px 24px; border-bottom: 1px solid #1f1f1f; }
+    .header h1 { font-size: 28px; font-weight: 800; color: #fbbf24; letter-spacing: -0.5px; }
+    .header p { margin-top: 6px; color: #9ca3af; font-size: 15px; }
+
+    /* ── Nav tabs ── */
+    .nav { display: flex; gap: 8px; padding: 20px 40px; overflow-x: auto; border-bottom: 1px solid #1f1f1f; }
+    .nav button {
+      padding: 8px 18px; border-radius: 20px; border: 1px solid #2a2a2a;
+      background: #111; color: #9ca3af; font-size: 13px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    }
+    .nav button:hover { border-color: #fbbf24; color: #fbbf24; }
+    .nav button.active { background: #fbbf24; color: #0a0a0a; border-color: #fbbf24; font-weight: 700; }
+
+    /* ── Direction panels ── */
+    .directions { display: none; }
+    .directions.active { display: block; }
+
+    /* ── Layout wrapper ── */
+    .showcase {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 32px; padding: 32px 40px;
+    }
+
+    /* ── Phone frame ── */
+    .phone {
+      background: #1c1715; border-radius: 36px; overflow: hidden;
+      border: 2px solid #2a2320; position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      width: 340px; min-height: 680px; margin: 0 auto;
+      display: flex; flex-direction: column;
+    }
+    .phone-notch {
+      height: 28px; background: #0e0b0b;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .phone-notch-pill { width: 80px; height: 10px; background: #1a1a1a; border-radius: 10px; }
+    .phone-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .phone-label {
+      text-align: center; padding: 16px 0 4px;
+      font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* ── Shared UI atoms ── */
+    .status-bar { height: 20px; background: #0e0b0b; display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; gap: 6px; }
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #fbbf24; }
+
+    .tab-bar {
+      height: 64px; background: #1c1715; border-top: 1px solid #2a2320;
+      display: flex; align-items: center; justify-content: space-around; padding: 0 8px;
+      flex-shrink: 0;
+    }
+    .tab-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 10px; cursor: pointer; }
+    .tab-icon { font-size: 18px; }
+    .tab-label { font-size: 9px; color: #6b7280; font-weight: 500; }
+    .tab-item.active .tab-icon { filter: brightness(1); }
+    .tab-item.active .tab-label { color: #fbbf24; }
+    .tab-scan {
+      width: 48px; height: 48px; border-radius: 24px;
+      background: #fbbf24; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 16px rgba(251,191,36,0.4);
+      margin-top: -12px;
+    }
+
+    /* ── Tier badges ── */
+    .tier { display: inline-flex; align-items: center; gap: 4px; border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+    .tier-diamond { background: rgba(147,197,253,0.15); color: #93c5fd; border: 1px solid rgba(147,197,253,0.3); }
+    .tier-gold { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .tier-silver { background: rgba(209,213,219,0.15); color: #d1d5db; border: 1px solid rgba(209,213,219,0.3); }
+    .tier-bronze { background: rgba(180,83,9,0.15); color: #b45309; border: 1px solid rgba(180,83,9,0.3); }
+    .tier-seen { background: rgba(107,114,128,0.15); color: #6b7280; border: 1px solid rgba(107,114,128,0.3); }
+
+    .status-badge { display: inline-flex; align-items: center; gap-3px; border-radius: 8px; padding: 2px 7px; font-size: 10px; font-weight: 600; }
+    .status-watched { background: rgba(5,150,105,0.15); color: #34d399; }
+    .status-owned { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .status-wishlist { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .status-loaned { background: rgba(245,158,11,0.15); color: #fcd34d; }
+
+    /* ── Direction 1: Poster Grid ── */
+    .d1-screen { flex: 1; background: #0e0b0b; overflow-y: auto; }
+    .d1-header { padding: 16px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
+    .d1-header h2 { font-size: 22px; font-weight: 800; color: #f3f4f6; }
+    .d1-filters { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; }
+    .d1-filter { padding: 5px 12px; border-radius: 16px; background: #1c1715; color: #9ca3af; font-size: 11px; font-weight: 600; border: 1px solid #2a2320; white-space: nowrap; }
+    .d1-filter.active { background: #fbbf24; color: #0a0a0a; border-color: #fbbf24; }
+    .d1-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
+    .d1-card { background: #1c1715; border-radius: 16px; overflow: hidden; border: 1px solid #2a2320; }
+    .d1-poster { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
+    .d1-poster-placeholder { width: 100%; aspect-ratio: 2/3; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+    .d1-card-info { padding: 8px 10px 10px; }
+    .d1-card-title { font-size: 12px; font-weight: 700; color: #f3f4f6; line-height: 1.3; margin-bottom: 5px; }
+    .d1-card-meta { display: flex; justify-content: space-between; align-items: center; }
+
+    /* ── Direction 2: List Dense ── */
+    .d2-screen { flex: 1; background: #0e0b0b; overflow-y: auto; }
+    .d2-searchbar { margin: 12px 16px; background: #1c1715; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border: 1px solid #2a2320; }
+    .d2-searchbar span { color: #6b7280; font-size: 14px; }
+    .d2-searchbar input-mock { flex: 1; font-size: 13px; color: #9ca3af; }
+    .d2-section { padding: 0 16px 8px; }
+    .d2-section-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; margin-top: 16px; }
+    .d2-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1c1715; }
+    .d2-thumb { width: 44px; height: 60px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .d2-info { flex: 1; min-width: 0; }
+    .d2-title { font-size: 14px; font-weight: 600; color: #f3f4f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .d2-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .d2-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .d2-rating { font-size: 13px; font-weight: 700; color: #fbbf24; }
+
+    /* ── Direction 3: Home Focus ── */
+    .d3-screen { flex: 1; background: #0e0b0b; overflow-y: auto; }
+    .d3-greeting { padding: 20px 16px 8px; }
+    .d3-greeting h2 { font-size: 20px; font-weight: 800; color: #f3f4f6; }
+    .d3-greeting p { font-size: 13px; color: #6b7280; margin-top: 2px; }
+    .d3-cineclub { margin: 12px 16px; border-radius: 20px; overflow: hidden; position: relative; background: #1c1715; border: 1px solid #2a2320; }
+    .d3-cineclub-img { width: 100%; height: 140px; display: flex; align-items: center; justify-content: center; font-size: 56px; background: linear-gradient(135deg, #1c1715, #2a2320); }
+    .d3-cineclub-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 14px; background: linear-gradient(transparent, rgba(14,11,11,0.95)); }
+    .d3-cineclub-label { font-size: 10px; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; }
+    .d3-cineclub-title { font-size: 15px; font-weight: 700; color: #f3f4f6; margin-top: 2px; }
+    .d3-cineclub-by { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+    .d3-section-title { font-size: 13px; font-weight: 700; color: #f3f4f6; padding: 12px 16px 8px; display: flex; justify-content: space-between; }
+    .d3-section-see-all { font-size: 11px; color: #fbbf24; font-weight: 600; }
+    .d3-recos { display: flex; gap: 10px; padding: 0 16px 16px; overflow-x: auto; }
+    .d3-reco-card { background: #1c1715; border-radius: 14px; padding: 10px; min-width: 130px; border: 1px solid #2a2320; flex-shrink: 0; }
+    .d3-reco-poster { width: 100%; aspect-ratio: 2/3; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 32px; background: #2a2320; margin-bottom: 8px; }
+    .d3-reco-title { font-size: 12px; font-weight: 600; color: #f3f4f6; line-height: 1.3; }
+    .d3-reco-from { font-size: 10px; color: #6b7280; margin-top: 3px; }
+    .d3-add-btn { margin-top: 6px; width: 100%; padding: 5px; border-radius: 8px; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; font-size: 10px; font-weight: 700; text-align: center; }
+
+    /* ── Direction 4: Item Detail ── */
+    .d4-screen { flex: 1; background: #0e0b0b; overflow-y: auto; }
+    .d4-hero { position: relative; height: 220px; background: linear-gradient(135deg, #1c1715, #2a2320); display: flex; align-items: center; justify-content: center; font-size: 72px; }
+    .d4-hero-gradient { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(transparent, #0e0b0b); }
+    .d4-back { position: absolute; top: 12px; left: 12px; width: 32px; height: 32px; border-radius: 16px; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .d4-info { padding: 0 16px 16px; }
+    .d4-title { font-size: 22px; font-weight: 800; color: #f3f4f6; line-height: 1.2; }
+    .d4-meta { font-size: 13px; color: #6b7280; margin-top: 4px; }
+    .d4-actions { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+    .d4-action-btn { padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }
+    .d4-btn-primary { background: #fbbf24; color: #0a0a0a; }
+    .d4-btn-secondary { background: #1c1715; color: #9ca3af; border: 1px solid #2a2320; }
+    .d4-section-label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin: 14px 0 8px; }
+    .d4-rating-row { display: flex; align-items: center; gap: 12px; }
+    .d4-score { font-size: 32px; font-weight: 800; color: #fbbf24; line-height: 1; }
+    .d4-score-label { font-size: 12px; color: #6b7280; }
+    .d4-tiers { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .d4-tier-btn { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; border: 1px solid #2a2320; background: #1c1715; color: #6b7280; cursor: pointer; }
+    .d4-tier-btn.selected { background: rgba(251,191,36,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+    .d4-comment { background: #1c1715; border-radius: 12px; padding: 12px; border: 1px solid #2a2320; color: #9ca3af; font-size: 13px; line-height: 1.5; font-style: italic; }
+
+    /* ── Direction 5: Scan Flow ── */
+    .d5-screen { flex: 1; background: #000; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+    .d5-viewfinder { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+    .d5-camera-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%); opacity: 0.8; }
+    .d5-frame { width: 200px; height: 200px; position: relative; z-index: 1; }
+    .d5-corner { position: absolute; width: 24px; height: 24px; border-color: #fbbf24; border-style: solid; }
+    .d5-corner-tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .d5-corner-tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+    .d5-corner-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+    .d5-corner-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+    .d5-scan-line { position: absolute; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, transparent, #fbbf24, transparent); top: 40%; }
+    .d5-hint { position: absolute; bottom: 32px; left: 0; right: 0; text-align: center; font-size: 13px; color: #9ca3af; z-index: 1; }
+    .d5-result { background: #0e0b0b; border-radius: 24px 24px 0 0; padding: 20px; }
+    .d5-result-header { display: flex; gap: 14px; align-items: flex-start; }
+    .d5-result-thumb { width: 64px; height: 88px; border-radius: 10px; background: #1c1715; display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; border: 1px solid #2a2320; }
+    .d5-result-info { flex: 1; }
+    .d5-result-title { font-size: 16px; font-weight: 800; color: #f3f4f6; line-height: 1.2; }
+    .d5-result-meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .d5-success-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; background: rgba(5,150,105,0.15); color: #34d399; border-radius: 8px; padding: 3px 8px; font-size: 11px; font-weight: 700; }
+    .d5-status-picker { margin-top: 16px; }
+    .d5-status-label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .d5-statuses { display: flex; gap: 6px; flex-wrap: wrap; }
+    .d5-status-btn { padding: 7px 13px; border-radius: 10px; font-size: 12px; font-weight: 600; border: 1px solid #2a2320; background: #1c1715; color: #9ca3af; cursor: pointer; }
+    .d5-status-btn.selected { background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+    .d5-confirm-btn { margin-top: 14px; width: 100%; padding: 14px; border-radius: 14px; background: #fbbf24; color: #0a0a0a; font-size: 15px; font-weight: 800; text-align: center; }
+
+    /* ── Direction 6: Circle/Social ── */
+    .d6-screen { flex: 1; background: #0e0b0b; overflow-y: auto; }
+    .d6-header { padding: 16px; }
+    .d6-header h2 { font-size: 20px; font-weight: 800; color: #f3f4f6; }
+    .d6-header p { font-size: 13px; color: #6b7280; margin-top: 2px; }
+    .d6-members { display: flex; gap: 12px; padding: 8px 16px 16px; overflow-x: auto; }
+    .d6-member { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+    .d6-avatar { width: 48px; height: 48px; border-radius: 24px; background: #1c1715; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid #2a2320; }
+    .d6-avatar.active { border-color: #fbbf24; }
+    .d6-member-name { font-size: 10px; color: #9ca3af; font-weight: 500; }
+    .d6-divider { height: 1px; background: #1c1715; margin: 0 16px; }
+    .d6-section-title { padding: 14px 16px 8px; font-size: 13px; font-weight: 700; color: #f3f4f6; }
+    .d6-reco { display: flex; gap: 12px; padding: 10px 16px; align-items: flex-start; }
+    .d6-reco-thumb { width: 48px; height: 66px; border-radius: 8px; background: #1c1715; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; border: 1px solid #2a2320; }
+    .d6-reco-content { flex: 1; }
+    .d6-reco-from { font-size: 11px; color: #6b7280; margin-bottom: 3px; }
+    .d6-reco-from span { color: #fbbf24; font-weight: 600; }
+    .d6-reco-title { font-size: 14px; font-weight: 700; color: #f3f4f6; }
+    .d6-reco-note { font-size: 12px; color: #9ca3af; margin-top: 3px; font-style: italic; }
+    .d6-add-btn { margin-top: 6px; display: inline-block; padding: 5px 12px; border-radius: 8px; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; font-size: 11px; font-weight: 700; }
+
+    /* ── Description panels ── */
+    .desc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 0 40px 40px; }
+    .desc-card { background: #111; border-radius: 16px; padding: 20px; border: 1px solid #1f1f1f; }
+    .desc-number { font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .desc-title { font-size: 16px; font-weight: 700; color: #f3f4f6; margin-bottom: 8px; }
+    .desc-text { font-size: 13px; color: #9ca3af; line-height: 1.6; }
+    .desc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .desc-tag { padding: 3px 10px; border-radius: 10px; background: #1c1715; color: #6b7280; font-size: 11px; font-weight: 500; border: 1px solid #2a2320; }
+
+    /* ── Overview ── */
+    .overview { padding: 32px 40px 16px; }
+    .overview h2 { font-size: 20px; font-weight: 700; color: #f3f4f6; margin-bottom: 8px; }
+    .overview p { font-size: 14px; color: #9ca3af; line-height: 1.6; max-width: 700px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Cinook — Design Directions</h1>
+  <p>6 explorations visuelles pour l'interface · Thème Dark Cinéma · NativeWind v4</p>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showDir('overview')">Vue d'ensemble</button>
+  <button onclick="showDir('d1')">1. Grille Affiches</button>
+  <button onclick="showDir('d2')">2. Liste Dense</button>
+  <button onclick="showDir('d3')">3. Accueil Social</button>
+  <button onclick="showDir('d4')">4. Fiche Détail</button>
+  <button onclick="showDir('d5')">5. Flow Scan</button>
+  <button onclick="showDir('d6')">6. Cercle Privé</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ OVERVIEW -->
+<div id="overview" class="directions active">
+  <div class="overview">
+    <h2>Toutes les directions</h2>
+    <p>Chaque écran ci-dessous représente un moment clé de l'expérience Cinook. Tous partagent le même langage visuel : fond noir chaud, accents ambre, affiches en position dominante. Les directions explorent différentes densités, hiérarchies et moments d'usage.</p>
+  </div>
+
+  <div class="showcase" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+
+    <!-- D1 preview -->
+    <div>
+      <div class="phone-label">1 · Grille Affiches</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d1-screen">
+            <div class="d1-header">
+              <h2>Ma Collection</h2>
+              <span style="font-size:20px">⊞</span>
+            </div>
+            <div class="d1-filters">
+              <div class="d1-filter active">Tout</div>
+              <div class="d1-filter">Films</div>
+              <div class="d1-filter">Séries</div>
+              <div class="d1-filter">Livres</div>
+            </div>
+            <div class="d1-grid">
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#1a0a0a,#2a1010)">🎬</div><div class="d1-card-info"><div class="d1-card-title">Dune: Part Two</div><div class="d1-card-meta"><span class="tier tier-gold">✦ Or</span><span style="font-size:12px;color:#fbbf24;font-weight:700">9</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#0a0a1a,#10102a)">📚</div><div class="d1-card-info"><div class="d1-card-title">La Horde du Contrevent</div><div class="d1-card-meta"><span class="tier tier-diamond">◆ Diamant</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#0a1a0a,#102a10)">🎬</div><div class="d1-card-info"><div class="d1-card-title">Past Lives</div><div class="d1-card-meta"><span class="tier tier-silver">● Argent</span><span style="font-size:12px;color:#fbbf24;font-weight:700">7</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#1a1a0a,#2a2a10)">📺</div><div class="d1-card-info"><div class="d1-card-title">Succession S4</div><div class="d1-card-meta"><span class="tier tier-gold">✦ Or</span><span style="font-size:12px;color:#fbbf24;font-weight:700">10</span></div></div></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item active"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- D3 preview -->
+    <div>
+      <div class="phone-label">3 · Accueil Social</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d3-screen">
+            <div class="d3-greeting"><h2>Bonsoir, Mathilde 🎬</h2><p>Vendredi · 6 mars 2026</p></div>
+            <div class="d3-cineclub">
+              <div class="d3-cineclub-img">🎭</div>
+              <div class="d3-cineclub-overlay">
+                <div class="d3-cineclub-label">🎬 Cinéclub de la semaine</div>
+                <div class="d3-cineclub-title">Pauvres Créatures</div>
+                <div class="d3-cineclub-by">Mis en avant par Anna</div>
+              </div>
+            </div>
+            <div class="d3-section-title">Recommandations <span class="d3-section-see-all">Voir tout</span></div>
+            <div class="d3-recos">
+              <div class="d3-reco-card"><div class="d3-reco-poster">📚</div><div class="d3-reco-title">Le Problème à 3 Corps</div><div class="d3-reco-from">De Anna · 9/10</div><div class="d3-add-btn">+ À voir</div></div>
+              <div class="d3-reco-card"><div class="d3-reco-poster">🎬</div><div class="d3-reco-title">All of Us Strangers</div><div class="d3-reco-from">De Anna · Diamant</div><div class="d3-add-btn">+ À voir</div></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item active"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- D5 preview -->
+    <div>
+      <div class="phone-label">5 · Flow Scan</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="d5-screen">
+            <div class="d5-viewfinder">
+              <div class="d5-camera-bg"></div>
+              <div class="d5-frame">
+                <div class="d5-corner d5-corner-tl"></div>
+                <div class="d5-corner d5-corner-tr"></div>
+                <div class="d5-corner d5-corner-bl"></div>
+                <div class="d5-corner d5-corner-br"></div>
+                <div class="d5-scan-line"></div>
+              </div>
+              <div class="d5-hint">Pointez vers un code-barres</div>
+            </div>
+            <div class="d5-result">
+              <div class="d5-result-header">
+                <div class="d5-result-thumb">🎬</div>
+                <div class="d5-result-info">
+                  <div class="d5-result-title">Oppenheimer</div>
+                  <div class="d5-result-meta">Christopher Nolan · 2023 · 3h</div>
+                  <div class="d5-success-badge">✓ Reconnu en 1.8s</div>
+                </div>
+              </div>
+              <div class="d5-status-picker">
+                <div class="d5-status-label">Statut</div>
+                <div class="d5-statuses">
+                  <div class="d5-status-btn">Possédé</div>
+                  <div class="d5-status-btn selected">Vu ✓</div>
+                  <div class="d5-status-btn">À voir</div>
+                  <div class="d5-status-btn">Prêté</div>
+                  <div class="d5-status-btn">Favori</div>
+                </div>
+              </div>
+              <div class="d5-confirm-btn">Ajouter à ma collection</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="desc-grid">
+    <div class="desc-card">
+      <div class="desc-number">Direction 1</div>
+      <div class="desc-title">Grille Affiches</div>
+      <div class="desc-text">La collection comme galerie visuelle. Les affiches dominent, les badges tier sont discrets. Plaisir de parcourir, comme une étagère de DVDs.</div>
+      <div class="desc-tags"><span class="desc-tag">Vue grille 2 col.</span><span class="desc-tag">Image-first</span><span class="desc-tag">Filtres horizontaux</span></div>
+    </div>
+    <div class="desc-card">
+      <div class="desc-number">Direction 2</div>
+      <div class="desc-title">Liste Dense</div>
+      <div class="desc-text">Efficacité maximale. Voir 8-10 items d'un coup. Idéale pour chercher, filtrer, gérer. Moins de plaisir visuel, plus de productivité.</div>
+      <div class="desc-tags"><span class="desc-tag">Vue liste 1 col.</span><span class="desc-tag">Recherche intégrée</span><span class="desc-tag">Compact</span></div>
+    </div>
+    <div class="desc-card">
+      <div class="desc-number">Direction 3</div>
+      <div class="desc-title">Accueil Social</div>
+      <div class="desc-text">La place de village. Cinéclub en bannière, recommandations d'Anna. L'accueil comme espace de connexion douce avec le cercle.</div>
+      <div class="desc-tags"><span class="desc-tag">Cinéclub hero</span><span class="desc-tag">Recos horizontales</span><span class="desc-tag">Chaleureux</span></div>
+    </div>
+    <div class="desc-card">
+      <div class="desc-number">Direction 4</div>
+      <div class="desc-title">Fiche Détail</div>
+      <div class="desc-text">La fiche comme moment de recueillement. Affiche en hero, notation expressive, espace pour le commentaire. La nostalgie accompagnée.</div>
+      <div class="desc-tags"><span class="desc-tag">Hero affiche</span><span class="desc-tag">Tier picker</span><span class="desc-tag">Commentaire libre</span></div>
+    </div>
+    <div class="desc-card">
+      <div class="desc-number">Direction 5</div>
+      <div class="desc-title">Flow Scan</div>
+      <div class="desc-text">Le moment magique. Caméra plein écran → vibration → fiche surgit → statut → confirmation. Le parcours fondateur de Cinook.</div>
+      <div class="desc-tags"><span class="desc-tag">Caméra full-screen</span><span class="desc-tag">Résultat slide-up</span><span class="desc-tag">Status inline</span></div>
+    </div>
+    <div class="desc-card">
+      <div class="desc-number">Direction 6</div>
+      <div class="desc-title">Cercle Privé</div>
+      <div class="desc-text">L'espace intime du cercle. Avatars des membres, recommandations reçues, ajout en 1 tap. Sobre, chaleureux, jamais intrusif.</div>
+      <div class="desc-tags"><span class="desc-tag">Membres avatars</span><span class="desc-tag">Recos feed</span><span class="desc-tag">Ajout 1 tap</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ D1 -->
+<div id="d1" class="directions">
+  <div class="overview"><h2>Direction 1 — Grille Affiches</h2><p>La collection comme galerie visuelle. Les affiches des films et couvertures de livres dominent. C'est le plaisir de parcourir une étagère numérique. Les badges tier et les notes sont discrets, accessibles sans surcharger l'image.</p></div>
+  <div class="showcase">
+    <div>
+      <div class="phone-label">Collection · Vue Grille</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d1-screen">
+            <div class="d1-header">
+              <h2>Ma Collection</h2>
+              <span style="font-size:20px;color:#6b7280">⊞</span>
+            </div>
+            <div class="d1-filters">
+              <div class="d1-filter active">Tout</div>
+              <div class="d1-filter">Films</div>
+              <div class="d1-filter">Séries</div>
+              <div class="d1-filter">Livres</div>
+              <div class="d1-filter">Vu ✓</div>
+              <div class="d1-filter">À voir</div>
+            </div>
+            <div class="d1-grid">
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#1a0a0a,#2a1010)">🎬</div><div class="d1-card-info"><div class="d1-card-title">Dune: Part Two</div><div class="d1-card-meta"><span class="tier tier-gold">✦ Or</span><span style="font-size:12px;color:#fbbf24;font-weight:700">9</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#0a0a1a,#10102a)">📚</div><div class="d1-card-info"><div class="d1-card-title">La Horde du Contrevent</div><div class="d1-card-meta"><span class="tier tier-diamond">◆ Diamant</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#0a1a0a,#102a10)">🎬</div><div class="d1-card-info"><div class="d1-card-title">Past Lives</div><div class="d1-card-meta"><span class="tier tier-silver">● Argent</span><span style="font-size:12px;color:#fbbf24;font-weight:700">7</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#1a1a0a,#2a2a10)">📺</div><div class="d1-card-info"><div class="d1-card-title">Succession S4</div><div class="d1-card-meta"><span class="tier tier-gold">✦ Or</span><span style="font-size:12px;color:#fbbf24;font-weight:700">10</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#1a0a1a,#2a102a)">📚</div><div class="d1-card-info"><div class="d1-card-title">Normal People</div><div class="d1-card-meta"><span class="tier tier-bronze">◈ Bronze</span><span style="font-size:12px;color:#fbbf24;font-weight:700">6</span></div></div></div>
+              <div class="d1-card"><div class="d1-poster-placeholder" style="background:linear-gradient(135deg,#0a1a1a,#102a2a)">🎬</div><div class="d1-card-info"><div class="d1-card-title">Anatomy of a Fall</div><div class="d1-card-meta"><span class="status-badge status-wishlist">À voir</span></div></div></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item active"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="phone-label">Collection · Vue Liste</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d2-screen">
+            <div class="d2-searchbar"><span>🔍</span><span style="color:#6b7280;font-size:13px">Rechercher dans ma collection…</span></div>
+            <div class="d2-section">
+              <div class="d2-section-title">Récemment ajoutés</div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#1a0a0a,#2a1010)">🎬</div><div class="d2-info"><div class="d2-title">Dune: Part Two</div><div class="d2-sub">Film · 2024 · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-gold">Or</span><div class="d2-rating">9</div></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#0a0a1a,#10102a)">📚</div><div class="d2-info"><div class="d2-title">La Horde du Contrevent</div><div class="d2-sub">Livre · Damasio · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-diamond">Diamant</span></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#1a1a0a,#2a2a10)">📺</div><div class="d2-info"><div class="d2-title">Succession S4</div><div class="d2-sub">Série · HBO · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-gold">Or</span><div class="d2-rating">10</div></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#0a1a1a,#102a2a)">🎬</div><div class="d2-info"><div class="d2-title">Anatomy of a Fall</div><div class="d2-sub">Film · 2023</div></div><div class="d2-right"><span class="status-badge status-wishlist">À voir</span></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#1a0a1a,#2a102a)">📚</div><div class="d2-info"><div class="d2-title">Simone — Le voyage du siècle</div><div class="d2-sub">Livre · <span style="color:#fcd34d">Prêté → Maman</span></div></div><div class="d2-right"><span class="tier tier-silver">Argent</span><div class="d2-rating">8</div></div></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item active"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ D3 -->
+<div id="d3" class="directions">
+  <div class="overview"><h2>Direction 3 — Accueil Social</h2><p>L'accueil comme place de village intime. Le Cinéclub en bannière hero, les recommandations d'Anna en scroll horizontal. Chaleureux, doux, pas intrusif.</p></div>
+  <div class="showcase">
+    <div>
+      <div class="phone-label">Accueil · Cinéclub + Recos</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d3-screen">
+            <div class="d3-greeting"><h2>Bonsoir, Mathilde 🎬</h2><p>Vendredi · 6 mars 2026</p></div>
+            <div class="d3-cineclub">
+              <div class="d3-cineclub-img">🎭</div>
+              <div class="d3-cineclub-overlay">
+                <div class="d3-cineclub-label">🎬 Cinéclub de la semaine</div>
+                <div class="d3-cineclub-title">Pauvres Créatures</div>
+                <div class="d3-cineclub-by">Mis en avant par Anna · <span style="color:#fbbf24">+ À voir</span></div>
+              </div>
+            </div>
+            <div class="d3-section-title">Recommandations <span class="d3-section-see-all">Voir tout →</span></div>
+            <div class="d3-recos">
+              <div class="d3-reco-card"><div class="d3-reco-poster">📚</div><div class="d3-reco-title">Le Problème à 3 Corps</div><div class="d3-reco-from">Anna · 9/10 · Diamant</div><div class="d3-add-btn">+ À voir</div></div>
+              <div class="d3-reco-card"><div class="d3-reco-poster">🎬</div><div class="d3-reco-title">All of Us Strangers</div><div class="d3-reco-from">Anna · Or</div><div class="d3-add-btn">+ À voir</div></div>
+              <div class="d3-reco-card"><div class="d3-reco-poster">📺</div><div class="d3-reco-title">The Bear S3</div><div class="d3-reco-from">Anna · 8/10</div><div class="d3-add-btn">+ À voir</div></div>
+            </div>
+            <div style="height:8px"></div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item active"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ D4 -->
+<div id="d4" class="directions">
+  <div class="overview"><h2>Direction 4 — Fiche Détail</h2><p>La fiche comme espace de recueillement. L'affiche en hero, la notation expressive (note + tier + commentaire), l'espace pour laisser une trace de l'émotion ressentie.</p></div>
+  <div class="showcase">
+    <div>
+      <div class="phone-label">Fiche Détail · Film</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d4-screen">
+            <div class="d4-hero">
+              🎬
+              <div class="d4-hero-gradient"></div>
+              <div class="d4-back">←</div>
+            </div>
+            <div class="d4-info">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div class="d4-title">Dune: Part Two</div>
+                  <div class="d4-meta">Denis Villeneuve · 2024 · 2h46</div>
+                </div>
+                <span class="status-badge status-watched" style="margin-top:4px">Vu ✓</span>
+              </div>
+              <div class="d4-actions">
+                <button class="d4-action-btn d4-btn-secondary">✏️ Modifier</button>
+                <button class="d4-action-btn d4-btn-secondary">↗ Recommander</button>
+                <button class="d4-action-btn d4-btn-primary">🎬 Cinéclub</button>
+              </div>
+              <div class="d4-section-label">Ma notation</div>
+              <div class="d4-rating-row">
+                <div><div class="d4-score">9</div><div class="d4-score-label">/10</div></div>
+                <span class="tier tier-gold" style="font-size:13px;padding:5px 12px">✦ Or</span>
+              </div>
+              <div class="d4-tiers">
+                <div class="d4-tier-btn">Je n'ai pas aimé</div>
+                <div class="d4-tier-btn">Vu aussi</div>
+                <div class="d4-tier-btn">Bronze</div>
+                <div class="d4-tier-btn">Argent</div>
+                <div class="d4-tier-btn selected">Or ✓</div>
+                <div class="d4-tier-btn">Diamant</div>
+              </div>
+              <div class="d4-section-label" style="margin-top:14px">Mon commentaire</div>
+              <div class="d4-comment">"Épique et hypnotique. La scène de combat dans le désert est une des plus belles choses que j'aie vues au cinéma cette décennie."</div>
+              <div class="d4-section-label" style="margin-top:14px">Notes d'Anna</div>
+              <div style="display:flex;align-items:center;gap:10px;background:#1c1715;border-radius:12px;padding:10px;border:1px solid #2a2320">
+                <div style="width:32px;height:32px;border-radius:16px;background:#2a2320;display:flex;align-items:center;justify-content:center;font-size:16px">👤</div>
+                <div><div style="font-size:12px;color:#f3f4f6;font-weight:600">Anna · <span style="color:#fbbf24">8/10</span> · <span class="tier tier-silver">Argent</span></div><div style="font-size:11px;color:#6b7280;margin-top:2px">"Moins aimé la première partie mais magnifique."</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ D5 -->
+<div id="d5" class="directions">
+  <div class="overview"><h2>Direction 5 — Flow Scan</h2><p>Le moment fondateur. Caméra plein écran avec viseur, vibration à la reconnaissance, fiche qui surgit en slide-up, sélecteur de statut intégré, confirmation en 1 tap.</p></div>
+  <div class="showcase">
+    <div>
+      <div class="phone-label">Scan · Caméra active</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="d5-screen">
+            <div class="d5-viewfinder" style="flex:1;min-height:320px">
+              <div class="d5-camera-bg"></div>
+              <div style="position:absolute;top:14px;left:14px;z-index:2;width:32px;height:32px;border-radius:16px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center">✕</div>
+              <div class="d5-frame">
+                <div class="d5-corner d5-corner-tl"></div>
+                <div class="d5-corner d5-corner-tr"></div>
+                <div class="d5-corner d5-corner-bl"></div>
+                <div class="d5-corner d5-corner-br"></div>
+                <div class="d5-scan-line"></div>
+              </div>
+              <div class="d5-hint">Pointez vers un code-barres EAN-13</div>
+            </div>
+            <div class="d5-result">
+              <div style="width:36px;height:4px;background:#2a2320;border-radius:2px;margin:0 auto 16px"></div>
+              <div class="d5-result-header">
+                <div class="d5-result-thumb">🎬</div>
+                <div class="d5-result-info">
+                  <div class="d5-result-title">Oppenheimer</div>
+                  <div class="d5-result-meta">Christopher Nolan · 2023 · 3h</div>
+                  <div style="font-size:11px;color:#9ca3af;margin-top:2px">Blu-ray · EAN 5055201847423</div>
+                  <div class="d5-success-badge">✓ Reconnu en 1.8s</div>
+                </div>
+              </div>
+              <div class="d5-status-picker">
+                <div class="d5-status-label">Statut</div>
+                <div class="d5-statuses">
+                  <div class="d5-status-btn">Possédé</div>
+                  <div class="d5-status-btn selected">Vu ✓</div>
+                  <div class="d5-status-btn">À voir</div>
+                  <div class="d5-status-btn">Prêté</div>
+                  <div class="d5-status-btn">Favori ♥</div>
+                </div>
+              </div>
+              <div class="d5-confirm-btn">Ajouter à ma collection →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="phone-label">Scan · Fallback recherche</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="d5-screen">
+            <div style="background:#0e0b0b;flex:1;padding:20px 16px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+                <span style="font-size:18px">←</span>
+                <span style="font-size:16px;font-weight:700;color:#f3f4f6">Code non reconnu</span>
+              </div>
+              <div style="background:#1c1715;border-radius:16px;padding:16px;border:1px solid #2a2320;margin-bottom:20px">
+                <div style="font-size:22px;text-align:center;margin-bottom:8px">🔍</div>
+                <div style="font-size:14px;font-weight:600;color:#f3f4f6;text-align:center">Code non trouvé dans les bases</div>
+                <div style="font-size:12px;color:#6b7280;text-align:center;margin-top:4px">Recherche par titre ou saisie manuelle</div>
+              </div>
+              <div class="d2-searchbar" style="margin:0 0 16px"><span>🔍</span><span style="color:#6b7280;font-size:13px">Titre du film, série ou livre…</span></div>
+              <div style="display:flex;gap:8px;margin-bottom:16px">
+                <div class="d1-filter active">Films</div>
+                <div class="d1-filter">Séries</div>
+                <div class="d1-filter">Livres</div>
+              </div>
+              <div style="background:#1c1715;border-radius:12px;padding:12px 14px;border:1px solid #2a2320;display:flex;align-items:center;gap:10px">
+                <span style="font-size:20px">✏️</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#f3f4f6">Créer une fiche manuelle</div>
+                  <div style="font-size:11px;color:#6b7280">Pour les items introuvables</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ D6 -->
+<div id="d6" class="directions">
+  <div class="overview"><h2>Direction 6 — Cercle Privé</h2><p>L'espace intime du cercle. Avatars des membres, recommandations reçues avec ajout en 1 tap, gestion des prêts. Sobre, chaleureux, jamais intrusif.</p></div>
+  <div class="showcase">
+    <div>
+      <div class="phone-label">Cercle · Recommandations</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d6-screen">
+            <div class="d6-header"><h2>Cercle Cinook</h2><p>4 membres · Espace privé</p></div>
+            <div class="d6-members">
+              <div class="d6-member"><div class="d6-avatar active">👩‍💻</div><div class="d6-member-name">Mathilde</div></div>
+              <div class="d6-member"><div class="d6-avatar active">👩</div><div class="d6-member-name">Anna</div></div>
+              <div class="d6-member"><div class="d6-avatar">👩‍🦳</div><div class="d6-member-name">Maman</div></div>
+              <div class="d6-member"><div class="d6-avatar">👨</div><div class="d6-member-name">Papa</div></div>
+              <div class="d6-member"><div class="d6-avatar" style="border-style:dashed">+</div><div class="d6-member-name">Inviter</div></div>
+            </div>
+            <div class="d6-divider"></div>
+            <div class="d6-section-title">Recommandations reçues</div>
+            <div class="d6-reco">
+              <div class="d6-reco-thumb">📚</div>
+              <div class="d6-reco-content">
+                <div class="d6-reco-from">De <span>Anna</span> · il y a 2h</div>
+                <div class="d6-reco-title">Le Problème à 3 Corps</div>
+                <div class="d6-reco-note">"Tu vas adorer, je te jure"</div>
+                <div style="display:flex;gap:6px;margin-top:6px"><span class="tier tier-diamond">◆ Diamant</span><span style="font-size:12px;color:#fbbf24;font-weight:700">9/10</span></div>
+                <div class="d6-add-btn">+ Ajouter à À voir</div>
+              </div>
+            </div>
+            <div class="d6-divider"></div>
+            <div class="d6-reco">
+              <div class="d6-reco-thumb">🎬</div>
+              <div class="d6-reco-content">
+                <div class="d6-reco-from">De <span>Anna</span> · hier</div>
+                <div class="d6-reco-title">All of Us Strangers</div>
+                <div class="d6-reco-note">"Prévois des mouchoirs"</div>
+                <div style="display:flex;gap:6px;margin-top:6px"><span class="tier tier-gold">✦ Or</span></div>
+                <div class="d6-add-btn">+ Ajouter à À voir</div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item active"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ D2 -->
+<div id="d2" class="directions">
+  <div class="overview"><h2>Direction 2 — Liste Dense</h2><p>Efficacité maximale. Vue liste 1 colonne avec miniature, titre, statut et tier. Idéale pour chercher, filtrer, et gérer 1000 items rapidement.</p></div>
+  <div class="showcase">
+    <div>
+      <div class="phone-label">Collection · Liste + Recherche</div>
+      <div class="phone">
+        <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+        <div class="phone-content">
+          <div class="status-bar"><div class="status-dot"></div></div>
+          <div class="d2-screen">
+            <div style="padding:12px 16px 4px;font-size:18px;font-weight:800;color:#f3f4f6">Ma Collection</div>
+            <div class="d2-searchbar"><span>🔍</span><span style="color:#6b7280;font-size:13px">Rechercher…</span><span style="margin-left:auto;color:#6b7280;font-size:13px">⊞</span></div>
+            <div class="d1-filters" style="padding:4px 16px 10px">
+              <div class="d1-filter active">Tout · 847</div>
+              <div class="d1-filter">Films</div>
+              <div class="d1-filter">Séries</div>
+              <div class="d1-filter">Livres</div>
+              <div class="d1-filter">Prêtés 🔴</div>
+            </div>
+            <div class="d2-section">
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#1a0a0a,#2a1010)">🎬</div><div class="d2-info"><div class="d2-title">Dune: Part Two</div><div class="d2-sub">Film · 2024 · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-gold">Or</span><div class="d2-rating">9</div></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#0a0a1a,#10102a)">📚</div><div class="d2-info"><div class="d2-title">La Horde du Contrevent</div><div class="d2-sub">Livre · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-diamond">Diamant</span></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#1a1a0a,#2a2a10)">📺</div><div class="d2-info"><div class="d2-title">Succession S4</div><div class="d2-sub">Série · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-gold">Or</span><div class="d2-rating">10</div></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#0a1a1a,#102a2a)">🎬</div><div class="d2-info"><div class="d2-title">Anatomy of a Fall</div><div class="d2-sub">Film · 2023</div></div><div class="d2-right"><span class="status-badge status-wishlist">À voir</span></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#1a0a1a,#2a102a)">📚</div><div class="d2-info"><div class="d2-title">Simone — Le voyage du siècle</div><div class="d2-sub"><span style="color:#fcd34d">Prêté → Maman depuis 12 jan.</span></div></div><div class="d2-right"><span class="tier tier-silver">Argent</span></div></div>
+              <div class="d2-item"><div class="d2-thumb" style="background:linear-gradient(135deg,#0a1a0a,#102a10)">🎬</div><div class="d2-info"><div class="d2-title">Past Lives</div><div class="d2-sub">Film · 2023 · <span style="color:#34d399">Vu ✓</span></div></div><div class="d2-right"><span class="tier tier-silver">Argent</span><div class="d2-rating">7</div></div></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><div class="tab-icon">🏠</div><div class="tab-label">Accueil</div></div>
+            <div class="tab-item active"><div class="tab-icon">📚</div><div class="tab-label">Collection</div></div>
+            <div class="tab-scan">📷</div>
+            <div class="tab-item"><div class="tab-icon">🎬</div><div class="tab-label">Découverte</div></div>
+            <div class="tab-item"><div class="tab-icon">👥</div><div class="tab-label">Cercle</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showDir(id) {
+    document.querySelectorAll('.directions').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
