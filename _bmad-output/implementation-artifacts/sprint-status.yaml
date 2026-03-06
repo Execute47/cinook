@@ -1,0 +1,98 @@
+# generated: 2026-03-06
+# project: cinook
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-06
+project: cinook
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+
+  # ─────────────────────────────────────────────────────
+  # Epic 1 : Fondations & Authentification
+  # ─────────────────────────────────────────────────────
+  epic-1: in-progress
+  1-1-initialisation-du-projet-et-configuration-technique: review
+  1-2-creation-de-compte-utilisateur: ready-for-dev
+  1-3-connexion-deconnexion-et-navigation-protegee: ready-for-dev
+  epic-1-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 2 : Ma Collection — Ajouter & Gérer
+  # ─────────────────────────────────────────────────────
+  epic-2: in-progress
+  2-1-configuration-firebase-functions-proxy-api: ready-for-dev
+  2-2-ajout-dun-item-via-scan-de-code-barres: ready-for-dev
+  2-3-ajout-dun-item-via-recherche-par-titre: ready-for-dev
+  2-4-creation-manuelle-dune-fiche: ready-for-dev
+  2-5-affichage-modification-et-suppression-dun-item: ready-for-dev
+  2-6-recherche-et-filtrage-de-la-collection: ready-for-dev
+  epic-2-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 3 : Statuts, Notation & Suivi des Prêts
+  # ─────────────────────────────────────────────────────
+  epic-3: in-progress
+  3-1-gestion-des-statuts-dun-item: ready-for-dev
+  3-2-notation-note-tier-list-et-commentaire: ready-for-dev
+  3-3-enregistrement-et-suivi-des-prets: ready-for-dev
+  epic-3-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 4 : Cercle Privé & Recommandations
+  # ─────────────────────────────────────────────────────
+  epic-4: in-progress
+  4-1-systeme-dinvitation-et-rejoindre-le-cercle: ready-for-dev
+  4-2-gestion-du-cercle-et-administration: ready-for-dev
+  4-3-consulter-la-collection-et-les-notes-dun-membre: ready-for-dev
+  4-4-envoyer-et-recevoir-des-recommandations: ready-for-dev
+  4-5-cineclub-mettre-en-avant-un-item: ready-for-dev
+  epic-4-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 5 : Découverte — Films à l'affiche
+  # ─────────────────────────────────────────────────────
+  epic-5: in-progress
+  5-1-parcourir-les-films-a-laffiche-et-les-ajouter: ready-for-dev
+  epic-5-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 6 : Mode Hors-ligne, Export & Paramètres
+  # ─────────────────────────────────────────────────────
+  epic-6: in-progress
+  6-1-mode-hors-ligne-lecture-et-ecriture: ready-for-dev
+  6-2-export-de-la-collection-et-parametres-du-compte: ready-for-dev
+  epic-6-retrospective: optional

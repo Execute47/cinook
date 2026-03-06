@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    // Vérifie qu'un utilisateur est authentifié
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Vérifie que l'utilisateur accède à ses propres données
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // Récupère le circleId de l'utilisateur courant
+    function userCircleId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.circleId;
+    }
+
+    // Vérifie que l'utilisateur est membre d'un cercle donné
+    function isCircleMember(circleId) {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/circles/$(circleId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/circles/$(circleId)).data.members;
+    }
+
+    // Vérifie que l'utilisateur est admin d'un cercle donné
+    function isCircleAdmin(circleId) {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/circles/$(circleId)) &&
+        request.auth.uid == get(/databases/$(database)/documents/circles/$(circleId)).data.adminId;
+    }
+
+    // ─── Profils utilisateur ────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      // Un utilisateur peut lire et écrire son propre profil
+      allow read, write: if isOwner(userId);
+
+      // Un membre du même cercle peut lire le profil (pour afficher les membres)
+      allow read: if isAuth() &&
+        resource.data.circleId != null &&
+        isCircleMember(resource.data.circleId);
+
+      // ─── Items personnels ──────────────────────────────────────────────────
+
+      match /items/{itemId} {
+        // Lecture et écriture de ses propres items
+        allow read, write: if isOwner(userId);
+
+        // Un membre du même cercle peut lire les items d'un autre membre
+        allow read: if isAuth() &&
+          exists(/databases/$(database)/documents/users/$(userId)) &&
+          get(/databases/$(database)/documents/users/$(userId)).data.circleId != null &&
+          isCircleMember(get(/databases/$(database)/documents/users/$(userId)).data.circleId);
+      }
+    }
+
+    // ─── Cercles ────────────────────────────────────────────────────────────────
+
+    match /circles/{circleId} {
+      // Tous les membres peuvent lire le document cercle
+      allow read: if isCircleMember(circleId);
+
+      // Seul l'admin peut créer ou modifier le document cercle
+      allow create: if isAuth();
+      allow update, delete: if isCircleAdmin(circleId);
+
+      // ─── Recommandations ────────────────────────────────────────────────────
+
+      match /recommendations/{recoId} {
+        // Tous les membres du cercle peuvent lire et écrire des recommandations
+        allow read, write: if isCircleMember(circleId);
+      }
+
+      // ─── Cinéclub ───────────────────────────────────────────────────────────
+
+      match /cineclub {
+        // Tous les membres du cercle peuvent lire et écrire le Cinéclub
+        allow read, write: if isCircleMember(circleId);
+      }
+    }
+  }
+}
