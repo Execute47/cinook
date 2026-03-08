@@ -236,27 +236,26 @@ Afin que mes données soient accessibles uniquement à moi et que l'app soit sé
 
 Les utilisatrices peuvent ajouter des films, séries et livres à leur collection via scan de code-barres ou recherche par titre, avec auto-remplissage des fiches, et gérer leur catalogue complet.
 
-### Story 2.1 : Configuration Firebase Functions — Proxy API
+### Story 2.1 : Configuration des clients API directs (TMDB & Google Books)
 
 En tant que développeuse,
-Je veux configurer Firebase Functions comme proxy pour TMDB et Google Books,
-Afin que les clés API ne soient jamais exposées côté client et que le scan et la recherche puissent fonctionner.
+Je veux configurer les clients TMDB et Google Books directement dans `lib/`,
+Afin que le scan et la recherche fonctionnent sans Firebase Functions et sans coût d'infrastructure.
 
 **Acceptance Criteria :**
 
-**Given** un projet Firebase configuré (Story 1.1)
-**When** les Firebase Functions sont déployées avec `searchMedia(query, type)` et `getMediaByBarcode(barcode)`
-**Then** un appel depuis le client via `lib/functions.ts` retourne un `FunctionResponse<MediaResult[]>` valide
-**And** les clés TMDB et Google Books sont uniquement dans `functions/.env`, jamais dans le code client (NFR8)
+**Given** `lib/tmdb.ts` et `lib/googleBooks.ts` configurés avec les clés `.env`
+**When** `searchMovies`, `searchTv`, `searchByEan`, `searchBooks`, `searchByIsbn` sont appelés
+**Then** ils retournent un `FunctionResponse<MediaResult[]|MediaResult>` valide
+**And** `lib/mediaSearch.ts` expose `searchMedia()` et `getMediaByBarcode()` avec la même interface qu'auparavant
 
-**Given** une Function appelée avec un barcode EAN-13 valide
-**When** `getMediaByBarcode` s'exécute
-**Then** la Function interroge Google Books (ISBN) ou TMDB (EAN DVD/Blu-ray) et retourne `{ success: true, data: MediaResult }`
-**And** la réponse est reçue en moins de 3 secondes sur connexion 4G standard (NFR1)
+**Given** `getMediaByBarcode` appelé avec un barcode EAN-13 valide
+**When** la détection ISBN (978/979 → Google Books) ou EAN (TMDB) s'exécute
+**Then** le résultat est retourné en moins de 3 secondes sur connexion 4G standard (NFR1)
 
 **Given** une API tierce indisponible
-**When** la Function est appelée
-**Then** elle retourne `{ success: false, error: "Service temporairement indisponible" }` sans crash (NFR14)
+**When** un client lib/ est appelé
+**Then** il retourne `{ success: false, error: "Service temporairement indisponible" }` sans crash (NFR14)
 
 ### Story 2.2 : Ajout d'un item via scan de code-barres
 
@@ -269,7 +268,7 @@ Afin que la fiche soit auto-remplie instantanément sans saisie manuelle.
 **Given** l'écran de scan (`app/scan.tsx`) ouvert sur mobile (development build requis)
 **When** je pointe la caméra vers un code-barres EAN-13, EAN-8 ou UPC-A valide
 **Then** le code est détecté automatiquement par `expo-camera`
-**And** `useBarcodeScan.ts` appelle `getMediaByBarcode` via `lib/functions.ts`
+**And** `useBarcodeScan.ts` appelle `getMediaByBarcode` via `lib/mediaSearch.ts`
 **And** la fiche apparaît pré-remplie (titre, affiche, synopsis, année, réalisateur/auteur) en moins de 3 secondes (NFR1)
 
 **Given** une fiche auto-remplie affichée
@@ -292,7 +291,7 @@ Afin d'ajouter un item à ma collection même sans code-barres disponible.
 
 **Given** l'écran de recherche avec sélecteur de type (film / série / livre)
 **When** je saisis au moins 2 caractères et lance la recherche
-**Then** `useMediaSearch.ts` appelle `searchMedia(query, type)` via `lib/functions.ts`
+**Then** `useMediaSearch.ts` appelle `searchMedia(query, type)` via `lib/mediaSearch.ts`
 **And** les résultats s'affichent avec titre, affiche et année
 
 **Given** des résultats affichés
@@ -572,7 +571,7 @@ Afin de ne rater aucune sortie et préparer mes prochaines sorties cinéma depui
 
 **Given** l'écran Découverte (`app/(app)/discover.tsx`)
 **When** je l'ouvre avec une connexion active
-**Then** la liste des films en salle s'affiche via l'endpoint TMDB `now_playing` (proxié par Firebase Functions)
+**Then** la liste des films en salle s'affiche via l'endpoint TMDB `now_playing` appelé depuis `lib/tmdb.ts` directement
 **And** chaque film affiche son affiche, son titre et sa date de sortie (FR24)
 
 **Given** la liste des films à l'affiche

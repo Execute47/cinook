@@ -54,7 +54,7 @@ development_status:
   # Epic 2 : Ma Collection — Ajouter & Gérer
   # ─────────────────────────────────────────────────────
   epic-2: in-progress
-  2-1-configuration-firebase-functions-proxy-api: ready-for-dev
+  2-1-configuration-firebase-functions-proxy-api: done
   2-2-ajout-dun-item-via-scan-de-code-barres: ready-for-dev
   2-3-ajout-dun-item-via-recherche-par-titre: ready-for-dev
   2-4-creation-manuelle-dune-fiche: ready-for-dev

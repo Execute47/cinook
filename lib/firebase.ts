@@ -12,7 +12,7 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 }
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
 // persistentLocalCache() requiert IndexedDB (web uniquement) — on utilise getFirestore() sans cache en React Native
 export const db = getFirestore(app)

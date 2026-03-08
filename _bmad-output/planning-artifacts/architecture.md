@@ -26,7 +26,7 @@ Les NFRs critiques qui guident l'architecture :
 - NFR2 : Collection 1 000 items < 2 secondes (pagination ou chargement anticipé)
 - NFR4 : Hors-ligne complet — lecture et écriture (Firestore Offline Persistence)
 - NFR5/6 : Isolation stricte par cercle (règles Firestore critiques)
-- NFR8 : Clés API non exposées client-side (Firebase Functions proxy obligatoire)
+- NFR8 : Clés API tierces (TMDB, Google Books) appelées directement depuis le client avec des clés read-only restreintes — Firebase Functions supprimées (plan Spark gratuit, 2026-03-08)
 - NFR16 : Disponibilité 99.5% (Firebase SLA satisfaisant par défaut)
 
 **Scale & Complexity :**
@@ -40,7 +40,6 @@ Projet à complexité moyenne. Faible volume utilisateurs (< 20 personnes) mais 
 
 - Firebase Firestore : base de données principale et moteur offline
 - Firebase Auth : authentification email/password
-- Firebase Functions : proxy sécurisé pour TMDB et Google Books (NFR8)
 - Firebase Hosting : hébergement SPA web
 - TMDB API : données films/séries (gratuit, clé requise)
 - Google Books API : données livres via ISBN (gratuit, clé requise)
@@ -51,7 +50,7 @@ Projet à complexité moyenne. Faible volume utilisateurs (< 20 personnes) mais 
 
 1. **Auth state management** : toutes les vues nécessitent une authentification valide — à gérer globalement (guard de navigation)
 2. **Couche offline-first** : tous les accès Firestore doivent fonctionner via le cache local — pas d'accès directs sans prise en compte du mode hors-ligne
-3. **Proxy API Firebase Functions** : TMDB et Google Books ne sont jamais appelés directement depuis le client — toujours via Functions
+3. **Clients API directs** : TMDB via `lib/tmdb.ts`, Google Books via `lib/googleBooks.ts` — jamais inline dans les composants
 4. **Gestion d'erreurs unifiée** : scan raté, API indisponible, réseau absent — comportement défini et cohérent sur toutes les plateformes (NFR18)
 5. **Isolation par cercle (Firestore Rules)** : règle de sécurité centrale à tester exhaustivement avant toute mise en production
 6. **Real-time Firestore listeners** : Cinéclub (FR30) et recommandations (FR27) nécessitent des listeners actifs sur l'accueil
@@ -164,11 +163,12 @@ Firebase JS SDK v12 (`firebase@^12.0.0`) — seule version compatible Expo SDK 5
 
 ### API & Communication Patterns
 
-**Firebase Functions MVP (2 fonctions) :**
+**Clients API directs (lib/) :**
 
 ```typescript
-// searchMedia(query: string, type: 'film' | 'serie' | 'livre') → MediaResult[]
-// getMediaByBarcode(barcode: string) → MediaResult | null
+// lib/tmdb.ts        → searchMovies, searchTv, searchByEan, getNowPlaying
+// lib/googleBooks.ts → searchBooks, searchByIsbn
+// lib/mediaSearch.ts → searchMedia(), getMediaByBarcode() — interface unifiée FunctionResponse<T>
 ```
 
 **Pattern de réponse unifié :**
@@ -176,7 +176,7 @@ Firebase JS SDK v12 (`firebase@^12.0.0`) — seule version compatible Expo SDK 5
 type FunctionResponse<T> = { success: true; data: T } | { success: false; error: string }
 ```
 
-**Hook client :** `useMediaSearch()` centralise tous les appels aux Functions, gère les états loading/error, et propose le fallback saisie manuelle en cas d'échec (NFR14).
+**Hook client :** `useMediaSearch()` centralise tous les appels via `lib/mediaSearch.ts`, gère les états loading/error, et propose le fallback saisie manuelle en cas d'échec (NFR14).
 
 ### Frontend Architecture
 
@@ -216,7 +216,7 @@ app/
 | Build mobile | EAS Build (cloud) | Pas de Mac requis pour iOS |
 | Distribution v1 | TestFlight (iOS) + APK direct (Android) | Sans Store compliance |
 | Web hosting | Firebase Hosting (SPA) | Intégré, gratuit, zéro config |
-| Variables d'env | `.env` Expo + Firebase Functions config | Clés TMDB/Google Books dans Functions uniquement |
+| Variables d'env | `.env` Expo uniquement | EXPO_PUBLIC_TMDB_API_KEY et EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY dans .env client |
 | CI/CD | Manuel v1 | Scope solo, pipeline automatisé reporté en V2 |
 | Monitoring | Firebase Crashlytics + console Firebase | Intégré, zéro configuration additionnelle |
 
@@ -364,13 +364,14 @@ Toute `catch` doit au minimum logger — jamais de catch vide (NFR18).
 4. Co-localiser les tests avec les fichiers source (`.test.tsx`)
 5. Nettoyer les listeners Firestore dans le `return` de `useEffect`
 6. Utiliser les mises à jour immuables dans Zustand
-7. Ne jamais appeler TMDB ou Google Books directement depuis le client
+7. Appeler TMDB exclusivement via `lib/tmdb.ts` et Google Books via `lib/googleBooks.ts` (jamais inline dans les composants)
 
 **Anti-patterns interdits :**
 
 ```typescript
 ❌ import firebase directement dans un composant → toujours via lib/firebase.ts
-❌ fetch('https://api.themoviedb.org/...') → toujours via lib/functions.ts
+❌ fetch('https://api.themoviedb.org/...') inline → toujours via lib/tmdb.ts
+❌ fetch('https://www.googleapis.com/books/...') inline → toujours via lib/googleBooks.ts
 ❌ state.filters.type = value → mutation directe Zustand interdite
 ❌ catch(e) {} → catch vide interdit, toujours au moins console.error(e)
 ```
@@ -461,7 +462,9 @@ cinook/
 ├── lib/
 │   ├── firebase.ts                 ← initializeApp, getFirestore, getAuth exports
 │   ├── firestore.ts                ← helpers CRUD : addItem, updateItem, deleteItem
-│   ├── functions.ts                ← searchMedia(), getMediaByBarcode() → Firebase Functions
+│   ├── tmdb.ts                     ← client TMDB direct (searchMovies, searchTv, searchByEan, getNowPlaying)
+│   ├── googleBooks.ts              ← client Google Books direct (searchBooks, searchByIsbn)
+│   ├── mediaSearch.ts              ← interface unifiée searchMedia() + getMediaByBarcode()
 │   └── export.ts                   ← generateCSV(), generateJSON() (FR6)
 │
 ├── types/
@@ -481,17 +484,7 @@ cinook/
 │   │   └── adaptive-icon.png
 │   └── fonts/
 │
-└── functions/                      ← Firebase Functions (déployé séparément)
-    ├── package.json
-    ├── tsconfig.json
-    ├── .env                        ← TMDB_API_KEY, GOOGLE_BOOKS_API_KEY
-    └── src/
-        ├── index.ts                ← exports des functions
-        ├── searchMedia.ts          ← appel TMDB + Google Books (FR8, FR9)
-        ├── getMediaByBarcode.ts    ← détection type + appel API (FR7, FR9)
-        └── utils/
-            ├── tmdb.ts             ← client TMDB
-            └── googleBooks.ts      ← client Google Books
+└── (répertoire functions/ supprimé — Firebase Functions non utilisées, plan Spark gratuit)
 ```
 
 ### Architectural Boundaries
@@ -501,10 +494,10 @@ cinook/
 - `app/(app)/` → protégé par guard dans `app/_layout.tsx`
 - `stores/authStore.ts` → source de vérité pour l'état auth global
 
-**Frontière API (clés sécurisées) :**
-- Le client n'appelle jamais TMDB ou Google Books directement
-- Tout passe par `lib/functions.ts` → Firebase Functions → APIs tierces
-- Clés dans `functions/.env` uniquement (NFR8)
+**Frontière API :**
+- `lib/tmdb.ts` — seul point d'entrée pour tous les appels TMDB (jamais inline dans les composants)
+- `lib/googleBooks.ts` — seul point d'entrée pour tous les appels Google Books
+- Clés `EXPO_PUBLIC_TMDB_API_KEY` et `EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY` dans `.env` client (read-only, acceptable pour app privée < 20 utilisateurs)
 
 **Frontière Offline :**
 - Tous les accès Firestore passent par les hooks (`useCollection`, `useCircle`, etc.)
@@ -530,13 +523,12 @@ cinook/
 
 ```
 Scan (mobile)
-  → useBarcodeScan.ts → lib/functions.ts
-  → Firebase Function getMediaByBarcode → TMDB / Google Books
+  → useBarcodeScan.ts → lib/googleBooks.ts (ISBN 978/979) | lib/tmdb.ts (EAN)
   → MediaResult → lib/firestore.ts → /users/{uid}/items
   → useCollection listener → UI mise à jour automatique
 
 Recherche manuelle
-  → useMediaSearch.ts → lib/functions.ts → Firebase Function searchMedia
+  → useMediaSearch.ts → lib/tmdb.ts (film/serie) | lib/googleBooks.ts (livre)
   → résultats → sélection → lib/firestore.ts → useCollection → UI
 
 Cinéclub (temps réel)
