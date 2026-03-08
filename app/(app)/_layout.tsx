@@ -1,15 +1,20 @@
 import { Tabs } from 'expo-router'
 
-// Tab navigation — implémenté complètement en Story 1.3
-// 4 tabs : Accueil, Collection, Découverte, Cercle
-
 export default function AppLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false, tabBarStyle: { backgroundColor: '#0E0B0B' }, tabBarActiveTintColor: '#FBBF24' }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { backgroundColor: '#0E0B0B', borderTopColor: '#1C1717' },
+        tabBarActiveTintColor: '#FBBF24',
+        tabBarInactiveTintColor: '#6B5E5E',
+      }}
+    >
       <Tabs.Screen name="index" options={{ title: 'Accueil' }} />
       <Tabs.Screen name="collection" options={{ title: 'Collection' }} />
       <Tabs.Screen name="discover" options={{ title: 'Découverte' }} />
       <Tabs.Screen name="circle" options={{ title: 'Cercle' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Paramètres' }} />
     </Tabs>
   )
 }

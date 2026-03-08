@@ -1,6 +1,6 @@
 # Story 1.2 : Création de compte utilisateur
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -34,35 +34,35 @@ Afin d'accéder à Cinook et commencer à gérer ma collection.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Implémenter l'écran register.tsx** (AC1, AC3)
-  - [ ] Créer le formulaire avec 3 champs : `displayName` (optionnel), `email` (requis), `password` (requis, min 6 car.)
-  - [ ] Ajouter la validation locale avant tout appel Firebase
-  - [ ] Afficher les erreurs de validation sous chaque champ concerné
-  - [ ] Styler avec NativeWind Dark Cinéma : `bg-[#0E0B0B]`, accents `amber-400`
+- [x] **Task 1 — Implémenter l'écran register.tsx** (AC1, AC3)
+  - [x] Créer le formulaire avec 3 champs : `displayName` (optionnel), `email` (requis), `password` (requis, min 6 car.)
+  - [x] Ajouter la validation locale avant tout appel Firebase
+  - [x] Afficher les erreurs de validation sous chaque champ concerné
+  - [x] Styler avec NativeWind Dark Cinéma : `bg-[#0E0B0B]`, accents `amber-400`
 
-- [ ] **Task 2 — Intégrer Firebase Auth** (AC1, AC2)
-  - [ ] Appeler `createUserWithEmailAndPassword(auth, email, password)`
-  - [ ] En cas de succès, appeler `updateProfile(user, { displayName })` si displayName fourni
-  - [ ] Gérer l'erreur `auth/email-already-in-use` → message "Ce compte existe déjà"
-  - [ ] Gérer les autres erreurs Firebase → toast générique via `useUIStore`
+- [x] **Task 2 — Intégrer Firebase Auth** (AC1, AC2)
+  - [x] Appeler `createUserWithEmailAndPassword(auth, email, password)`
+  - [x] En cas de succès, appeler `updateProfile(user, { displayName })` si displayName fourni
+  - [x] Gérer l'erreur `auth/email-already-in-use` → message "Ce compte existe déjà"
+  - [x] Gérer les autres erreurs Firebase → toast générique via `useUIStore`
 
-- [ ] **Task 3 — Créer le document Firestore utilisateur** (AC1)
-  - [ ] Après création Auth réussie, appeler `setDoc(doc(db, 'users', user.uid), { displayName, email, circleId: null, createdAt: serverTimestamp() })`
-  - [ ] En cas d'échec Firestore, logger l'erreur sans bloquer la navigation (le profil peut être réparé)
+- [x] **Task 3 — Créer le document Firestore utilisateur** (AC1)
+  - [x] Après création Auth réussie, appeler `setDoc(doc(db, 'users', user.uid), { displayName, email, circleId: null, createdAt: serverTimestamp() })`
+  - [x] En cas d'échec Firestore, logger l'erreur sans bloquer la navigation (le profil peut être réparé)
 
-- [ ] **Task 4 — Mettre à jour authStore et naviguer** (AC1)
-  - [ ] Appeler `useAuthStore.getState().setUser(uid, email, displayName)` après création
-  - [ ] Naviguer vers `/(app)/` via `router.replace('/(app)/')`
+- [x] **Task 4 — Mettre à jour authStore et naviguer** (AC1)
+  - [x] Appeler `useAuthStore.getState().setUser(uid, email, displayName)` après création
+  - [x] Naviguer vers `/(app)/` via `router.replace('/(app)/')`
 
-- [ ] **Task 5 — Lien vers login** (UX)
-  - [ ] Ajouter un lien "Déjà un compte ? Se connecter" → `router.push('/(auth)/login')`
+- [x] **Task 5 — Lien vers login** (UX)
+  - [x] Ajouter un lien "Déjà un compte ? Se connecter" → `router.push('/(auth)/login')`
 
-- [ ] **Task 6 — Tests** (tous ACs)
-  - [ ] Test : validation email invalide → erreur affichée, pas d'appel Firebase
-  - [ ] Test : mot de passe < 6 caractères → erreur affichée
-  - [ ] Test : création réussie → `setUser` appelé avec les bons arguments
-  - [ ] Test : email déjà utilisé → message d'erreur correct affiché
-  - [ ] Test : erreur Firestore → navigation quand même (non bloquant)
+- [x] **Task 6 — Tests** (tous ACs)
+  - [x] Test : validation email invalide → erreur affichée, pas d'appel Firebase
+  - [x] Test : mot de passe < 6 caractères → erreur affichée
+  - [x] Test : création réussie → `setUser` appelé avec les bons arguments
+  - [x] Test : email déjà utilisé → message d'erreur correct affiché
+  - [x] Test : erreur Firestore → navigation quand même (non bloquant)
 
 ## Dev Notes
 
@@ -217,6 +217,12 @@ useAuthStore.setState({ uid: '...' })  // Utiliser les actions setUser()
 - Pas de nouveau composant requis — formulaire inline dans la route
 - Le test est co-localisé : `app/(auth)/register.test.tsx`
 
+### Learnings pour les stories suivantes
+
+- `transformIgnorePatterns` étendu dans `package.json` pour inclure `firebase|@firebase` — nécessaire pour tous les composants qui importent Firebase directement
+- `jest.requireActual('firebase/app')` fonctionne pour obtenir `FirebaseError` réel dans les tests
+- Firebase ESM fonctionne après transformation Babel via jest-expo
+
 ### References
 
 - [Source: epics.md#Story 1.2] — ACs complets
@@ -231,13 +237,22 @@ useAuthStore.setState({ uid: '...' })  // Utiliser les actions setUser()
 
 ### Agent Model Used
 
-_À remplir par l'agent dev_
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- Firebase ESM → SyntaxError : résolu en ajoutant `firebase|@firebase` dans `transformIgnorePatterns` de `package.json`
+
 ### Completion Notes List
+
+- `register.tsx` : formulaire complet avec validation locale, Firebase Auth, Firestore, authStore, navigation
+- Firestore non bloquant : erreur loggée mais navigation effectuée quand même
+- 5 tests couvrent tous les ACs : validation email, validation password, création réussie, email existant, Firestore down
+- Suite complète : 23/23 tests passent (18 stores + 5 register)
 
 ### File List
 
 - `app/(auth)/register.tsx` (stub → implémentation complète)
-- `app/(auth)/register.test.tsx` (nouveau)
+- `app/(auth)/register.test.tsx` (nouveau — 5 tests)
+- `package.json` (jest.transformIgnorePatterns étendu pour Firebase ESM)
+- `metro.config.js` (blockList ajouté pour exclure les fichiers *.test.* du bundler Metro)
