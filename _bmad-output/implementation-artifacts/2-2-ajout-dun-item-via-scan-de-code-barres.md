@@ -1,6 +1,6 @@
 # Story 2.2 : Ajout d'un item via scan de code-barres
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -15,7 +15,7 @@ Afin que la fiche soit auto-remplie instantanément sans saisie manuelle.
 **Given** l'écran de scan (`app/scan.tsx`) ouvert sur mobile (development build requis)
 **When** je pointe la caméra vers un code-barres EAN-13, EAN-8 ou UPC-A valide
 **Then** le code est détecté automatiquement par `expo-camera`
-**And** `useBarcodeScan.ts` appelle `getMediaByBarcode` via `lib/functions.ts`
+**And** `useBarcodeScan.ts` appelle `getMediaByBarcode` via `lib/mediaSearch.ts`
 **And** la fiche apparaît pré-remplie (titre, affiche, synopsis, année, réalisateur/auteur) en moins de 3 secondes (NFR1)
 
 ### AC2 — Confirmation et enregistrement
@@ -34,41 +34,41 @@ Afin que la fiche soit auto-remplie instantanément sans saisie manuelle.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Installer expo-camera** (AC1)
-  - [ ] `npx expo install expo-camera`
-  - [ ] Ajouter permissions dans `app.json` : `"camera"` pour iOS et Android
+- [x] **Task 1 — Installer expo-camera** (AC1)
+  - [x] `npx expo install expo-camera`
+  - [x] Ajouter permissions dans `app.json` : `"camera"` pour iOS et Android
 
-- [ ] **Task 2 — Implémenter `hooks/useBarcodeScan.ts`** (AC1, AC3)
-  - [ ] State : `isScanning`, `result: MediaResult | null`, `error: string | null`, `isLoading`
-  - [ ] `onBarcodeScanned(barcode)` → appeler `getMediaByBarcode(barcode)` via `lib/functions.ts`
-  - [ ] Si succès → stocker `result`, arrêter le scan
-  - [ ] Si échec → stocker `error`, proposer fallback saisie manuelle
-  - [ ] `reset()` pour recommencer un scan
+- [x] **Task 2 — Implémenter `hooks/useBarcodeScan.ts`** (AC1, AC3)
+  - [x] State : `isScanning`, `result: MediaResult | null`, `error: string | null`, `isLoading`
+  - [x] `onBarcodeScanned(barcode)` → appeler `getMediaByBarcode(barcode)` via `lib/mediaSearch.ts`
+  - [x] Si succès → stocker `result`, arrêter le scan
+  - [x] Si échec → stocker `error`, proposer fallback saisie manuelle
+  - [x] `reset()` pour recommencer un scan
 
-- [ ] **Task 3 — Implémenter `app/scan.tsx`** (AC1, AC2, AC3)
-  - [ ] `CameraView` de `expo-camera` plein écran
-  - [ ] `BarcodeOverlay` (viseur centré, amber border)
-  - [ ] Quand résultat disponible : afficher fiche pré-remplie (titre, affiche, synopsis)
-  - [ ] Bouton "Ajouter" → écrire dans Firestore avec `addedVia: 'scan'`
-  - [ ] Bouton "Annuler" → fermer le scanner (`router.back()`)
-  - [ ] En cas d'erreur : message + bouton "Saisie manuelle" → `router.push('/item/new')`
-  - [ ] Fermer automatiquement après confirmation (AC2)
+- [x] **Task 3 — Implémenter `app/scan.tsx`** (AC1, AC2, AC3)
+  - [x] `CameraView` de `expo-camera` plein écran
+  - [x] `BarcodeOverlay` (viseur centré, amber border)
+  - [x] Quand résultat disponible : afficher fiche pré-remplie (titre, affiche, synopsis)
+  - [x] Bouton "Ajouter" → écrire dans Firestore avec `addedVia: 'scan'`
+  - [x] Bouton "Annuler" → fermer le scanner (`router.back()`)
+  - [x] En cas d'erreur : message + bouton "Saisie manuelle" → `router.push('/item/new')`
+  - [x] Fermer automatiquement après confirmation (AC2)
 
-- [ ] **Task 4 — Helper Firestore `addItem` dans lib/firestore.ts** (AC2)
-  - [ ] `addItem(uid: string, item: Omit<MediaItem, 'id'>): Promise<string>`
-  - [ ] `addDoc(collection(db, 'users', uid, 'items'), { ...item, addedAt: serverTimestamp() })`
-  - [ ] Retourner l'id du document créé
+- [x] **Task 4 — Helper Firestore `addItem` dans lib/firestore.ts** (AC2)
+  - [x] `addItem(uid: string, item: Omit<MediaItem, 'id' | 'addedAt'>): Promise<string>`
+  - [x] `addDoc(collection(db, 'users', uid, 'items'), { ...item, addedAt: serverTimestamp() })`
+  - [x] Retourner l'id du document créé
 
-- [ ] **Task 5 — Composant `components/scan/BarcodeOverlay.tsx`** (AC1)
-  - [ ] Overlay avec viseur centré (rectangle amber)
-  - [ ] Texte "Pointez la caméra vers un code-barres"
-  - [ ] Animation subtile (pulse ou blink)
+- [x] **Task 5 — Composant `components/scan/BarcodeOverlay.tsx`** (AC1)
+  - [x] Overlay avec viseur centré (rectangle amber)
+  - [x] Texte "Pointez la caméra vers un code-barres"
+  - [x] Animation subtile (pulse)
 
-- [ ] **Task 6 — Tests** (tous ACs)
-  - [ ] Test `useBarcodeScan` : barcode valide → `getMediaByBarcode` appelé, result stocké
-  - [ ] Test `useBarcodeScan` : réponse `success: false` → error stocké, result null
-  - [ ] Test `addItem` : appelle `addDoc` avec les bons paramètres
-  - [ ] Test `addItem` : `addedAt` est un serverTimestamp
+- [x] **Task 6 — Tests** (tous ACs)
+  - [x] Test `useBarcodeScan` : barcode valide → `getMediaByBarcode` appelé, result stocké
+  - [x] Test `useBarcodeScan` : réponse `success: false` → error stocké, result null
+  - [x] Test `addItem` : appelle `addDoc` avec les bons paramètres
+  - [x] Test `addItem` : `addedAt` est un serverTimestamp
 
 ## Dev Notes
 
@@ -169,14 +169,26 @@ const reset = () => {
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+- Référence `lib/functions.ts` dans la story → mis à jour vers `lib/mediaSearch.ts` (migration 2.1)
+
 ### Completion Notes List
+- Installé `expo-camera` (SDK 54 compatible), ajouté permissions iOS/Android dans `app.json`
+- Implémenté `hooks/useBarcodeScan.ts` : scannedRef anti-doublon, routing via `lib/mediaSearch.getMediaByBarcode`, reset()
+- Implémenté `lib/firestore.ts` : `addItem(uid, item)` → addDoc Firestore `/users/{uid}/items` avec serverTimestamp
+- Implémenté `components/scan/BarcodeOverlay.tsx` : viseur amber animé (pulse), texte instruction
+- Implémenté `app/scan.tsx` : permission flow → CameraView + BarcodeOverlay → fiche résultat → Firestore write → error fallback saisie manuelle
+- 7 tests nouveaux : 4 useBarcodeScan + 2 addItem + 1 BarcodeOverlay — 62/62 suite complète, zéro régression
+
 ### File List
 
 - `app/scan.tsx` (stub → implémentation)
 - `hooks/useBarcodeScan.ts` (nouveau)
+- `hooks/useBarcodeScan.test.ts` (nouveau)
 - `lib/firestore.ts` (stub → addItem)
+- `lib/firestore.test.ts` (nouveau)
 - `components/scan/BarcodeOverlay.tsx` (nouveau)
 - `components/scan/BarcodeOverlay.test.tsx` (nouveau)
-- `hooks/useBarcodeScan.test.ts` (nouveau)
-- `app.json` (ajout permissions caméra)
+- `app.json` (ajout permissions caméra iOS/Android)
