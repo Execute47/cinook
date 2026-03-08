@@ -45,7 +45,7 @@ development_status:
   # Epic 1 : Fondations & Authentification
   # ─────────────────────────────────────────────────────
   epic-1: in-progress
-  1-1-initialisation-du-projet-et-configuration-technique: review
+  1-1-initialisation-du-projet-et-configuration-technique: done
   1-2-creation-de-compte-utilisateur: done
   1-3-connexion-deconnexion-et-navigation-protegee: done
   epic-1-retrospective: optional
