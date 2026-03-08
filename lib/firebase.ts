@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { initializeFirestore, persistentLocalCache, getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -11,20 +12,19 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 }
 
-// Prevent re-initialization in hot-reload environments
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
-// Offline persistence via persistentLocalCache (React Native compatible — Firebase SDK v10+)
-// Falls back gracefully if persistence is already enabled or unavailable
-let db
-try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache(),
-  })
-} catch {
-  // Already initialized (e.g. hot reload) — use existing instance
-  db = getFirestore(app)
-}
+// persistentLocalCache() requiert IndexedDB (web uniquement) — on utilise getFirestore() sans cache en React Native
+export const db = getFirestore(app)
 
-export { db }
-export const auth = getAuth(app)
+// getAuth() échoue si initializeAuth n'a pas encore été appelé dans cette session Metro
+// On tente getAuth() d'abord (hot-reload), sinon on initialise avec la persistance AsyncStorage
+let _auth
+try {
+  _auth = getAuth(app)
+} catch {
+  _auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  })
+}
+export const auth = _auth
