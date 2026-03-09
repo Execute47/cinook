@@ -1,5 +1,6 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
 import type { MediaItem } from '@/types/media'
+import { STATUS_OPTIONS } from '@/components/media/StatusPicker'
 
 interface Props {
   item: MediaItem
@@ -7,13 +8,7 @@ interface Props {
 }
 
 const TYPE_LABEL: Record<string, string> = { film: 'Film', serie: 'Série', livre: 'Livre' }
-const STATUS_LABEL: Record<string, string> = {
-  owned: 'Possédé',
-  watched: 'Vu',
-  loaned: 'Prêté',
-  wishlist: 'Souhaité',
-  favorite: 'Favori',
-}
+const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.value, s]))
 
 export default function ItemCard({ item, onPress }: Props) {
   return (
@@ -39,8 +34,10 @@ export default function ItemCard({ item, onPress }: Props) {
           <View className="bg-[#3D3535] px-2 py-0.5 rounded">
             <Text className="text-amber-400 text-xs">{TYPE_LABEL[item.type] ?? item.type}</Text>
           </View>
-          <View className="bg-[#2A2222] px-2 py-0.5 rounded">
-            <Text className="text-gray-300 text-xs">{STATUS_LABEL[item.status] ?? item.status}</Text>
+          <View className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
+            <Text className="text-xs" style={{ color: STATUS_MAP[item.status]?.color ?? '#9CA3AF' }}>
+              {STATUS_MAP[item.status]?.label ?? item.status}
+            </Text>
           </View>
         </View>
       </View>

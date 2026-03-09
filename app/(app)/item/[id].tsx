@@ -7,7 +7,9 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { useCollection } from '@/hooks/useCollection'
 import { updateItem, deleteItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
-import type { MediaType } from '@/types/media'
+import StatusPicker, { STATUS_OPTIONS } from '@/components/media/StatusPicker'
+import type { MediaType, ItemStatus } from '@/types/media'
+import { deleteField } from 'firebase/firestore'
 
 const TYPE_LABEL: Record<string, string> = { film: 'Film', serie: 'Série', livre: 'Livre' }
 const TYPES: { value: MediaType; label: string }[] = [
@@ -24,6 +26,18 @@ export default function ItemDetailScreen() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  const handleStatusChange = async (newStatus: ItemStatus) => {
+    if (!uid || !item) return
+    const updates: Record<string, unknown> = { status: newStatus }
+    if (item.status === 'loaned' && newStatus !== 'loaned') {
+      updates.loanTo = deleteField()
+      updates.loanDate = deleteField()
+    }
+    await updateItem(uid, item.id, updates as never)
+  }
+
+  const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.value, s]))
 
   // Champs éditables
   const [title, setTitle] = useState('')
@@ -72,7 +86,7 @@ export default function ItemDetailScreen() {
           style: 'destructive',
           onPress: async () => {
             await deleteItem(uid, item.id)
-            router.back()
+            router.push('/(app)/collection')
           },
         },
       ]
@@ -161,7 +175,7 @@ export default function ItemDetailScreen() {
     <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 24 }}>
       {/* Header */}
       <View className="flex-row items-center mb-4">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
+        <TouchableOpacity onPress={() => router.push('/(app)/collection')} className="mr-3">
           <Text className="text-amber-400">←</Text>
         </TouchableOpacity>
         <View className="flex-1" />
@@ -209,9 +223,22 @@ export default function ItemDetailScreen() {
         <Text className="text-gray-300 text-sm leading-5 mb-4">{item.synopsis}</Text>
       )}
 
-      {/* Statut / Note — stubs pour Story 3.x */}
+      {/* Statut */}
       <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
-        <Text className="text-[#6B5E5E] text-sm text-center">Statut & notation — Story 3.x</Text>
+        <View className="flex-row items-center mb-3">
+          <Text className="text-[#6B5E5E] text-sm mr-2">Statut :</Text>
+          <View className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
+            <Text className="text-sm font-medium" style={{ color: STATUS_MAP[item.status]?.color ?? '#9CA3AF' }}>
+              {STATUS_MAP[item.status]?.label ?? item.status}
+            </Text>
+          </View>
+        </View>
+        <StatusPicker current={item.status} onSelect={handleStatusChange} />
+      </View>
+
+      {/* Note — stub pour Story 3.2 */}
+      <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
+        <Text className="text-[#6B5E5E] text-sm text-center">Notation & tier list — Story 3.2</Text>
       </View>
     </ScrollView>
   )
