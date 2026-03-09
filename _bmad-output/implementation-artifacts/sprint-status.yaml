@@ -48,6 +48,7 @@ development_status:
   1-1-initialisation-du-projet-et-configuration-technique: done
   1-2-creation-de-compte-utilisateur: done
   1-3-connexion-deconnexion-et-navigation-protegee: done
+  1-4-connexion-via-google: ready-for-dev
   epic-1-retrospective: optional
 
   # ─────────────────────────────────────────────────────

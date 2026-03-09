@@ -7,6 +7,8 @@ import { FirebaseError } from 'firebase/app'
 import { auth, db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
+import { signInWithGoogle } from '@/lib/auth'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
 export default function RegisterScreen() {
   const [displayName, setDisplayName] = useState('')
@@ -15,6 +17,7 @@ export default function RegisterScreen() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   const validate = (): boolean => {
     let valid = true
@@ -68,6 +71,13 @@ export default function RegisterScreen() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true)
+    const success = await signInWithGoogle()
+    setIsGoogleLoading(false)
+    if (success) router.replace('/(app)/')
   }
 
   return (
@@ -131,6 +141,16 @@ export default function RegisterScreen() {
             {isLoading ? 'Création...' : 'Créer mon compte'}
           </Text>
         </TouchableOpacity>
+
+        {/* Séparateur */}
+        <View className="flex-row items-center my-6">
+          <View className="flex-1 h-px bg-[#3D3535]" />
+          <Text className="text-[#6B5E5E] mx-4">ou</Text>
+          <View className="flex-1 h-px bg-[#3D3535]" />
+        </View>
+
+        {/* Bouton Google */}
+        <GoogleSignInButton onPress={handleGoogleSignIn} isLoading={isGoogleLoading} />
 
         {/* Lien login */}
         <TouchableOpacity

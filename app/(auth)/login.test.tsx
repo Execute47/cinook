@@ -24,6 +24,10 @@ jest.mock('firebase/firestore', () => ({
 
 jest.mock('@/lib/firebase', () => ({ auth: {}, db: {} }))
 
+jest.mock('@/lib/auth', () => ({
+  signInWithGoogle: jest.fn(),
+}))
+
 const mockSetUser = jest.fn()
 const mockSetCircle = jest.fn()
 jest.mock('@/stores/authStore', () => ({
