@@ -8,7 +8,11 @@ import { useCollection } from '@/hooks/useCollection'
 import { updateItem, deleteItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
 import StatusPicker, { STATUS_OPTIONS } from '@/components/media/StatusPicker'
-import type { MediaType, ItemStatus } from '@/types/media'
+import RatingWidget from '@/components/media/RatingWidget'
+import TierPicker from '@/components/media/TierPicker'
+import TierBadge from '@/components/media/TierBadge'
+import CommentInput from '@/components/media/CommentInput'
+import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
 import { deleteField } from 'firebase/firestore'
 
 const TYPE_LABEL: Record<string, string> = { film: 'Film', serie: 'Série', livre: 'Livre' }
@@ -236,9 +240,43 @@ export default function ItemDetailScreen() {
         <StatusPicker current={item.status} onSelect={handleStatusChange} />
       </View>
 
-      {/* Note — stub pour Story 3.2 */}
+      {/* Mon avis */}
       <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
-        <Text className="text-[#6B5E5E] text-sm text-center">Notation & tier list — Story 3.2</Text>
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-white font-semibold">Mon avis</Text>
+          <TierBadge tier={item.tier} />
+        </View>
+
+        <Text className="text-[#6B5E5E] text-sm mb-2">Note</Text>
+        <RatingWidget
+          value={item.rating ?? null}
+          onRate={async (val) => {
+            if (!uid) return
+            await updateItem(uid, item.id, { rating: val === null ? deleteField() : val } as never)
+          }}
+        />
+
+        <Text className="text-[#6B5E5E] text-sm mt-4 mb-2">Tier</Text>
+        <TierPicker
+          current={item.tier}
+          onSelect={async (tier: TierLevel) => {
+            if (!uid) return
+            await updateItem(uid, item.id, { tier } as never)
+          }}
+        />
+
+        <Text className="text-[#6B5E5E] text-sm mt-4 mb-2">Commentaire</Text>
+        <CommentInput
+          value={item.comment}
+          onSave={async (comment) => {
+            if (!uid) return
+            await updateItem(uid, item.id, { comment } as never)
+          }}
+          onClear={async () => {
+            if (!uid) return
+            await updateItem(uid, item.id, { comment: deleteField() } as never)
+          }}
+        />
       </View>
     </ScrollView>
   )

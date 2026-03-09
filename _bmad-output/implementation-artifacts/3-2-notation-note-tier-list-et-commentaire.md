@@ -1,6 +1,6 @@
 # Story 3.2 : Notation — note, tier-list et commentaire
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -39,37 +39,37 @@ Afin d'exprimer précisément mon ressenti et retrouver mes avis facilement.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Composant `components/media/RatingWidget.tsx`** (AC1, AC2)
-  - [ ] Slider ou boutons 0-10
-  - [ ] Affichage de la note actuelle
-  - [ ] `onRate(value: number | null)` callback
-  - [ ] Bouton "Effacer" pour supprimer la note
+- [x] **Task 1 — Composant `components/media/RatingWidget.tsx`** (AC1, AC2)
+  - [x] Slider ou boutons 0-10
+  - [x] Affichage de la note actuelle
+  - [x] `onRate(value: number | null)` callback
+  - [x] Bouton "Effacer" pour supprimer la note
 
-- [ ] **Task 2 — Composant `components/media/TierPicker.tsx`** (AC1, AC3)
-  - [ ] 6 boutons pour les niveaux depuis `TIER_LEVELS`
-  - [ ] Couleur et emoji de chaque niveau
-  - [ ] Niveau actif mis en évidence
-  - [ ] `onSelect(tier: TierLevel)` callback
+- [x] **Task 2 — Composant `components/media/TierPicker.tsx`** (AC1, AC3)
+  - [x] 6 boutons pour les niveaux depuis `TIER_LEVELS`
+  - [x] Couleur et emoji de chaque niveau
+  - [x] Niveau actif mis en évidence
+  - [x] `onSelect(tier: TierLevel)` callback
 
-- [ ] **Task 3 — Composant `components/media/CommentInput.tsx`** (AC1, AC4)
-  - [ ] TextInput multiline
-  - [ ] Bouton "Enregistrer" → `updateItem(uid, id, { comment })`
-  - [ ] Bouton "Effacer" → `updateItem(uid, id, { comment: deleteField() })`
+- [x] **Task 3 — Composant `components/media/CommentInput.tsx`** (AC1, AC4)
+  - [x] TextInput multiline
+  - [x] Bouton "Enregistrer" → `updateItem(uid, id, { comment })`
+  - [x] Bouton "Effacer" → `updateItem(uid, id, { comment: deleteField() })`
 
-- [ ] **Task 4 — Composant `components/media/TierBadge.tsx`** (AC3)
-  - [ ] Badge avec couleur + emoji + label du tier
-  - [ ] Réutilisable dans ItemCard et fiche détail
+- [x] **Task 4 — Composant `components/media/TierBadge.tsx`** (AC3)
+  - [x] Badge avec couleur + emoji + label du tier
+  - [x] Réutilisable dans ItemCard et fiche détail
 
-- [ ] **Task 5 — Intégrer dans item/[id].tsx** (AC1, AC2, AC3, AC4)
-  - [ ] Section "Mon avis" avec les 3 composants
-  - [ ] Chaque modification → `updateItem` avec le champ concerné
-  - [ ] Utiliser `deleteField()` pour effacer rating/comment
+- [x] **Task 5 — Intégrer dans item/[id].tsx** (AC1, AC2, AC3, AC4)
+  - [x] Section "Mon avis" avec les 3 composants
+  - [x] Chaque modification → `updateItem` avec le champ concerné
+  - [x] Utiliser `deleteField()` pour effacer rating/comment
 
-- [ ] **Task 6 — Tests** (tous ACs)
-  - [ ] Test RatingWidget : onRate appelé avec la bonne valeur
-  - [ ] Test TierPicker : onSelect appelé avec le bon tier
-  - [ ] Test : effacement note → `updateItem` avec `deleteField()`
-  - [ ] Test : affichage TierBadge avec la bonne couleur
+- [x] **Task 6 — Tests** (tous ACs)
+  - [x] Test RatingWidget : onRate appelé avec la bonne valeur
+  - [x] Test TierPicker : onSelect appelé avec le bon tier
+  - [x] Test : effacement note → `updateItem` avec `deleteField()`
+  - [x] Test : affichage TierBadge avec la bonne couleur
 
 ## Dev Notes
 
