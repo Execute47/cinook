@@ -36,21 +36,22 @@ export default function ScanScreen() {
 
   const handleAdd = async () => {
     if (!result || !uid) return
-    await addItem(uid, {
+    const item: Record<string, unknown> = {
       title: result.title,
       type: result.type,
-      poster: result.poster,
-      synopsis: result.synopsis,
-      director: result.director,
-      author: result.author,
-      year: result.year,
-      tmdbId: result.tmdbId,
-      googleBooksId: result.googleBooksId,
-      isbn: result.isbn,
       status: 'owned',
       tier: 'none',
       addedVia: 'scan',
-    })
+    }
+    if (result.poster !== undefined) item.poster = result.poster
+    if (result.synopsis !== undefined) item.synopsis = result.synopsis
+    if (result.director !== undefined) item.director = result.director
+    if (result.author !== undefined) item.author = result.author
+    if (result.year !== undefined) item.year = result.year
+    if (result.tmdbId !== undefined) item.tmdbId = result.tmdbId
+    if (result.googleBooksId !== undefined) item.googleBooksId = result.googleBooksId
+    if (result.isbn !== undefined) item.isbn = result.isbn
+    await addItem(uid, item as never)
     router.back()
   }
 
