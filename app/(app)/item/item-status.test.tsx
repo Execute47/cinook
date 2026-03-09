@@ -30,7 +30,7 @@ jest.mock('@/stores/authStore', () => ({
 const mockItems = [
   {
     id: 'item-1', title: 'Matrix', type: 'film', status: 'loaned',
-    tier: 'none', addedVia: 'search', loanTo: 'Alice', loanDate: 'somedate',
+    tier: 'none', addedVia: 'search', loanTo: 'Alice', loanDate: { toDate: () => new Date('2025-01-01') },
   },
 ]
 jest.mock('@/hooks/useCollection', () => ({

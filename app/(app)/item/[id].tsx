@@ -12,8 +12,9 @@ import RatingWidget from '@/components/media/RatingWidget'
 import TierPicker from '@/components/media/TierPicker'
 import TierBadge from '@/components/media/TierBadge'
 import CommentInput from '@/components/media/CommentInput'
+import LoanModal from '@/components/media/LoanModal'
 import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
-import { deleteField } from 'firebase/firestore'
+import { deleteField, Timestamp } from 'firebase/firestore'
 
 const TYPE_LABEL: Record<string, string> = { film: 'Film', serie: 'Série', livre: 'Livre' }
 const TYPES: { value: MediaType; label: string }[] = [
@@ -30,15 +31,26 @@ export default function ItemDetailScreen() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [showLoanModal, setShowLoanModal] = useState(false)
 
   const handleStatusChange = async (newStatus: ItemStatus) => {
     if (!uid || !item) return
+    if (newStatus === 'loaned' && item.status !== 'loaned') {
+      setShowLoanModal(true)
+      return
+    }
     const updates: Record<string, unknown> = { status: newStatus }
     if (item.status === 'loaned' && newStatus !== 'loaned') {
       updates.loanTo = deleteField()
       updates.loanDate = deleteField()
     }
     await updateItem(uid, item.id, updates as never)
+  }
+
+  const handleLoanValidate = async (loanTo: string, loanDate: Timestamp) => {
+    if (!uid || !item) return
+    setShowLoanModal(false)
+    await updateItem(uid, item.id, { status: 'loaned', loanTo, loanDate } as never)
   }
 
   const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.value, s]))
@@ -238,7 +250,25 @@ export default function ItemDetailScreen() {
           </View>
         </View>
         <StatusPicker current={item.status} onSelect={handleStatusChange} />
+        {item.status === 'loaned' && item.loanTo && (
+          <View className="mt-3 pt-3 border-t border-[#3D3535]">
+            <Text className="text-[#6B5E5E] text-sm">
+              Prêté à : <Text className="text-amber-400">{item.loanTo}</Text>
+            </Text>
+            {item.loanDate && (
+              <Text className="text-[#6B5E5E] text-sm mt-0.5">
+                Depuis le : {item.loanDate.toDate().toLocaleDateString('fr-FR')}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
+
+      <LoanModal
+        visible={showLoanModal}
+        onValidate={handleLoanValidate}
+        onCancel={() => setShowLoanModal(false)}
+      />
 
       {/* Mon avis */}
       <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">

@@ -40,6 +40,9 @@ export default function ItemCard({ item, onPress }: Props) {
             </Text>
           </View>
         </View>
+        {item.status === 'loaned' && item.loanTo && (
+          <Text className="text-amber-400 text-xs mt-1">→ {item.loanTo}</Text>
+        )}
       </View>
     </TouchableOpacity>
   )

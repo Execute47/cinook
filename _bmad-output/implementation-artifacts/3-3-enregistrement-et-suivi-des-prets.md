@@ -1,6 +1,6 @@
 # Story 3.3 : Enregistrement et suivi des prêts
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -39,28 +39,28 @@ Afin de ne jamais perdre la trace de mes objets prêtés.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Composant `components/media/LoanModal.tsx`** (AC1, AC2)
-  - [ ] Modal avec TextInput "Nom de l'emprunteur" (requis)
-  - [ ] DatePicker ou TextInput date (par défaut : aujourd'hui)
-  - [ ] Bouton "Valider" → `updateItem(uid, id, { status: 'loaned', loanTo, loanDate: Timestamp.fromDate(date) })`
-  - [ ] Bouton "Annuler" → fermer sans modification
+- [x] **Task 1 — Composant `components/media/LoanModal.tsx`** (AC1, AC2)
+  - [x] Modal avec TextInput "Nom de l'emprunteur" (requis)
+  - [x] DatePicker ou TextInput date (par défaut : aujourd'hui)
+  - [x] Bouton "Valider" → `updateItem(uid, id, { status: 'loaned', loanTo, loanDate: Timestamp.fromDate(date) })`
+  - [x] Bouton "Annuler" → fermer sans modification
 
-- [ ] **Task 2 — Intégrer LoanModal dans item/[id].tsx** (AC1, AC2)
-  - [ ] Quand StatusPicker sélectionne 'loaned' → ouvrir LoanModal avant d'appliquer
-  - [ ] LoanModal bloque la navigation jusqu'à validation ou annulation
+- [x] **Task 2 — Intégrer LoanModal dans item/[id].tsx** (AC1, AC2)
+  - [x] Quand StatusPicker sélectionne 'loaned' → ouvrir LoanModal avant d'appliquer
+  - [x] LoanModal bloque la navigation jusqu'à validation ou annulation
 
-- [ ] **Task 3 — Composant `components/media/LoanList.tsx`** (AC3)
-  - [ ] Filtrer items avec `status === 'loaned'` depuis `useCollection`
-  - [ ] Afficher : titre, `loanTo`, date du prêt formatée
-  - [ ] Accessible depuis un onglet ou section dédiée (< 2 taps)
+- [x] **Task 3 — Composant `components/media/LoanList.tsx`** (AC3)
+  - [x] Filtrer items avec `status === 'loaned'` depuis `useCollection`
+  - [x] Afficher : titre, `loanTo`, date du prêt formatée
+  - [x] Accessible depuis un onglet ou section dédiée (< 2 taps)
 
-- [ ] **Task 4 — AC4 déjà couvert par Story 3.1** (AC4)
-  - [ ] Vérifier que Story 3.1 efface bien `loanTo`/`loanDate` lors du changement de statut
+- [x] **Task 4 — AC4 déjà couvert par Story 3.1** (AC4)
+  - [x] Vérifier que Story 3.1 efface bien `loanTo`/`loanDate` lors du changement de statut
 
-- [ ] **Task 5 — Tests** (tous ACs)
-  - [ ] Test LoanModal : emprunteur vide → bouton Valider désactivé
-  - [ ] Test LoanModal : validation → `updateItem` avec `loanTo`, `loanDate` (Timestamp), `status: 'loaned'`
-  - [ ] Test LoanList : affiche uniquement les items avec `status === 'loaned'`
+- [x] **Task 5 — Tests** (tous ACs)
+  - [x] Test LoanModal : emprunteur vide → bouton Valider désactivé
+  - [x] Test LoanModal : validation → `updateItem` avec `loanTo`, `loanDate` (Timestamp), `status: 'loaned'`
+  - [x] Test LoanList : affiche uniquement les items avec `status === 'loaned'`
 
 ## Dev Notes
 
