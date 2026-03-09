@@ -1,6 +1,6 @@
 # Story 2.4 : Création manuelle d'une fiche
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -26,18 +26,19 @@ Afin de ne jamais être bloquée par les limites des bases de données externes.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Implémenter `app/item/new.tsx`** (AC1, AC2)
-  - [ ] Champ titre (requis) avec erreur si vide
-  - [ ] Sélecteur type : `film | serie | livre` (boutons segmentés)
-  - [ ] Champs optionnels : année (numérique), réalisateur/auteur, synopsis (multiline)
-  - [ ] Bouton "Ajouter" → validation → `addItem(uid, { ...data, addedVia: 'manual', status: 'owned', tier: 'none' })`
-  - [ ] Après succès : `router.back()` ou naviguer vers la fiche créée
-  - [ ] Styler Dark Cinéma NativeWind
+- [x] **Task 1 — Implémenter `app/item/new.tsx`** (AC1, AC2)
+  - [x] Champ titre (requis) avec erreur si vide
+  - [x] Sélecteur type : `film | serie | livre` (boutons segmentés)
+  - [x] Champs optionnels : année (numérique), réalisateur/auteur, synopsis (multiline)
+  - [x] Bouton "Ajouter" → validation → `addItem(uid, { ...data, addedVia: 'manual', status: 'owned', tier: 'none' })`
+  - [x] Après succès : `router.back()`
+  - [x] Styler Dark Cinéma NativeWind
 
-- [ ] **Task 2 — Tests** (AC1, AC2)
-  - [ ] Test : titre vide → erreur affichée, `addItem` non appelé
-  - [ ] Test : titre + type → `addItem` appelé avec `addedVia: 'manual'`
-  - [ ] Test : champs optionnels inclus dans l'item si renseignés
+- [x] **Task 2 — Tests** (AC1, AC2)
+  - [x] Test : titre vide → erreur affichée, `addItem` non appelé
+  - [x] Test : titre + type → `addItem` appelé avec `addedVia: 'manual'`
+  - [x] Test : champs optionnels inclus dans l'item si renseignés
+  - [x] Test : champ auteur pour les livres
 
 ## Dev Notes
 
@@ -75,8 +76,14 @@ Afin de ne jamais être bloquée par les limites des bases de données externes.
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+
 ### Completion Notes List
+- `app/item/new.tsx` : sélecteur type, titre requis, champs optionnels conditionnels (réalisateur/auteur), année parsée, addItem + router.back()
+- 4 tests — 77/77 suite complète, zéro régression
+
 ### File List
 
 - `app/item/new.tsx` (stub → implémentation)
