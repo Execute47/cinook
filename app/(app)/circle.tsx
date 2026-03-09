@@ -1,28 +1,32 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, ActivityIndicator, Share } from 'react-native'
+import { View, Text, TouchableOpacity, ActivityIndicator, Share, ScrollView } from 'react-native'
 import { doc, getDoc } from 'firebase/firestore'
+import { router } from 'expo-router'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import { createCircle, getCircle, generateInviteToken } from '@/lib/circle'
+import { useCircle } from '@/hooks/useCircle'
+import MemberList from '@/components/circle/MemberList'
 
 const INVITE_BASE_URL = 'https://cinook-caf55.web.app/invite'
 
 export default function CircleScreen() {
   const uid = useAuthStore((s) => s.uid)
   const circleId = useAuthStore((s) => s.circleId)
-  const isAdmin = useAuthStore((s) => s.isAdmin)
   const setCircle = useAuthStore((s) => s.setCircle)
 
-  const [loading, setLoading] = useState(true)
+  const [initLoading, setInitLoading] = useState(true)
+  const [initError, setInitError] = useState<string | null>(null)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
+  const { members, isAdmin, adminId, loading: circleLoading } = useCircle()
+
+  // Auto-create or load circle on first access
   useEffect(() => {
     if (!uid) return
 
     const init = async () => {
       try {
-        // Read circleId from user profile (source of truth)
         const userSnap = await getDoc(doc(db, 'users', uid))
         const storedCircleId: string | null = userSnap.data()?.circleId ?? null
 
@@ -34,9 +38,9 @@ export default function CircleScreen() {
           setCircle(storedCircleId, circle?.adminId === uid)
         }
       } catch {
-        setError('Impossible de charger le cercle.')
+        setInitError('Impossible de charger le cercle.')
       } finally {
-        setLoading(false)
+        setInitLoading(false)
       }
     }
 
@@ -49,7 +53,7 @@ export default function CircleScreen() {
       const token = await generateInviteToken(circleId)
       setInviteLink(`${INVITE_BASE_URL}/${token}`)
     } catch {
-      setError("Impossible de générer le lien.")
+      setInitError("Impossible de générer le lien.")
     }
   }
 
@@ -58,7 +62,7 @@ export default function CircleScreen() {
     await Share.share({ message: inviteLink })
   }
 
-  if (loading) {
+  if (initLoading || circleLoading) {
     return (
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center">
         <ActivityIndicator size="large" color="#f59e0b" />
@@ -67,16 +71,27 @@ export default function CircleScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#0E0B0B] px-4 pt-12">
+    <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 16, paddingTop: 48 }}>
       <Text className="text-white text-2xl font-bold mb-1">Mon Cercle</Text>
       <Text className="text-[#6B5E5E] text-sm mb-6">
         {isAdmin ? 'Administratrice' : 'Membre'}
       </Text>
 
-      {error && <Text className="text-red-400 mb-4 text-sm">{error}</Text>}
+      {initError && <Text className="text-red-400 mb-4 text-sm">{initError}</Text>}
 
-      {isAdmin ? (
-        <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4">
+      {/* Liste des membres */}
+      <Text className="text-white font-semibold mb-3">
+        Membres ({members.length})
+      </Text>
+      <MemberList
+        members={members}
+        adminId={adminId}
+        onPress={(memberId) => router.push(`/(app)/member/${memberId}` as never)}
+      />
+
+      {/* Section invitation (admin seulement) */}
+      {isAdmin && (
+        <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-4">
           <Text className="text-white font-semibold mb-3">Inviter quelqu'un</Text>
           <TouchableOpacity
             onPress={handleGenerateLink}
@@ -102,13 +117,7 @@ export default function CircleScreen() {
             </View>
           )}
         </View>
-      ) : (
-        <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4">
-          <Text className="text-[#6B5E5E] text-sm text-center">
-            Vous avez rejoint ce cercle en tant que membre.
-          </Text>
-        </View>
       )}
-    </View>
+    </ScrollView>
   )
 }

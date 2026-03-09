@@ -1,6 +1,6 @@
 # Story 4.2 : Gestion du cercle et administration
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -25,25 +25,25 @@ Afin de savoir qui a rejoint Cinook et gérer mon cercle privé.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Implémenter `hooks/useCircle.ts`** (AC1)
-  - [ ] Listener `onSnapshot` sur `/circles/{circleId}`
-  - [ ] Charger les profils de chaque membre depuis `/users/{uid}` pour avoir displayName et email
-  - [ ] State : `circle: CircleData | null`, `members: Member[]`, `isAdmin`, `loading`, `error`
-  - [ ] Cleanup `unsubscribe` (OBLIGATOIRE)
+- [x] **Task 1 — Implémenter `hooks/useCircle.ts`** (AC1)
+  - [x] Listener `onSnapshot` sur `/circles/{circleId}`
+  - [x] Charger les profils de chaque membre depuis `/users/{uid}` pour avoir displayName et email
+  - [x] State : `circle: CircleData | null`, `members: Member[]`, `isAdmin`, `loading`, `error`
+  - [x] Cleanup `unsubscribe` (OBLIGATOIRE)
 
-- [ ] **Task 2 — Compléter `app/(app)/circle.tsx`** (AC1, AC2)
-  - [ ] Afficher `MemberList` avec les membres du cercle
-  - [ ] Badge "Admin" pour l'administratrice
-  - [ ] Section "Invitation" (Story 4.1) : bouton générer + lien si admin
-  - [ ] Tap sur un membre → naviguer vers sa collection (Story 4.3)
+- [x] **Task 2 — Compléter `app/(app)/circle.tsx`** (AC1, AC2)
+  - [x] Afficher `MemberList` avec les membres du cercle
+  - [x] Badge "Admin" pour l'administratrice
+  - [x] Section "Invitation" (Story 4.1) : bouton générer + lien si admin
+  - [x] Tap sur un membre → naviguer vers sa collection (Story 4.3)
 
-- [ ] **Task 3 — Composants `components/circle/MemberList.tsx` et `MemberCard.tsx`** (AC1)
-  - [ ] MemberCard : avatar initiales, displayName, email, badge admin si applicable
-  - [ ] MemberList : FlatList de MemberCard
+- [x] **Task 3 — Composants `components/circle/MemberList.tsx` et `MemberCard.tsx`** (AC1)
+  - [x] MemberCard : avatar initiales, displayName, email, badge admin si applicable
+  - [x] MemberList : FlatList de MemberCard
 
-- [ ] **Task 4 — Tests** (tous ACs)
-  - [ ] Test `useCircle` : listener sur /circles/{circleId} avec cleanup
-  - [ ] Test : isAdmin correct selon adminId vs uid connecté
+- [x] **Task 4 — Tests** (tous ACs)
+  - [x] Test `useCircle` : listener sur /circles/{circleId} avec cleanup
+  - [x] Test : isAdmin correct selon adminId vs uid connecté
 
 ## Dev Notes
 
