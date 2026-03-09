@@ -1,6 +1,6 @@
 # Story 4.1 : Système d'invitation et rejoindre le cercle
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -35,32 +35,32 @@ Afin que mes proches puissent rejoindre Cinook et accéder à l'espace partagé.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Création du cercle pour l'admin** (AC1)
-  - [ ] Si l'utilisatrice connectée n'a pas de `circleId` → créer un cercle automatiquement au premier accès à `circle.tsx`
-  - [ ] `addDoc(collection(db, 'circles'), { members: [uid], adminId: uid, createdAt: serverTimestamp() })`
-  - [ ] Mettre à jour `/users/{uid}` avec le `circleId` créé
-  - [ ] `authStore.setCircle(circleId, true)` (isAdmin: true)
+- [x] **Task 1 — Création du cercle pour l'admin** (AC1)
+  - [x] Si l'utilisatrice connectée n'a pas de `circleId` → créer un cercle automatiquement au premier accès à `circle.tsx`
+  - [x] `addDoc(collection(db, 'circles'), { members: [uid], adminId: uid, createdAt: serverTimestamp() })`
+  - [x] Mettre à jour `/users/{uid}` avec le `circleId` créé
+  - [x] `authStore.setCircle(circleId, true)` (isAdmin: true)
 
-- [ ] **Task 2 — Génération du token dans circle.tsx** (AC1)
-  - [ ] Bouton "Générer un lien d'invitation"
-  - [ ] Générer UUID côté client : `crypto.randomUUID()` ou `uuid` package
-  - [ ] `updateDoc(circleRef, { inviteToken: token })`
-  - [ ] Afficher le lien : `https://cinook-caf55.web.app/invite/${token}`
-  - [ ] Bouton "Copier" → `Clipboard.setStringAsync(link)` (expo-clipboard)
+- [x] **Task 2 — Génération du token dans circle.tsx** (AC1)
+  - [x] Bouton "Générer un lien d'invitation"
+  - [x] Générer UUID côté client : `crypto.randomUUID()` ou `uuid` package
+  - [x] `updateDoc(circleRef, { inviteToken: token })`
+  - [x] Afficher le lien : `https://cinook-caf55.web.app/invite/${token}`
+  - [x] Bouton "Copier" → `Clipboard.setStringAsync(link)` (expo-clipboard)
 
-- [ ] **Task 3 — Implémenter `app/invite/[token].tsx`** (AC2, AC3)
-  - [ ] Lire le token depuis `useLocalSearchParams`
-  - [ ] Chercher dans Firestore : `query(collection(db, 'circles'), where('inviteToken', '==', token))`
-  - [ ] Si non trouvé → afficher "Lien invalide ou expiré"
-  - [ ] Si trouvé → `arrayUnion` pour ajouter uid dans `members[]`
-  - [ ] Mettre à jour `/users/{uid}` avec `circleId`
-  - [ ] `authStore.setCircle(circleId, false)` (isAdmin: false)
-  - [ ] `router.replace('/(app)/')`
+- [x] **Task 3 — Implémenter `app/invite/[token].tsx`** (AC2, AC3)
+  - [x] Lire le token depuis `useLocalSearchParams`
+  - [x] Chercher dans Firestore : `query(collection(db, 'circles'), where('inviteToken', '==', token))`
+  - [x] Si non trouvé → afficher "Lien invalide ou expiré"
+  - [x] Si trouvé → `arrayUnion` pour ajouter uid dans `members[]`
+  - [x] Mettre à jour `/users/{uid}` avec `circleId`
+  - [x] `authStore.setCircle(circleId, false)` (isAdmin: false)
+  - [x] `router.replace('/(app)/')`
 
-- [ ] **Task 4 — Tests** (tous ACs)
-  - [ ] Test : génération token → `updateDoc` avec inviteToken
-  - [ ] Test : token valide → uid ajouté dans members, circleId mis à jour
-  - [ ] Test : token invalide → message d'erreur, aucun update Firestore
+- [x] **Task 4 — Tests** (tous ACs)
+  - [x] Test : génération token → `updateDoc` avec inviteToken
+  - [x] Test : token valide → uid ajouté dans members, circleId mis à jour
+  - [x] Test : token invalide → message d'erreur, aucun update Firestore
 
 ## Dev Notes
 
