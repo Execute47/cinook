@@ -13,6 +13,7 @@ import TierPicker from '@/components/media/TierPicker'
 import TierBadge from '@/components/media/TierBadge'
 import CommentInput from '@/components/media/CommentInput'
 import LoanModal from '@/components/media/LoanModal'
+import MemberOpinions from '@/components/circle/MemberOpinions'
 import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
 import { deleteField, Timestamp } from 'firebase/firestore'
 
@@ -308,6 +309,9 @@ export default function ItemDetailScreen() {
           }}
         />
       </View>
+
+      {/* Notes des membres du cercle */}
+      <MemberOpinions item={item} />
     </ScrollView>
   )
 }

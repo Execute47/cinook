@@ -1,6 +1,6 @@
 # Story 4.3 : Consulter la collection et les notes d'un membre
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -26,22 +26,22 @@ Afin de découvrir ses goûts et m'inspirer de ses avis.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Créer `app/(app)/member/[uid].tsx`** (AC1)
-  - [ ] Récupérer la collection d'un autre membre : `collection(db, 'users', memberUid, 'items')`
-  - [ ] Afficher en lecture seule avec `ItemCard` (pas de bouton modifier/supprimer)
-  - [ ] Header avec displayName du membre
-  - [ ] Protégé par Firestore Rules (la règle gère l'accès — côté client, faire confiance)
+- [x] **Task 1 — Créer `app/(app)/member/[uid].tsx`** (AC1)
+  - [x] Récupérer la collection d'un autre membre : `collection(db, 'users', memberUid, 'items')`
+  - [x] Afficher en lecture seule avec `ItemCard` (pas de bouton modifier/supprimer)
+  - [x] Header avec displayName du membre
+  - [x] Protégé par Firestore Rules (la règle gère l'accès — côté client, faire confiance)
 
-- [ ] **Task 2 — Notes croisées dans item/[id].tsx** (AC2)
-  - [ ] Pour chaque membre du cercle (depuis `useCircle`), chercher s'ils ont le même item dans leur collection (par `tmdbId` ou `googleBooksId` ou `title`)
-  - [ ] Afficher section "Ce que pensent les membres" avec rating, tier, comment de chaque membre
+- [x] **Task 2 — Notes croisées dans item/[id].tsx** (AC2)
+  - [x] Pour chaque membre du cercle (depuis `useCircle`), chercher s'ils ont le même item dans leur collection (par `tmdbId` ou `googleBooksId` ou `title`)
+  - [x] Afficher section "Ce que pensent les membres" avec rating, tier, comment de chaque membre
 
-- [ ] **Task 3 — Navigation depuis MemberCard** (AC1)
-  - [ ] Tap sur MemberCard → `router.push('/(app)/member/' + member.uid)`
+- [x] **Task 3 — Navigation depuis MemberCard** (AC1)
+  - [x] Tap sur MemberCard → `router.push('/(app)/member/' + member.uid)`
 
-- [ ] **Task 4 — Tests** (AC1, AC2)
-  - [ ] Test : lecture collection membre → requête sur /users/{memberUid}/items
-  - [ ] Test : notes croisées filtrées par circleId
+- [x] **Task 4 — Tests** (AC1, AC2)
+  - [x] Test : lecture collection membre → requête sur /users/{memberUid}/items
+  - [x] Test : notes croisées filtrées par circleId
 
 ## Dev Notes
 
