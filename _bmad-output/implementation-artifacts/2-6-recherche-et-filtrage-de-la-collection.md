@@ -1,6 +1,6 @@
 # Story 2.6 : Recherche et filtrage de la collection
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -32,31 +32,32 @@ Afin de retrouver rapidement n'importe quel item.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Logique de filtrage dans collection.tsx** (AC1, AC2)
-  - [ ] Lire `searchQuery`, `mediaType`, `status` depuis `useFiltersStore`
-  - [ ] `useMemo` pour calculer `filteredItems` depuis `items` (useCollection)
-  - [ ] Filtre titre : `item.title.toLowerCase().includes(query.toLowerCase())`
-  - [ ] Filtre type : `item.type === mediaType` (si mediaType non null)
-  - [ ] Filtre statut : `item.status === status` (si status non null)
-  - [ ] Combiner les 3 filtres avec `&&`
+- [x] **Task 1 — Logique de filtrage dans collection.tsx** (AC1, AC2)
+  - [x] Lire `searchQuery`, `mediaType`, `status` depuis `useFiltersStore`
+  - [x] `useMemo` pour calculer `filteredItems` depuis `items` (useCollection)
+  - [x] Filtre titre case-insensitive
+  - [x] Filtre type (si mediaType non null)
+  - [x] Filtre statut (si status non null)
+  - [x] Combinaison des 3 filtres avec `&&`
 
-- [ ] **Task 2 — UI filtres dans collection.tsx** (AC1, AC2)
-  - [ ] Barre de recherche (TextInput) → `filtersStore.setSearchQuery`
-  - [ ] Chips scrollables pour les types (`MEDIA_TYPES`)
-  - [ ] Chips scrollables pour les statuts (`STATUS_OPTIONS`)
-  - [ ] Bouton "Effacer les filtres" si filtres actifs → `filtersStore.clearFilters()`
+- [x] **Task 2 — UI filtres dans collection.tsx** (AC1, AC2)
+  - [x] Barre de recherche (TextInput) → `filtersStore.setSearchQuery`
+  - [x] Chips scrollables pour les types (toggle on/off)
+  - [x] Chips scrollables pour les statuts (toggle on/off)
+  - [x] Bouton "Effacer les filtres" si filtres actifs
 
-- [ ] **Task 3 — Composant `components/ui/EmptyState.tsx`** (AC3)
-  - [ ] Icône + message + CTA bouton
-  - [ ] Props : `message`, `ctaLabel`, `onCtaPress`
-  - [ ] Utiliser dans collection.tsx quand `filteredItems.length === 0`
+- [x] **Task 3 — Composant `components/ui/EmptyState.tsx`** (AC3)
+  - [x] Icône + message + CTA bouton optionnel
+  - [x] Props : `message`, `ctaLabel`, `onCtaPress`
+  - [x] Utilisé dans collection.tsx (filtres actifs vs collection vide)
 
-- [ ] **Task 4 — Tests** (tous ACs)
-  - [ ] Test : filtrage par titre case-insensitive
-  - [ ] Test : filtre type seul
-  - [ ] Test : filtre statut seul
-  - [ ] Test : filtres combinés type + statut
-  - [ ] Test : clearFilters → tous items visibles
+- [x] **Task 4 — Tests** (tous ACs)
+  - [x] Test : affiche tous les items sans filtre
+  - [x] Test : filtrage par titre case-insensitive
+  - [x] Test : filtre type seul
+  - [x] Test : filtre statut seul
+  - [x] Test : filtres combinés type + statut → EmptyState
+  - [x] Test : clearFilters → tous items visibles
 
 ## Dev Notes
 
@@ -88,10 +89,17 @@ Tout se passe côté client — aucun appel Firestore supplémentaire.
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+
 ### Completion Notes List
+- `components/ui/EmptyState.tsx` : icône, message, CTA optionnel
+- `collection.tsx` : useMemo filteredItems, barre recherche, chips type + statut toggle, bouton effacer, EmptyState contextuel
+- 6 tests filtrage — 87/87 suite complète, zéro régression
+
 ### File List
 
-- `app/(app)/collection.tsx` (mise à jour filtres)
+- `app/(app)/collection.tsx` (filtres complets)
+- `app/(app)/collection.test.tsx` (nouveau)
 - `components/ui/EmptyState.tsx` (nouveau)
-- `components/ui/EmptyState.test.tsx` (nouveau)

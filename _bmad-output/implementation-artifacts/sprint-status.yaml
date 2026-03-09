@@ -48,19 +48,19 @@ development_status:
   1-1-initialisation-du-projet-et-configuration-technique: done
   1-2-creation-de-compte-utilisateur: done
   1-3-connexion-deconnexion-et-navigation-protegee: done
-  1-4-connexion-via-google: ready-for-dev
+  1-4-connexion-via-google: done
   epic-1-retrospective: optional
 
   # ─────────────────────────────────────────────────────
   # Epic 2 : Ma Collection — Ajouter & Gérer
   # ─────────────────────────────────────────────────────
-  epic-2: in-progress
+  epic-2: done
   2-1-configuration-firebase-functions-proxy-api: done
   2-2-ajout-dun-item-via-scan-de-code-barres: done
-  2-3-ajout-dun-item-via-recherche-par-titre: ready-for-dev
-  2-4-creation-manuelle-dune-fiche: ready-for-dev
-  2-5-affichage-modification-et-suppression-dun-item: ready-for-dev
-  2-6-recherche-et-filtrage-de-la-collection: ready-for-dev
+  2-3-ajout-dun-item-via-recherche-par-titre: done
+  2-4-creation-manuelle-dune-fiche: done
+  2-5-affichage-modification-et-suppression-dun-item: done
+  2-6-recherche-et-filtrage-de-la-collection: done
   epic-2-retrospective: optional
 
   # ─────────────────────────────────────────────────────
