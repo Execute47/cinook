@@ -88,7 +88,7 @@ service cloud.firestore {
 
       // ─── Cinéclub ───────────────────────────────────────────────────────────
 
-      match /cineclub {
+      match /cineclub/current {
         // Tous les membres du cercle peuvent lire et écrire le Cinéclub
         allow read, write: if isCircleMember(circleId);
       }

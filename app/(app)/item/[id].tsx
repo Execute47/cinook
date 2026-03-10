@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, Image, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator,
+  TextInput, Alert, ActivityIndicator, Platform,
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useCollection } from '@/hooks/useCollection'
@@ -15,6 +15,7 @@ import CommentInput from '@/components/media/CommentInput'
 import LoanModal from '@/components/media/LoanModal'
 import MemberOpinions from '@/components/circle/MemberOpinions'
 import RecoComposer from '@/components/circle/RecoComposer'
+import CineclubButton from '@/components/circle/CineclubButton'
 import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
 import { deleteField, Timestamp } from 'firebase/firestore'
 
@@ -95,21 +96,18 @@ export default function ItemDetailScreen() {
 
   const handleDelete = () => {
     if (!uid || !item) return
-    Alert.alert(
-      'Supprimer cet item',
-      'Cette action est irréversible.',
-      [
+    const doDelete = async () => {
+      await deleteItem(uid, item.id)
+      router.push('/(app)/collection')
+    }
+    if (Platform.OS === 'web') {
+      if (window.confirm('Supprimer cet item ?\n\nCette action est irréversible.')) doDelete()
+    } else {
+      Alert.alert('Supprimer cet item', 'Cette action est irréversible.', [
         { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteItem(uid, item.id)
-            router.push('/(app)/collection')
-          },
-        },
-      ]
-    )
+        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+      ])
+    }
   }
 
   if (collectionLoading) {
@@ -209,7 +207,8 @@ export default function ItemDetailScreen() {
           <Text className="text-amber-400">←</Text>
         </TouchableOpacity>
         <View className="flex-1" />
-        <TouchableOpacity onPress={() => setShowRecoComposer(true)} className="mr-4">
+        <CineclubButton item={item} />
+        <TouchableOpacity onPress={() => setShowRecoComposer(true)} className="mr-4 ml-4">
           <Text className="text-amber-400">Recommander</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={startEditing} className="mr-4">

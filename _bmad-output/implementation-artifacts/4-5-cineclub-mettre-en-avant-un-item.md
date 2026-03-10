@@ -1,6 +1,6 @@
 # Story 4.5 : Cinéclub — mettre en avant un item
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -31,31 +31,30 @@ Afin de partager un coup de cœur ou un film à l'affiche avec mon entourage.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Composant `components/circle/CineclubButton.tsx`** (AC1)
-  - [ ] Bouton "⭐ Mettre en Cinéclub"
-  - [ ] `setDoc(doc(db, 'circles', circleId, 'cineclub'), { itemId, itemTitle, itemPoster, postedBy: uid, postedAt: serverTimestamp() })` (setDoc écrase)
+- [x] **Task 1 — Composant `components/circle/CineclubButton.tsx`** (AC1)
+  - [x] Bouton "⭐ Mettre en Cinéclub"
+  - [x] `setDoc(doc(db, 'circles', circleId, 'cineclub'), { itemId, itemTitle, itemPoster, postedBy: uid, postedAt: serverTimestamp() })` (setDoc écrase)
 
-- [ ] **Task 2 — Implémenter `hooks/useCineclub.ts`** (AC2)
-  - [ ] Listener `onSnapshot` sur `/circles/{circleId}/cineclub`
-  - [ ] State : `cineclub: Cineclub | null`, `loading`
-  - [ ] Cleanup `unsubscribe` (OBLIGATOIRE)
+- [x] **Task 2 — Implémenter `hooks/useCineclub.ts`** (AC2)
+  - [x] Listener `onSnapshot` sur `/circles/{circleId}/cineclub`
+  - [x] State : `cineclub: Cineclub | null`, `loading`
+  - [x] Cleanup `unsubscribe` (OBLIGATOIRE)
 
-- [ ] **Task 3 — Composant `components/circle/CineclubBanner.tsx`** (AC2, AC3)
-  - [ ] Afficher : grande affiche, titre, "Mis en avant par {postedBy}"
-  - [ ] Bouton "Ajouter à À voir" → `addItem(uid, { ...cineclubData, status: 'wishlist', tier: 'none', addedVia: 'discover' })`
-  - [ ] Animation subtile à l'apparition
+- [x] **Task 3 — Composant `components/circle/CineclubBanner.tsx`** (AC2, AC3)
+  - [x] Afficher : grande affiche, titre, "Mis en avant par {postedBy}"
+  - [x] Bouton "Ajouter à À voir" → `addItem(uid, { ...cineclubData, status: 'wishlist', tier: 'none', addedVia: 'discover' })`
 
-- [ ] **Task 4 — Intégrer dans `app/(app)/index.tsx`** (AC2)
-  - [ ] Afficher `CineclubBanner` en haut de l'accueil si `cineclub !== null`
-  - [ ] En dessous : section recommandations (Story 4.4)
+- [x] **Task 4 — Intégrer dans `app/(app)/index.tsx`** (AC2)
+  - [x] Afficher `CineclubBanner` en haut de l'accueil si `cineclub !== null`
+  - [x] En dessous : section recommandations (Story 4.4)
 
-- [ ] **Task 5 — Intégrer CineclubButton dans item/[id].tsx** (AC1)
-  - [ ] Afficher le bouton uniquement si l'utilisatrice a un cercle
+- [x] **Task 5 — Intégrer CineclubButton dans item/[id].tsx** (AC1)
+  - [x] Afficher le bouton uniquement si l'utilisatrice a un cercle
 
-- [ ] **Task 6 — Tests** (tous ACs)
-  - [ ] Test `useCineclub` : listener avec cleanup
-  - [ ] Test CineclubButton : setDoc appelé avec les bons champs
-  - [ ] Test CineclubBanner : bouton "À voir" → addItem avec status wishlist
+- [x] **Task 6 — Tests** (tous ACs)
+  - [x] Test `useCineclub` : listener avec cleanup
+  - [x] Test CineclubButton : setDoc appelé avec les bons champs
+  - [x] Test CineclubBanner : bouton "À voir" → addItem avec status wishlist
 
 ## Dev Notes
 
