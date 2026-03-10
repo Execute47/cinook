@@ -1,6 +1,12 @@
+import { Platform } from 'react-native'
 import { initializeApp, getApps } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth'
+import {
+  initializeAuth,
+  getReactNativePersistence,
+  browserLocalPersistence,
+  getAuth,
+} from 'firebase/auth'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 
@@ -14,22 +20,26 @@ const firebaseConfig = {
 }
 
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-
-// persistentLocalCache() requiert IndexedDB (web uniquement) — on utilise getFirestore() sans cache en React Native
 export const db = getFirestore(app)
 
-// getAuth() échoue si initializeAuth n'a pas encore été appelé dans cette session Metro
-// On tente getAuth() d'abord (hot-reload), sinon on initialise avec la persistance AsyncStorage
+// Auth : browser persistence sur web, AsyncStorage sur natif
+const isWeb = typeof document !== 'undefined'
 let _auth
 try {
-  _auth = getAuth(app)
-} catch {
   _auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
+    persistence: isWeb
+      ? browserLocalPersistence
+      : getReactNativePersistence(AsyncStorage),
   })
+} catch {
+  _auth = getAuth(app)
 }
 export const auth = _auth
 
-GoogleSignin.configure({
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-})
+// GoogleSignin uniquement sur natif
+// typeof document est plus fiable que Platform.OS avec unstable_conditionNames
+if (typeof document === 'undefined') {
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  })
+}
