@@ -32,11 +32,7 @@ Afin d'avoir la souveraineté sur mes données et de pouvoir me déconnecter ou 
 
 ### AC4 — Suppression du compte (RGPD)
 
-**Given** l'écran Paramètres
-**When** je demande la suppression de mon compte
-**Then** une confirmation explicite est demandée ("Cette action est irréversible")
-**And** après confirmation, mon compte Firebase Auth et mes données Firestore `/users/{uid}` sont supprimés (NFR9 RGPD)
-**And** je suis redirigée vers l'écran de création de compte
+> ⚠️ **Reporté à Story 6.3** — Cette AC est intentionnellement laissée en suspens dans cette story. Story 6.3 implémente la suppression complète (données seules + compte complet, avec gestion du cercle et succession admin). Ne pas implémenter l'AC4 ici pour éviter une collision.
 
 ## Tasks / Subtasks
 
@@ -56,12 +52,7 @@ Afin d'avoir la souveraineté sur mes données et de pouvoir me déconnecter ou 
   - [ ] `signOut(auth)` → `authStore.reset()` → navigation vers `/(auth)/login`
   - [ ] Réutiliser le pattern de Story 1.3
 
-- [ ] **Task 4 — Suppression du compte** (AC4)
-  - [ ] Modal de confirmation avec texte explicite "Cette action est irréversible"
-  - [ ] `deleteDoc(doc(db, 'users', uid))` — données Firestore
-  - [ ] `deleteUser(auth.currentUser)` — compte Firebase Auth
-  - [ ] Redirection vers `/(auth)/register`
-  - [ ] Gérer l'erreur `requires-recent-login` → invite à se reconnecter d'abord
+- [ ] **Task 4 — Suppression du compte** (AC4 — reportée à Story 6.3, ne pas implémenter ici)
 
 - [ ] **Task 5 — Ajouter lien Settings dans navigation** (AC1)
   - [ ] Icône paramètres dans le header ou un onglet dédié dans `app/(app)/_layout.tsx`
