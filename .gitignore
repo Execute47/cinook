@@ -4,6 +4,9 @@ _bmad/
 # Claude Code
 .claude/
 
+# Firebase CLI
+.firebase/
+
 # Environment variables — ne jamais committer
 .env
 .env*.env
