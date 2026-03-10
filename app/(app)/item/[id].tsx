@@ -14,6 +14,7 @@ import TierBadge from '@/components/media/TierBadge'
 import CommentInput from '@/components/media/CommentInput'
 import LoanModal from '@/components/media/LoanModal'
 import MemberOpinions from '@/components/circle/MemberOpinions'
+import RecoComposer from '@/components/circle/RecoComposer'
 import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
 import { deleteField, Timestamp } from 'firebase/firestore'
 
@@ -33,6 +34,7 @@ export default function ItemDetailScreen() {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showRecoComposer, setShowRecoComposer] = useState(false)
 
   const handleStatusChange = async (newStatus: ItemStatus) => {
     if (!uid || !item) return
@@ -207,6 +209,9 @@ export default function ItemDetailScreen() {
           <Text className="text-amber-400">←</Text>
         </TouchableOpacity>
         <View className="flex-1" />
+        <TouchableOpacity onPress={() => setShowRecoComposer(true)} className="mr-4">
+          <Text className="text-amber-400">Recommander</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={startEditing} className="mr-4">
           <Text className="text-amber-400">Modifier</Text>
         </TouchableOpacity>
@@ -323,6 +328,12 @@ export default function ItemDetailScreen() {
 
       {/* Notes des membres du cercle */}
       <MemberOpinions item={item} />
+
+      <RecoComposer
+        item={item}
+        visible={showRecoComposer}
+        onClose={() => setShowRecoComposer(false)}
+      />
     </ScrollView>
   )
 }

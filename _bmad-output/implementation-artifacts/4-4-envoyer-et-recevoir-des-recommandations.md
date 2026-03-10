@@ -1,6 +1,6 @@
 # Story 4.4 : Envoyer et recevoir des recommandations
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -32,31 +32,31 @@ Afin d'enrichir nos échanges culturels de façon asynchrone.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Composant `components/circle/RecoComposer.tsx`** (AC1)
-  - [ ] Liste des membres (depuis `useCircle`) avec checkbox multi-sélection
-  - [ ] Bouton "Envoyer" → `addDoc(collection(db, 'circles', circleId, 'recommendations'), { fromUserId: uid, fromUserName, toUserIds, itemId, itemTitle, itemPoster, createdAt: serverTimestamp() })`
+- [x] **Task 1 — Composant `components/circle/RecoComposer.tsx`** (AC1)
+  - [x] Liste des membres (depuis `useCircle`) avec checkbox multi-sélection
+  - [x] Bouton "Envoyer" → `addDoc(collection(db, 'circles', circleId, 'recommendations'), { fromUserId: uid, fromUserName, toUserIds, itemId, itemTitle, itemPoster, createdAt: serverTimestamp() })`
 
-- [ ] **Task 2 — Intégrer RecoComposer dans item/[id].tsx** (AC1)
-  - [ ] Bouton "Recommander" → ouvrir RecoComposer en modal
+- [x] **Task 2 — Intégrer RecoComposer dans item/[id].tsx** (AC1)
+  - [x] Bouton "Recommander" → ouvrir RecoComposer en modal
 
-- [ ] **Task 3 — Implémenter `hooks/useRecommendations.ts`** (AC2)
-  - [ ] Listener `onSnapshot` sur `/circles/{circleId}/recommendations`
-  - [ ] Filtrer les recommandations où `toUserIds.includes(uid)` côté client
-  - [ ] State : `recommendations: Recommendation[]`, `loading`, `error`
-  - [ ] Cleanup `unsubscribe` (OBLIGATOIRE)
+- [x] **Task 3 — Implémenter `hooks/useRecommendations.ts`** (AC2)
+  - [x] Listener `onSnapshot` sur `/circles/{circleId}/recommendations`
+  - [x] Filtrer les recommandations où `toUserIds.includes(uid)` côté client
+  - [x] State : `recommendations: Recommendation[]`, `loading`, `error`
+  - [x] Cleanup `unsubscribe` (OBLIGATOIRE)
 
-- [ ] **Task 4 — Composant `components/circle/RecoCard.tsx`** (AC2, AC3)
-  - [ ] Afficher : affiche, titre, expéditeur, date
-  - [ ] Bouton "Ajouter à À voir" → `addItem(uid, { ...recoData, status: 'wishlist', addedVia: 'search', tier: 'none' })`
+- [x] **Task 4 — Composant `components/circle/RecoCard.tsx`** (AC2, AC3)
+  - [x] Afficher : affiche, titre, expéditeur, date
+  - [x] Bouton "Ajouter à À voir" → `addItem(uid, { ...recoData, status: 'wishlist', addedVia: 'search', tier: 'none' })`
 
-- [ ] **Task 5 — Intégrer dans `app/(app)/index.tsx`** (AC2, AC3)
-  - [ ] Section "Recommandations reçues" avec `useRecommendations`
-  - [ ] Liste de `RecoCard`
+- [x] **Task 5 — Intégrer dans `app/(app)/index.tsx`** (AC2, AC3)
+  - [x] Section "Recommandations reçues" avec `useRecommendations`
+  - [x] Liste de `RecoCard`
 
-- [ ] **Task 6 — Tests** (tous ACs)
-  - [ ] Test `useRecommendations` : listener avec cleanup, filtre toUserIds
-  - [ ] Test RecoComposer : addDoc appelé avec les bons champs
-  - [ ] Test RecoCard : "Ajouter à À voir" → addItem avec status wishlist
+- [x] **Task 6 — Tests** (tous ACs)
+  - [x] Test `useRecommendations` : listener avec cleanup, filtre toUserIds
+  - [x] Test RecoComposer : addDoc appelé avec les bons champs
+  - [x] Test RecoCard : "Ajouter à À voir" → addItem avec status wishlist
 
 ## Dev Notes
 
@@ -73,13 +73,22 @@ Les règles Firestore donnent accès à toutes les recommandations du cercle. Le
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+- Fix mockCollection dans RecoComposer.test.tsx : ajout de `mockCollectionRef = {}` pour que `expect.anything()` matche (undefined n'est pas matché par anything())
+
 ### Completion Notes List
+- Toutes les tâches complètes. 28 suites / 145 tests verts.
+- Composant RecoCard.test.tsx créé (manquait en fin de session précédente).
+
 ### File List
 
 - `hooks/useRecommendations.ts` (nouveau)
 - `hooks/useRecommendations.test.ts` (nouveau)
 - `components/circle/RecoComposer.tsx` (nouveau)
+- `components/circle/RecoComposer.test.tsx` (nouveau)
 - `components/circle/RecoCard.tsx` (nouveau)
+- `components/circle/RecoCard.test.tsx` (nouveau)
 - `app/(app)/index.tsx` (mise à jour)
 - `app/(app)/item/[id].tsx` (bouton Recommander)
