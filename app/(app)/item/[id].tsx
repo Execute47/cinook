@@ -27,7 +27,7 @@ const TYPES: { value: MediaType; label: string }[] = [
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const uid = useAuthStore((s) => s.uid)
-  const { items } = useCollection()
+  const { items, loading: collectionLoading } = useCollection()
   const item = items.find((i) => i.id === id)
 
   const [isEditing, setIsEditing] = useState(false)
@@ -110,10 +110,21 @@ export default function ItemDetailScreen() {
     )
   }
 
-  if (!item) {
+  if (collectionLoading) {
     return (
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center">
         <ActivityIndicator size="large" color="#f59e0b" />
+      </View>
+    )
+  }
+
+  if (!item) {
+    return (
+      <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-6">
+        <Text className="text-red-400 text-lg font-bold mb-2">Item introuvable</Text>
+        <TouchableOpacity onPress={() => router.push('/(app)/collection')}>
+          <Text className="text-amber-400">← Retour à la collection</Text>
+        </TouchableOpacity>
       </View>
     )
   }

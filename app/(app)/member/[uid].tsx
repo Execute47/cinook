@@ -16,7 +16,10 @@ export default function MemberCollectionScreen() {
   const member = members.find((m) => m.uid === memberUid)
 
   useEffect(() => {
-    if (!memberUid) return
+    if (!memberUid) {
+      setLoading(false)
+      return
+    }
 
     const load = async () => {
       try {

@@ -68,9 +68,7 @@ beforeEach(() => {
 describe('RegisterScreen', () => {
   describe('AC3 — Validation du formulaire', () => {
     it('affiche une erreur pour un email invalide sans appel Firebase', async () => {
-      const { getByPlaceholderText, getByText, queryByText } = render(
-        <RegisterScreen />
-      )
+      const { getByPlaceholderText, getByText } = render(<RegisterScreen />)
       fireEvent.changeText(getByPlaceholderText('Email'), 'pasunemail')
       fireEvent.changeText(getByPlaceholderText('Mot de passe'), 'motdepasse')
       fireEvent.press(getByText("Créer mon compte"))

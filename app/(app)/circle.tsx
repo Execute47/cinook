@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { router } from 'expo-router'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
-import { createCircle, getCircle, generateInviteToken } from '@/lib/circle'
+import { createCircle, getCircle, generateInviteToken, joinCircle } from '@/lib/circle'
 import { useCircle } from '@/hooks/useCircle'
 import MemberList from '@/components/circle/MemberList'
 
@@ -30,12 +30,25 @@ export default function CircleScreen() {
         const userSnap = await getDoc(doc(db, 'users', uid))
         const storedCircleId: string | null = userSnap.data()?.circleId ?? null
 
-        if (!storedCircleId) {
-          const newCircleId = await createCircle(uid)
-          setCircle(newCircleId, true)
-        } else {
+        if (storedCircleId) {
+          // Déjà dans un cercle — on efface tout token en attente obsolète
+          useAuthStore.getState().setPendingInviteToken(null)
           const circle = await getCircle(storedCircleId)
           setCircle(storedCircleId, circle?.adminId === uid)
+        } else {
+          // Pas encore dans un cercle — vérifier un token d'invitation en attente
+          const pendingToken = useAuthStore.getState().pendingInviteToken
+          if (pendingToken) {
+            useAuthStore.getState().setPendingInviteToken(null)
+            const joinedCircleId = await joinCircle(uid, pendingToken)
+            if (joinedCircleId) {
+              setCircle(joinedCircleId, false)
+              return
+            }
+          }
+          // Aucun token valide → créer un nouveau cercle
+          const newCircleId = await createCircle(uid)
+          setCircle(newCircleId, true)
         }
       } catch {
         setInitError('Impossible de charger le cercle.')

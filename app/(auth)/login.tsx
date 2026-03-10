@@ -50,7 +50,6 @@ export default function LoginScreen() {
       if (data?.circleId) {
         useAuthStore.getState().setCircle(data.circleId, false)
       }
-
       router.replace('/(app)/')
     } catch (error) {
       if (error instanceof FirebaseError) {

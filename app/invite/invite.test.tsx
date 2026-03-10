@@ -14,15 +14,31 @@ jest.mock('@/lib/circle', () => ({
 }))
 
 const mockSetCircle = jest.fn()
+const mockSetPendingInviteToken = jest.fn()
+let mockUid: string | null = 'uid-test'
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ uid: 'uid-test', setCircle: mockSetCircle }),
+    selector({ uid: mockUid, setCircle: mockSetCircle }),
+  // getState used for setPendingInviteToken
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...({} as any),
 }))
+
+// Override getState for the static call
+beforeAll(() => {
+  const authStoreMock = jest.requireMock('@/stores/authStore')
+  authStoreMock.useAuthStore.getState = () => ({
+    setPendingInviteToken: mockSetPendingInviteToken,
+  })
+})
 
 import InviteScreen from './[token]'
 import { router } from 'expo-router'
 
-beforeEach(() => jest.clearAllMocks())
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockUid = 'uid-test'
+})
 
 describe('InviteScreen', () => {
   it('affiche le spinner pendant le chargement', () => {
@@ -51,5 +67,16 @@ describe('InviteScreen', () => {
       expect(getByText('Lien invalide ou expiré')).toBeTruthy()
     })
     expect(mockSetCircle).not.toHaveBeenCalled()
+  })
+
+  it('stocke le token dans le store et redirige vers register si non authentifiée', async () => {
+    mockUid = null
+    render(<InviteScreen />)
+
+    await waitFor(() => {
+      expect(mockSetPendingInviteToken).toHaveBeenCalledWith('test-token')
+      expect(router.replace).toHaveBeenCalledWith('/(auth)/register')
+    })
+    expect(mockJoinCircle).not.toHaveBeenCalled()
   })
 })

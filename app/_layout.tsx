@@ -42,8 +42,9 @@ export default function RootLayout() {
     if (authState === 'loading') return
 
     const inAuthGroup = segments[0] === '(auth)'
+    const inInviteRoute = segments[0] === 'invite'
 
-    if (authState === 'unauthenticated' && !inAuthGroup) {
+    if (authState === 'unauthenticated' && !inAuthGroup && !inInviteRoute) {
       router.replace('/(auth)/login')
     } else if (authState === 'authenticated' && inAuthGroup) {
       router.replace('/(app)/')

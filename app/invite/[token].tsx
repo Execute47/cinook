@@ -12,8 +12,14 @@ export default function InviteScreen() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
 
   useEffect(() => {
-    if (!uid || !token) {
+    if (!token) {
       setStatus('error')
+      return
+    }
+
+    if (!uid) {
+      useAuthStore.getState().setPendingInviteToken(token)
+      router.replace('/(auth)/register')
       return
     }
 

@@ -61,12 +61,23 @@ service cloud.firestore {
     // ─── Cercles ────────────────────────────────────────────────────────────────
 
     match /circles/{circleId} {
-      // Tous les membres peuvent lire le document cercle
-      allow read: if isCircleMember(circleId);
+      // Les membres du cercle peuvent lire ; tout utilisateur authentifié peut lire
+      // pour résoudre un inviteToken (UUID difficile à deviner)
+      allow read: if isCircleMember(circleId) || isAuth();
 
-      // Seul l'admin peut créer ou modifier le document cercle
+      // Seul l'admin peut créer le document cercle
       allow create: if isAuth();
-      allow update, delete: if isCircleAdmin(circleId);
+
+      // L'admin peut tout modifier
+      // OU un utilisateur authentifié peut s'ajouter lui-même via inviteToken
+      allow update: if isCircleAdmin(circleId) ||
+        (isAuth() &&
+         resource.data.inviteToken != null &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
+         request.auth.uid in request.resource.data.members &&
+         !(request.auth.uid in resource.data.members));
+
+      allow delete: if isCircleAdmin(circleId);
 
       // ─── Recommandations ────────────────────────────────────────────────────
 
