@@ -1,14 +1,19 @@
+import { useState } from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
-import { signOut } from 'firebase/auth'
+import { signOut, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useCollection } from '@/hooks/useCollection'
 import { exportCollection } from '@/lib/export'
+import { deleteAccount } from '@/lib/account'
+import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal'
 
 export default function SettingsScreen() {
   const { items } = useCollection()
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const circleId = useAuthStore((s) => s.circleId)
 
   const handleSignOut = async () => {
     try {
@@ -67,12 +72,30 @@ export default function SettingsScreen() {
         <Text className="text-red-400 font-semibold text-center">Se déconnecter</Text>
       </TouchableOpacity>
 
-      {/* Section Danger — suppression reportée à Story 6.3 */}
+      {/* Section Danger */}
       <Text className="text-[#6B5E5E] text-xs uppercase mb-3">Zone de danger</Text>
-      <View className="bg-[#1C1717] border border-[#3D2020] rounded-lg px-4 py-4 opacity-50">
-        <Text className="text-red-600 font-semibold text-center">Supprimer mon compte</Text>
-        <Text className="text-[#6B5E5E] text-xs text-center mt-1">Disponible prochainement</Text>
-      </View>
+      <TouchableOpacity
+        onPress={() => setShowDeleteModal(true)}
+        className="bg-[#1C1717] border border-[#3D2020] rounded-lg px-4 py-4"
+      >
+        <Text className="text-red-500 font-semibold text-center">Supprimer mon compte</Text>
+        <Text className="text-[#6B5E5E] text-xs text-center mt-1">
+          Supprime définitivement votre collection et votre compte
+        </Text>
+      </TouchableOpacity>
+
+      <DeleteAccountModal
+        visible={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={async (password) => {
+          const user = auth.currentUser!
+          const credential = EmailAuthProvider.credential(user.email!, password)
+          await reauthenticateWithCredential(user, credential)
+          await deleteAccount(user.uid, circleId ?? null)
+          useAuthStore.getState().reset()
+          router.replace('/(auth)/login')
+        }}
+      />
     </View>
   )
 }
