@@ -115,7 +115,7 @@ export default function PreviewScreen() {
         <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg px-4 py-3 mb-6">
           <Text className="text-[#6B5E5E] text-xs">
             {source === 'cineclub'
-              ? `En Cinéclub · Mis en avant par ${sourceName}`
+              ? `En ${type === 'livre' ? 'Coin lecture' : 'Cinéclub'} · Mis en avant par ${sourceName}`
               : `Recommandé par ${sourceName}`}
           </Text>
         </View>

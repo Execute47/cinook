@@ -145,4 +145,16 @@ describe('preview.tsx — source recommandation', () => {
     const { getByText } = render(<PreviewScreen />)
     expect(getByText(/Recommandé par Bob/)).toBeTruthy()
   })
+
+  it('affiche "Coin lecture" pour un livre en cinéclub', () => {
+    mockParams = { ...mockParams, type: 'livre', source: 'cineclub', sourceName: 'Alice' }
+    const { getByText } = render(<PreviewScreen />)
+    expect(getByText(/Coin lecture.*Alice/)).toBeTruthy()
+  })
+
+  it('affiche "Cinéclub" pour un film en cinéclub', () => {
+    mockParams = { ...mockParams, type: 'film', source: 'cineclub', sourceName: 'Alice' }
+    const { getByText } = render(<PreviewScreen />)
+    expect(getByText(/Cinéclub.*Alice/)).toBeTruthy()
+  })
 })
