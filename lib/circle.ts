@@ -1,6 +1,6 @@
 import {
-  addDoc, updateDoc, getDoc, getDocs,
-  doc, collection, query, where, arrayUnion, serverTimestamp,
+  addDoc, updateDoc, deleteDoc, getDoc, getDocs,
+  doc, collection, query, where, arrayUnion, arrayRemove, deleteField, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
@@ -42,6 +42,32 @@ export async function generateInviteToken(circleId: string): Promise<string> {
   const token = generateUUID()
   await updateDoc(doc(db, 'circles', circleId), { inviteToken: token })
   return token
+}
+
+export async function removeMember(circleId: string, targetUid: string): Promise<void> {
+  await updateDoc(doc(db, 'circles', circleId), { members: arrayRemove(targetUid) })
+  await updateDoc(doc(db, 'users', targetUid), { circleId: deleteField() })
+}
+
+export async function promoteMember(circleId: string, newAdminUid: string): Promise<void> {
+  await updateDoc(doc(db, 'circles', circleId), { adminId: newAdminUid })
+}
+
+export async function leaveCircle(circleId: string, uid: string, successorUid?: string): Promise<void> {
+  const circle = await getCircle(circleId)
+  if (!circle) return
+  if (circle.adminId === uid) {
+    const successor = successorUid ?? circle.members.find(m => m !== uid)
+    if (!successor) throw new Error('Aucun successeur disponible')
+    await promoteMember(circleId, successor)
+  }
+  await updateDoc(doc(db, 'circles', circleId), { members: arrayRemove(uid) })
+  await updateDoc(doc(db, 'users', uid), { circleId: deleteField() })
+}
+
+export async function deleteCircle(circleId: string, uid: string): Promise<void> {
+  await deleteDoc(doc(db, 'circles', circleId))
+  await updateDoc(doc(db, 'users', uid), { circleId: deleteField() })
 }
 
 export async function joinCircle(uid: string, token: string): Promise<string | null> {

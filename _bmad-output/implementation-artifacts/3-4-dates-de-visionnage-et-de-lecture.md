@@ -1,6 +1,6 @@
 # Story 3.4 : Dates de visionnage et de lecture
 
-Status: ready-for-review
+Status: done
 
 ## Story
 
