@@ -1,4 +1,4 @@
-import { searchMovies, searchTv, searchByEan } from './tmdb'
+import { searchMovies, searchTv, searchByEan, getNowPlaying } from './tmdb'
 
 const mockFetch = jest.fn()
 global.fetch = mockFetch
@@ -115,6 +115,53 @@ describe('lib/tmdb.ts', () => {
     it('lève une erreur si la réponse n\'est pas ok', async () => {
       mockFetch.mockReturnValueOnce(makeResponse({}, false))
       await expect(searchByEan('test')).rejects.toThrow('TMDB EAN search failed')
+    })
+  })
+
+  describe('getNowPlaying', () => {
+    it('retourne un tableau de MediaResult avec releaseDate', async () => {
+      mockFetch.mockReturnValueOnce(
+        makeResponse({
+          results: [
+            {
+              id: 123,
+              title: 'Dune 2',
+              poster_path: '/dune.jpg',
+              overview: 'Suite de Dune',
+              release_date: '2024-03-06',
+            },
+          ],
+        })
+      )
+      const results = await getNowPlaying()
+      expect(results).toHaveLength(1)
+      expect(results[0]).toMatchObject({
+        title: 'Dune 2',
+        type: 'film',
+        tmdbId: '123',
+        year: 2024,
+        releaseDate: '2024-03-06',
+        poster: 'https://image.tmdb.org/t/p/w500/dune.jpg',
+      })
+    })
+
+    it('appelle l\'endpoint now_playing avec language=fr-FR', async () => {
+      mockFetch.mockReturnValueOnce(makeResponse({ results: [] }))
+      await getNowPlaying()
+      const url = mockFetch.mock.calls[0][0] as string
+      expect(url).toContain('/movie/now_playing')
+      expect(url).toContain('language=fr-FR')
+    })
+
+    it('retourne un tableau vide si results est absent', async () => {
+      mockFetch.mockReturnValueOnce(makeResponse({}))
+      const results = await getNowPlaying()
+      expect(results).toEqual([])
+    })
+
+    it('lève une erreur si la réponse n\'est pas ok', async () => {
+      mockFetch.mockReturnValueOnce(makeResponse({}, false))
+      await expect(getNowPlaying()).rejects.toThrow('TMDB now_playing failed')
     })
   })
 })

@@ -94,7 +94,7 @@ development_status:
   # Epic 5 : Découverte — Films à l'affiche
   # ─────────────────────────────────────────────────────
   epic-5: in-progress
-  5-1-parcourir-les-films-a-laffiche-et-les-ajouter: in-progress
+  5-1-parcourir-les-films-a-laffiche-et-les-ajouter: review
   epic-5-retrospective: optional
 
   # ─────────────────────────────────────────────────────

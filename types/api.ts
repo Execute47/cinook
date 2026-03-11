@@ -12,6 +12,7 @@ export interface MediaResult {
   director?: string
   author?: string
   year?: number
+  releaseDate?: string
   tmdbId?: string
   googleBooksId?: string
   isbn?: string

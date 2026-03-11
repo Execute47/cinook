@@ -32,6 +32,14 @@ export async function searchByEan(ean: string): Promise<MediaResult | null> {
   return first ? mapMovie(first) : null
 }
 
+export async function getNowPlaying(): Promise<MediaResult[]> {
+  const url = `${BASE_URL}/movie/now_playing?language=fr-FR&page=1`
+  const res = await fetch(url, { headers: authHeader() })
+  if (!res.ok) throw new Error(`TMDB now_playing failed: ${res.status}`)
+  const json = await res.json()
+  return (json.results ?? []).map(mapMovie)
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapMovie(item: any): MediaResult {
   return {
@@ -40,6 +48,7 @@ function mapMovie(item: any): MediaResult {
     poster: item.poster_path ? `${POSTER_BASE}${item.poster_path}` : undefined,
     synopsis: item.overview || undefined,
     year: item.release_date ? parseInt(item.release_date.slice(0, 4), 10) : undefined,
+    releaseDate: item.release_date || undefined,
     tmdbId: String(item.id),
   }
 }
