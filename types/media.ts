@@ -4,7 +4,7 @@ export type MediaType = 'film' | 'serie' | 'livre'
 
 export type ItemStatus = 'owned' | 'watched' | 'loaned' | 'wishlist' | 'favorite'
 
-export type TierLevel = 'none' | 'disliked' | 'seen' | 'bronze' | 'silver' | 'gold' | 'diamond'
+export type TierLevel = 'none' | 'disliked' | 'bronze' | 'silver' | 'gold' | 'diamond'
 
 export type AddedVia = 'scan' | 'search' | 'manual' | 'discover'
 

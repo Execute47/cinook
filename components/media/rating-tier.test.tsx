@@ -49,7 +49,6 @@ describe('TierPicker', () => {
   it('affiche tous les tiers sauf none', () => {
     const { getByText } = render(<TierPicker current="none" onSelect={jest.fn()} />)
     expect(getByText("J'ai pas aimé")).toBeTruthy()
-    expect(getByText('Vu aussi')).toBeTruthy()
     expect(getByText('Bronze')).toBeTruthy()
     expect(getByText('Argent')).toBeTruthy()
     expect(getByText('Or')).toBeTruthy()
