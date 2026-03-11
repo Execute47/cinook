@@ -19,9 +19,20 @@ jest.mock('@/stores/authStore', () => ({
     selector({ uid: 'uid-test' }),
 }))
 
-import { router } from 'expo-router'
+const mockCollectionItems: jest.Mock = jest.fn().mockReturnValue([])
+jest.mock('@/hooks/useCollection', () => ({
+  useCollection: () => ({ items: mockCollectionItems(), loading: false, error: null }),
+}))
 
-beforeEach(() => jest.clearAllMocks())
+import { router } from 'expo-router'
+import type { Timestamp } from 'firebase/firestore'
+
+const fakeTimestamp = {} as Timestamp
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockCollectionItems.mockReturnValue([])
+})
 
 describe('NewItemScreen', () => {
   describe('AC2 — Validation titre obligatoire', () => {
@@ -91,6 +102,56 @@ describe('NewItemScreen', () => {
           expect.objectContaining({ type: 'livre', author: 'Frank Herbert' })
         )
       })
+    })
+  })
+
+  describe('AC3 — Avertissement doublon (non bloquant)', () => {
+    it('affiche un avertissement si doublon titre+type détecté', () => {
+      mockCollectionItems.mockReturnValue([
+        {
+          id: 'existing-film',
+          title: 'Inception',
+          type: 'film',
+          status: 'owned',
+          tier: 'none',
+          addedVia: 'search',
+          addedAt: fakeTimestamp,
+        },
+      ])
+
+      const { getByPlaceholderText, queryByText } = render(<NewItemScreen />)
+      fireEvent.changeText(getByPlaceholderText('Titre'), 'Inception')
+
+      expect(queryByText(/Un item similaire existe déjà/)).toBeTruthy()
+      expect(queryByText('Voir la fiche')).toBeTruthy()
+    })
+
+    it('le bouton Ajouter reste actif même avec un doublon détecté', () => {
+      mockCollectionItems.mockReturnValue([
+        {
+          id: 'existing-film',
+          title: 'Inception',
+          type: 'film',
+          status: 'owned',
+          tier: 'none',
+          addedVia: 'search',
+          addedAt: fakeTimestamp,
+        },
+      ])
+
+      const { getByPlaceholderText, getByText } = render(<NewItemScreen />)
+      fireEvent.changeText(getByPlaceholderText('Titre'), 'Inception')
+
+      expect(getByText('Ajouter à ma collection')).toBeTruthy()
+    })
+
+    it("n'affiche pas d'avertissement quand pas de doublon", () => {
+      mockCollectionItems.mockReturnValue([])
+
+      const { getByPlaceholderText, queryByText } = render(<NewItemScreen />)
+      fireEvent.changeText(getByPlaceholderText('Titre'), 'Film Inconnu')
+
+      expect(queryByText(/Un item similaire/)).toBeNull()
     })
   })
 })

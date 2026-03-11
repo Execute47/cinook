@@ -5,6 +5,8 @@ import {
 import { router } from 'expo-router'
 import { addItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
+import { useCollection } from '@/hooks/useCollection'
+import { findDuplicate } from '@/lib/duplicates'
 import type { MediaType } from '@/types/media'
 
 const TYPES: { value: MediaType; label: string }[] = [
@@ -15,6 +17,7 @@ const TYPES: { value: MediaType; label: string }[] = [
 
 export default function NewItemScreen() {
   const uid = useAuthStore((s) => s.uid)
+  const { items } = useCollection()
 
   const [title, setTitle] = useState('')
   const [mediaType, setMediaType] = useState<MediaType>('film')
@@ -24,6 +27,10 @@ export default function NewItemScreen() {
   const [synopsis, setSynopsis] = useState('')
   const [titleError, setTitleError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  const duplicateItem = title.trim()
+    ? findDuplicate(items, { title, type: mediaType })
+    : undefined
 
   const handleAdd = async () => {
     if (!title.trim()) {
@@ -97,7 +104,18 @@ export default function NewItemScreen() {
           className="bg-[#1C1717] text-white border border-[#3D3535] rounded-lg px-4 py-3 mb-1"
         />
         {titleError && <Text className="text-red-400 text-sm mb-3">{titleError}</Text>}
-        {!titleError && <View className="mb-3" />}
+        {!titleError && duplicateItem ? (
+          <View className="mb-3">
+            <Text className="text-amber-400 text-xs">
+              Un item similaire existe déjà dans votre collection.{' '}
+            </Text>
+            <TouchableOpacity onPress={() => router.push(`/(app)/item/${duplicateItem.id}`)}>
+              <Text className="text-amber-400 text-xs underline">Voir la fiche</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          !titleError && <View className="mb-3" />
+        )}
 
         {/* Année */}
         <Text className="text-[#6B5E5E] text-sm mb-1">Année (optionnel)</Text>

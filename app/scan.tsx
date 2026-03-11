@@ -4,12 +4,25 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { addItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
+import { useCollection } from '@/hooks/useCollection'
+import { findDuplicate } from '@/lib/duplicates'
 import BarcodeOverlay from '@/components/scan/BarcodeOverlay'
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions()
   const { result, error, isLoading, onBarcodeScanned, reset } = useBarcodeScan()
   const uid = useAuthStore((s) => s.uid)
+  const { items } = useCollection()
+
+  const existingItem = result
+    ? findDuplicate(items, {
+        title: result.title,
+        type: result.type,
+        tmdbId: result.tmdbId,
+        googleBooksId: result.googleBooksId,
+        isbn: result.isbn,
+      })
+    : undefined
 
   if (!permission) {
     return <View className="flex-1 bg-black" />
@@ -97,14 +110,28 @@ export default function ScanScreen() {
             {result.synopsis}
           </Text>
         )}
-        <TouchableOpacity
-          className="bg-amber-500 py-4 rounded-xl mb-3"
-          onPress={handleAdd}
-        >
-          <Text className="text-black font-bold text-center text-lg">
-            Ajouter à ma collection
-          </Text>
-        </TouchableOpacity>
+        {existingItem ? (
+          <View className="items-center gap-3">
+            <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg px-4 py-2">
+              <Text className="text-[#6B5E5E] text-sm text-center">Déjà dans votre collection</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push(`/(app)/item/${existingItem.id}`)}
+              className="bg-amber-500 py-4 rounded-xl w-full"
+            >
+              <Text className="text-black font-bold text-center">Voir la fiche</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            className="bg-amber-500 py-4 rounded-xl mb-3"
+            onPress={handleAdd}
+          >
+            <Text className="text-black font-bold text-center text-lg">
+              Ajouter à ma collection
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={reset} className="py-3">
           <Text className="text-gray-400 text-center">Annuler</Text>
         </TouchableOpacity>

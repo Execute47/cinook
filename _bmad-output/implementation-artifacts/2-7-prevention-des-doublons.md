@@ -1,6 +1,6 @@
 # Story 2.7 : Prévention des doublons
 
-Status: ready-for-dev
+Status: ready-for-review
 
 ## Story
 
@@ -57,44 +57,44 @@ La vérification s'arrête à la première correspondance trouvée.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Helper `lib/duplicates.ts`** (AC1–AC5)
-  - [ ] `findDuplicate(items: MediaItem[], candidate: DuplicateCandidate): MediaItem | undefined`
-  - [ ] Type `DuplicateCandidate = { title: string; type: MediaType; tmdbId?: string; googleBooksId?: string; isbn?: string }`
-  - [ ] Appliquer les 4 règles de matching dans l'ordre (retourner dès la première correspondance)
-  - [ ] Comparaison titre : `a.trim().toLowerCase() === b.trim().toLowerCase()`
+- [x] **Task 1 — Helper `lib/duplicates.ts`** (AC1–AC5)
+  - [x] `findDuplicate(items: MediaItem[], candidate: DuplicateCandidate): MediaItem | undefined`
+  - [x] Type `DuplicateCandidate = { title: string; type: MediaType; tmdbId?: string; googleBooksId?: string; isbn?: string }`
+  - [x] Appliquer les 4 règles de matching dans l'ordre (retourner dès la première correspondance)
+  - [x] Comparaison titre : `a.trim().toLowerCase() === b.trim().toLowerCase()`
 
-- [ ] **Task 2 — Mise à jour `app/item/search.tsx`** (AC1)
-  - [ ] Importer `useCollection` et `findDuplicate`
-  - [ ] Dans la vue détail (item sélectionné) : calculer `existingItem = findDuplicate(items, selected)`
-  - [ ] Si `existingItem` → remplacer le bouton "Ajouter" par badge + bouton "Voir la fiche"
-  - [ ] Bouton "Voir la fiche" → `router.push('/(app)/item/' + existingItem.id)`
+- [x] **Task 2 — Mise à jour `app/item/search.tsx`** (AC1)
+  - [x] Importer `useCollection` et `findDuplicate`
+  - [x] Dans la vue détail (item sélectionné) : calculer `existingItem = findDuplicate(items, selected)`
+  - [x] Si `existingItem` → remplacer le bouton "Ajouter" par badge + bouton "Voir la fiche"
+  - [x] Bouton "Voir la fiche" → `router.push('/(app)/item/' + existingItem.id)`
 
-- [ ] **Task 3 — Mise à jour `app/scan.tsx`** (AC2)
-  - [ ] Importer `useCollection` et `findDuplicate`
-  - [ ] Dans la vue résultat de scan : calculer `existingItem = findDuplicate(items, result)`
-  - [ ] Si `existingItem` → masquer le bouton "Ajouter", afficher message + "Voir la fiche"
+- [x] **Task 3 — Mise à jour `app/scan.tsx`** (AC2)
+  - [x] Importer `useCollection` et `findDuplicate`
+  - [x] Dans la vue résultat de scan : calculer `existingItem = findDuplicate(items, result)`
+  - [x] Si `existingItem` → masquer le bouton "Ajouter", afficher message + "Voir la fiche"
 
-- [ ] **Task 4 — Mise à jour `app/item/new.tsx`** (AC3)
-  - [ ] Importer `useCollection` et `findDuplicate`
-  - [ ] Recalculer `existingItem = findDuplicate(items, { title, type: mediaType })` à chaque changement de titre ou de type
-  - [ ] Afficher l'avertissement inline sous le champ titre si `existingItem` trouvé
-  - [ ] Le bouton "Créer" reste actif (avertissement non bloquant)
+- [x] **Task 4 — Mise à jour `app/item/new.tsx`** (AC3)
+  - [x] Importer `useCollection` et `findDuplicate`
+  - [x] Recalculer `existingItem = findDuplicate(items, { title, type: mediaType })` à chaque changement de titre ou de type
+  - [x] Afficher l'avertissement inline sous le champ titre si `existingItem` trouvé
+  - [x] Le bouton "Créer" reste actif (avertissement non bloquant)
 
-- [ ] **Task 5 — Mise à jour `app/(app)/index.tsx`** (AC4)
-  - [ ] Importer `useCollection` et `findDuplicate`
-  - [ ] Dans `handleAddCineclubToWishlist` : vérifier avant `addItem`, ignorer si doublon, afficher message bref
-  - [ ] Dans `handleAddRecoToWishlist` : même vérification
+- [x] **Task 5 — Mise à jour `app/(app)/index.tsx`** (AC4)
+  - [x] Importer `useCollection` et `findDuplicate`
+  - [x] Dans `handleAddCineclubToWishlist` : vérifier avant `addItem`, ignorer si doublon, afficher message bref
+  - [x] Dans `handleAddRecoToWishlist` : même vérification
 
-- [ ] **Task 6 — Tests** (AC1–AC5)
-  - [ ] `findDuplicate` : priorité tmdbId — item avec tmdbId identique → retourné
-  - [ ] `findDuplicate` : priorité googleBooksId — match sur googleBooksId
-  - [ ] `findDuplicate` : priorité isbn — match sur isbn
-  - [ ] `findDuplicate` : fallback titre+type — "Le Seigneur des Anneaux" (casse différente) + type 'livre' → match
-  - [ ] `findDuplicate` : même titre mais types différents → pas de match
-  - [ ] `findDuplicate` : tmdbId null vs tmdbId null → ne pas matcher sur null
-  - [ ] search.tsx : doublon détecté → bouton "Ajouter" absent, "Voir la fiche" présent
-  - [ ] search.tsx : pas de doublon → comportement inchangé
-  - [ ] new.tsx : doublon titre+type → avertissement visible mais bouton "Créer" actif
+- [x] **Task 6 — Tests** (AC1–AC5)
+  - [x] `findDuplicate` : priorité tmdbId — item avec tmdbId identique → retourné
+  - [x] `findDuplicate` : priorité googleBooksId — match sur googleBooksId
+  - [x] `findDuplicate` : priorité isbn — match sur isbn
+  - [x] `findDuplicate` : fallback titre+type — "Le Seigneur des Anneaux" (casse différente) + type 'livre' → match
+  - [x] `findDuplicate` : même titre mais types différents → pas de match
+  - [x] `findDuplicate` : tmdbId null vs tmdbId null → ne pas matcher sur null
+  - [x] search.tsx : doublon détecté → bouton "Ajouter" absent, "Voir la fiche" présent
+  - [x] search.tsx : pas de doublon → comportement inchangé
+  - [x] new.tsx : doublon titre+type → avertissement visible mais bouton "Créer" actif
 
 ## Dev Notes
 
@@ -192,8 +192,19 @@ export function findDuplicate(
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+Aucun bug rencontré. Implémentation conforme aux Dev Notes.
+
 ### Completion Notes List
+- `findDuplicate` implémenté exactement selon les 4 règles de matching (AC5) avec garde sur null/undefined
+- `search.tsx` : badge + bouton "Voir la fiche" remplace le bouton "Ajouter" en cas de doublon (AC1)
+- `scan.tsx` : même pattern que search.tsx (AC2)
+- `new.tsx` : avertissement inline non-bloquant sous le champ titre, recalculé à chaque changement (AC3)
+- `index.tsx` : garde silencieuse + toast temporaire 3s dans handleAddRecoToWishlist et handleAddCineclubToWishlist (AC4)
+- Suite complète : 170/170 tests passent
+
 ### File List
 
 - `lib/duplicates.ts` (nouveau)

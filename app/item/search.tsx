@@ -7,6 +7,8 @@ import { router } from 'expo-router'
 import { useMediaSearch } from '@/hooks/useMediaSearch'
 import { addItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
+import { useCollection } from '@/hooks/useCollection'
+import { findDuplicate } from '@/lib/duplicates'
 import SearchResultCard from '@/components/media/SearchResultCard'
 import type { MediaResult } from '@/types/api'
 import type { MediaType } from '@/types/media'
@@ -19,10 +21,21 @@ const TYPES: { value: MediaType; label: string }[] = [
 
 export default function SearchScreen() {
   const uid = useAuthStore((s) => s.uid)
+  const { items } = useCollection()
   const { results, isLoading, error, query, mediaType, setQuery, setMediaType, reset } =
     useMediaSearch()
   const [selected, setSelected] = useState<MediaResult | null>(null)
   const [isAdding, setIsAdding] = useState(false)
+
+  const existingItem = selected
+    ? findDuplicate(items, {
+        title: selected.title,
+        type: selected.type,
+        tmdbId: selected.tmdbId,
+        googleBooksId: selected.googleBooksId,
+        isbn: selected.isbn,
+      })
+    : undefined
 
   const handleAdd = async () => {
     if (!selected || !uid) return
@@ -76,15 +89,29 @@ export default function SearchScreen() {
             {selected.synopsis}
           </Text>
         )}
-        <TouchableOpacity
-          onPress={handleAdd}
-          disabled={isAdding}
-          className="bg-amber-500 py-4 rounded-xl mb-3"
-        >
-          <Text className="text-black font-bold text-center text-lg">
-            {isAdding ? 'Ajout...' : 'Ajouter à ma collection'}
-          </Text>
-        </TouchableOpacity>
+        {existingItem ? (
+          <View className="items-center gap-3">
+            <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg px-4 py-2">
+              <Text className="text-[#6B5E5E] text-sm text-center">Déjà dans votre collection</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push(`/(app)/item/${existingItem.id}`)}
+              className="bg-amber-500 py-4 rounded-xl w-full"
+            >
+              <Text className="text-black font-bold text-center">Voir la fiche</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={handleAdd}
+            disabled={isAdding}
+            className="bg-amber-500 py-4 rounded-xl mb-3"
+          >
+            <Text className="text-black font-bold text-center text-lg">
+              {isAdding ? 'Ajout...' : 'Ajouter à ma collection'}
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={() => setSelected(null)} className="py-3">
           <Text className="text-[#6B5E5E] text-center">Annuler</Text>
         </TouchableOpacity>
