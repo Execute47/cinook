@@ -1,6 +1,6 @@
 # Story 3.4 : Dates de visionnage et de lecture
 
-Status: ready-for-dev
+Status: ready-for-review
 
 ## Story
 
@@ -55,38 +55,38 @@ Afin de garder une trace précise de mon parcours de consommation culturelle.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Mise à jour du type `MediaItem`** (`types/media.ts`)
-  - [ ] Ajouter `startedAt?: Timestamp` — date de début (série, livre)
-  - [ ] Ajouter `endedAt?: Timestamp` — date de fin / visionnage (tous types)
+- [x] **Task 1 — Mise à jour du type `MediaItem`** (`types/media.ts`)
+  - [x] Ajouter `startedAt?: Timestamp` — date de début (série, livre)
+  - [x] Ajouter `endedAt?: Timestamp` — date de fin / visionnage (tous types)
 
-- [ ] **Task 2 — Composant `components/media/WatchDateModal.tsx`** (AC1, AC2)
-  - [ ] Props : `visible`, `type: MediaType`, `onValidate(endedAt: Timestamp, startedAt?: Timestamp)`, `onCancel`
-  - [ ] Réutiliser les helpers `todayStr()` et `parseDate()` du pattern LoanModal
-  - [ ] Film : un seul champ "Vu le" (obligatoire, pré-rempli à aujourd'hui)
-  - [ ] Série / Livre : champ "Commencé le" (optionnel) + champ "Terminé le" (obligatoire, pré-rempli)
-  - [ ] Bouton "Valider" actif uniquement si `endedAt` est une date valide
-  - [ ] Bouton "Annuler" → fermer sans modification
+- [x] **Task 2 — Composant `components/media/WatchDateModal.tsx`** (AC1, AC2)
+  - [x] Props : `visible`, `type: MediaType`, `onValidate(endedAt: Timestamp, startedAt?: Timestamp)`, `onCancel`
+  - [x] Réutiliser les helpers `todayStr()` et `parseDate()` du pattern LoanModal
+  - [x] Film : un seul champ "Vu le" (obligatoire, pré-rempli à aujourd'hui)
+  - [x] Série / Livre : champ "Commencé le" (optionnel) + champ "Terminé le" (obligatoire, pré-rempli)
+  - [x] Bouton "Valider" actif uniquement si `endedAt` est une date valide
+  - [x] Bouton "Annuler" → fermer sans modification
 
-- [ ] **Task 3 — Intégration dans `app/(app)/item/[id].tsx`** (AC1, AC2, AC3, AC5)
-  - [ ] Ajouter état `showWatchDateModal: boolean`
-  - [ ] Dans `handleStatusChange` : si `newStatus === 'watched'` → ouvrir `WatchDateModal` au lieu d'appliquer directement
-  - [ ] Handler `handleWatchDateValidate(endedAt, startedAt?)` → `updateItem(uid, item.id, { status: 'watched', endedAt, startedAt? })`
-  - [ ] Si l'ancien statut était 'watched' et le nouveau ne l'est pas → ajouter `startedAt: deleteField(), endedAt: deleteField()` aux updates (AC5)
-  - [ ] Dans la section Statut : afficher les dates sous le StatusPicker quand `item.status === 'watched'` (AC3)
-  - [ ] Bouton "Modifier les dates" → rouvre WatchDateModal pré-remplie avec les dates existantes
+- [x] **Task 3 — Intégration dans `app/(app)/item/[id].tsx`** (AC1, AC2, AC3, AC5)
+  - [x] Ajouter état `showWatchDateModal: boolean`
+  - [x] Dans `handleStatusChange` : si `newStatus === 'watched'` → ouvrir `WatchDateModal` au lieu d'appliquer directement
+  - [x] Handler `handleWatchDateValidate(endedAt, startedAt?)` → `updateItem(uid, item.id, { status: 'watched', endedAt, startedAt? })`
+  - [x] Si l'ancien statut était 'watched' et le nouveau ne l'est pas → ajouter `startedAt: deleteField(), endedAt: deleteField()` aux updates (AC5)
+  - [x] Dans la section Statut : afficher les dates sous le StatusPicker quand `item.status === 'watched'` (AC3)
+  - [x] Bouton "Modifier les dates" → rouvre WatchDateModal pré-remplie avec les dates existantes
 
-- [ ] **Task 4 — Mise à jour de `components/media/ItemCard.tsx`** (AC4)
-  - [ ] Si `item.status === 'watched' && item.endedAt` → afficher `"Vu le XX/XX/AAAA"` sous le bloc titre/badges
-  - [ ] Formatage : `item.endedAt.toDate().toLocaleDateString('fr-FR')`
+- [x] **Task 4 — Mise à jour de `components/media/ItemCard.tsx`** (AC4)
+  - [x] Si `item.status === 'watched' && item.endedAt` → afficher `"Vu le XX/XX/AAAA"` sous le bloc titre/badges
+  - [x] Formatage : `item.endedAt.toDate().toLocaleDateString('fr-FR')`
 
-- [ ] **Task 5 — Tests** (tous ACs)
-  - [ ] WatchDateModal film : champ "Vu le" vide → bouton Valider désactivé
-  - [ ] WatchDateModal film : validation → `onValidate` appelé avec `Timestamp` correct, sans `startedAt`
-  - [ ] WatchDateModal série : "Terminé le" valide + "Commencé le" vide → `onValidate` sans `startedAt`
-  - [ ] WatchDateModal série : deux dates valides → `onValidate` avec les deux `Timestamp`
-  - [ ] `handleStatusChange` : statut → 'watched' → `showWatchDateModal === true` (pas d'update Firestore direct)
-  - [ ] `handleStatusChange` : ancien statut 'watched' → nouveau statut ≠ 'watched' → `deleteField()` sur `startedAt` et `endedAt`
-  - [ ] ItemCard : `endedAt` présent + statut 'watched' → affiche la date ; absent → pas de date
+- [x] **Task 5 — Tests** (tous ACs)
+  - [x] WatchDateModal film : champ "Vu le" vide → bouton Valider désactivé
+  - [x] WatchDateModal film : validation → `onValidate` appelé avec `Timestamp` correct, sans `startedAt`
+  - [x] WatchDateModal série : "Terminé le" valide + "Commencé le" vide → `onValidate` sans `startedAt`
+  - [x] WatchDateModal série : deux dates valides → `onValidate` avec les deux `Timestamp`
+  - [x] `handleStatusChange` : statut → 'watched' → `showWatchDateModal === true` (pas d'update Firestore direct)
+  - [x] `handleStatusChange` : ancien statut 'watched' → nouveau statut ≠ 'watched' → `deleteField()` sur `startedAt` et `endedAt`
+  - [x] ItemCard : `endedAt` présent + statut 'watched' → affiche la date ; absent → pas de date
 
 ## Dev Notes
 
@@ -144,8 +144,18 @@ Passer des props optionnelles `initialEndedAt?: Timestamp` et `initialStartedAt?
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+- `handleWatchDateValidate` : ajout de `deleteField()` sur loanTo/loanDate si ancien statut était 'loaned' (oublié en première passe)
+- Test item-status : label "Possédé" et non "Ma collection" pour le statut 'owned'
+
 ### Completion Notes List
+- WatchDateModal basée sur le pattern LoanModal, avec useEffect pour pré-remplir les dates lors de la réouverture (édition)
+- handleStatusChange intercepte 'watched' → ouvre la modal au lieu d'écrire directement en Firestore
+- handleWatchDateValidate gère aussi le nettoyage de loanTo/loanDate si transition depuis 'loaned'
+- Suite complète : 179/179 tests passent
+
 ### File List
 
 - `types/media.ts` (modification — ajout startedAt, endedAt)

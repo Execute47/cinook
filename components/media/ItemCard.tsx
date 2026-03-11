@@ -43,6 +43,11 @@ export default function ItemCard({ item, onPress }: Props) {
         {item.status === 'loaned' && item.loanTo && (
           <Text className="text-amber-400 text-xs mt-1">→ {item.loanTo}</Text>
         )}
+        {item.status === 'watched' && item.endedAt && (
+          <Text className="text-[#6B5E5E] text-xs mt-1">
+            Vu le {item.endedAt.toDate().toLocaleDateString('fr-FR')}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   )

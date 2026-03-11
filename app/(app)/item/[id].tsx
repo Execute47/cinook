@@ -13,6 +13,7 @@ import TierPicker from '@/components/media/TierPicker'
 import TierBadge from '@/components/media/TierBadge'
 import CommentInput from '@/components/media/CommentInput'
 import LoanModal from '@/components/media/LoanModal'
+import WatchDateModal from '@/components/media/WatchDateModal'
 import MemberOpinions from '@/components/circle/MemberOpinions'
 import RecoComposer from '@/components/circle/RecoComposer'
 import CineclubButton from '@/components/circle/CineclubButton'
@@ -35,6 +36,7 @@ export default function ItemDetailScreen() {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showWatchDateModal, setShowWatchDateModal] = useState(false)
   const [showRecoComposer, setShowRecoComposer] = useState(false)
 
   const handleStatusChange = async (newStatus: ItemStatus) => {
@@ -43,10 +45,18 @@ export default function ItemDetailScreen() {
       setShowLoanModal(true)
       return
     }
+    if (newStatus === 'watched') {
+      setShowWatchDateModal(true)
+      return
+    }
     const updates: Record<string, unknown> = { status: newStatus }
     if (item.status === 'loaned' && newStatus !== 'loaned') {
       updates.loanTo = deleteField()
       updates.loanDate = deleteField()
+    }
+    if (item.status === 'watched' && newStatus !== 'watched') {
+      updates.startedAt = deleteField()
+      updates.endedAt = deleteField()
     }
     await updateItem(uid, item.id, updates as never)
   }
@@ -55,6 +65,18 @@ export default function ItemDetailScreen() {
     if (!uid || !item) return
     setShowLoanModal(false)
     await updateItem(uid, item.id, { status: 'loaned', loanTo, loanDate } as never)
+  }
+
+  const handleWatchDateValidate = async (endedAt: Timestamp, startedAt?: Timestamp) => {
+    if (!uid || !item) return
+    setShowWatchDateModal(false)
+    const updates: Record<string, unknown> = { status: 'watched', endedAt }
+    if (startedAt) updates.startedAt = startedAt
+    if (item.status === 'loaned') {
+      updates.loanTo = deleteField()
+      updates.loanDate = deleteField()
+    }
+    await updateItem(uid, item.id, updates as never)
   }
 
   const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.value, s]))
@@ -278,12 +300,46 @@ export default function ItemDetailScreen() {
             )}
           </View>
         )}
+        {item.status === 'watched' && item.endedAt && (
+          <View className="mt-3 pt-3 border-t border-[#3D3535]">
+            {item.type === 'film' ? (
+              <Text className="text-[#6B5E5E] text-sm">
+                Vu le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+              </Text>
+            ) : (
+              <>
+                {item.startedAt && (
+                  <Text className="text-[#6B5E5E] text-sm">
+                    Commencé le : <Text className="text-white">{item.startedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                  </Text>
+                )}
+                <Text className="text-[#6B5E5E] text-sm mt-0.5">
+                  Terminé le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                </Text>
+              </>
+            )}
+            <TouchableOpacity
+              onPress={() => setShowWatchDateModal(true)}
+              className="mt-2"
+            >
+              <Text className="text-amber-400 text-xs">Modifier les dates</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <LoanModal
         visible={showLoanModal}
         onValidate={handleLoanValidate}
         onCancel={() => setShowLoanModal(false)}
+      />
+      <WatchDateModal
+        visible={showWatchDateModal}
+        type={item.type}
+        initialEndedAt={item.endedAt}
+        initialStartedAt={item.startedAt}
+        onValidate={handleWatchDateValidate}
+        onCancel={() => setShowWatchDateModal(false)}
       />
 
       {/* Mon avis */}

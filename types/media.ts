@@ -27,6 +27,8 @@ export interface MediaItem {
   comment?: string
   loanTo?: string
   loanDate?: Timestamp
+  startedAt?: Timestamp
+  endedAt?: Timestamp
   addedAt: Timestamp
   updatedAt?: Timestamp
   addedVia: AddedVia
