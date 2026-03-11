@@ -18,14 +18,17 @@ interface LoadingState {
 interface UIState {
   loading: LoadingState
   toastQueue: Toast[]
+  syncPending: boolean
   setLoading: (key: keyof LoadingState, value: boolean) => void
   addToast: (message: string, type?: Toast['type']) => void
   removeToast: (id: string) => void
+  setSyncPending: (value: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
   loading: { scan: false, export: false, search: false },
   toastQueue: [],
+  syncPending: false,
   setLoading: (key, value) =>
     set((state) => ({ loading: { ...state.loading, [key]: value } })),
   addToast: (message, type = 'info') =>
@@ -39,4 +42,5 @@ export const useUIStore = create<UIState>((set) => ({
     set((state) => ({
       toastQueue: state.toastQueue.filter((t) => t.id !== id),
     })),
+  setSyncPending: (value) => set({ syncPending: value }),
 }))

@@ -1,8 +1,15 @@
+import { View } from 'react-native'
 import { Tabs } from 'expo-router'
+import { SyncIndicator } from '@/components/ui/SyncIndicator'
+import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 
 export default function AppLayout() {
+  useNetworkStatus()
+
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <SyncIndicator />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: { backgroundColor: '#0E0B0B', borderTopColor: '#1C1717' },
@@ -20,5 +27,6 @@ export default function AppLayout() {
       <Tabs.Screen name="item/[id]" options={{ href: null }} />
       <Tabs.Screen name="item/preview" options={{ href: null }} />
     </Tabs>
+    </View>
   )
 }

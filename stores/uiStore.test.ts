@@ -5,6 +5,7 @@ beforeEach(() => {
   useUIStore.setState({
     loading: { scan: false, export: false, search: false },
     toastQueue: [],
+    syncPending: false,
   })
 })
 
@@ -47,6 +48,17 @@ describe('uiStore', () => {
     const queue = useUIStore.getState().toastQueue
     expect(queue).toHaveLength(1)
     expect(queue[0].message).toBe('Toast 2')
+  })
+
+  it('syncPending initialisé à false', () => {
+    expect(useUIStore.getState().syncPending).toBe(false)
+  })
+
+  it('setSyncPending met à jour syncPending', () => {
+    useUIStore.getState().setSyncPending(true)
+    expect(useUIStore.getState().syncPending).toBe(true)
+    useUIStore.getState().setSyncPending(false)
+    expect(useUIStore.getState().syncPending).toBe(false)
   })
 
   it('les mises à jour loading sont immuables', () => {

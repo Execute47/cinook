@@ -1,6 +1,6 @@
 import { Platform } from 'react-native'
 import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, getFirestore } from 'firebase/firestore'
 import {
   initializeAuth,
   getReactNativePersistence,
@@ -20,7 +20,14 @@ const firebaseConfig = {
 }
 
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-export const db = getFirestore(app)
+
+let _db
+try {
+  _db = initializeFirestore(app, { localCache: persistentLocalCache() })
+} catch {
+  _db = getFirestore(app)
+}
+export const db = _db
 
 // Auth : browser persistence sur web, AsyncStorage sur natif
 const isWeb = typeof document !== 'undefined'
