@@ -1,6 +1,6 @@
 # Story 4.6 : Gestion avancée des membres du cercle
 
-Status: ready-for-review
+Status: done
 
 ## Story
 

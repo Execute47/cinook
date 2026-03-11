@@ -1,6 +1,6 @@
 # Story 2.7 : Prévention des doublons
 
-Status: ready-for-review
+Status: done
 
 ## Story
 
