@@ -106,3 +106,10 @@ development_status:
   6-3-suppression-des-donnees-et-du-compte: review
   6-4-configuration-pwa: review
   epic-6-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 7 : Stylisation & Modernisation UI
+  # ─────────────────────────────────────────────────────
+  epic-7: in-progress
+  7-1-stylisation-et-modernisation-ui: ready-for-dev
+  epic-7-retrospective: optional
