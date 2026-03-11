@@ -1,6 +1,7 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
 import type { MediaItem } from '@/types/media'
 import { STATUS_OPTIONS } from '@/components/media/StatusPicker'
+import { getStatusLabel } from '@/constants/statuses'
 
 interface Props {
   item: MediaItem
@@ -36,7 +37,7 @@ export default function ItemCard({ item, onPress }: Props) {
           </View>
           <View className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
             <Text className="text-xs" style={{ color: STATUS_MAP[item.status]?.color ?? '#9CA3AF' }}>
-              {STATUS_MAP[item.status]?.label ?? item.status}
+              {getStatusLabel(item.status, item.type)}
             </Text>
           </View>
         </View>
@@ -45,7 +46,7 @@ export default function ItemCard({ item, onPress }: Props) {
         )}
         {item.status === 'watched' && item.endedAt && (
           <Text className="text-[#6B5E5E] text-xs mt-1">
-            Vu le {item.endedAt.toDate().toLocaleDateString('fr-FR')}
+            {item.type === 'livre' ? 'Lu le' : 'Vu le'} {item.endedAt.toDate().toLocaleDateString('fr-FR')}
           </Text>
         )}
       </View>

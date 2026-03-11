@@ -1,4 +1,4 @@
-import type { ItemStatus } from '../types/media'
+import type { ItemStatus, MediaType } from '../types/media'
 
 export const STATUS_OPTIONS: Record<ItemStatus, { label: string; icon: string; color: string }> = {
   owned: { label: 'Possédé', icon: 'archive-outline', color: '#60A5FA' },
@@ -6,4 +6,9 @@ export const STATUS_OPTIONS: Record<ItemStatus, { label: string; icon: string; c
   loaned: { label: 'Prêté', icon: 'arrow-redo-outline', color: '#FBBF24' },
   wishlist: { label: 'À voir', icon: 'bookmark-outline', color: '#A78BFA' },
   favorite: { label: 'Favori', icon: 'heart-outline', color: '#F87171' },
+}
+
+export function getStatusLabel(status: ItemStatus, mediaType: MediaType): string {
+  if (status === 'watched' && mediaType === 'livre') return 'Lu'
+  return STATUS_OPTIONS[status].label
 }

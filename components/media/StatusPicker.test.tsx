@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native'
 import StatusPicker from './StatusPicker'
 
 describe('StatusPicker', () => {
-  it('affiche les 5 statuts', () => {
+  it('affiche les 5 statuts (film par défaut)', () => {
     const { getByText } = render(
       <StatusPicker current="owned" onSelect={jest.fn()} />
     )
@@ -14,12 +14,29 @@ describe('StatusPicker', () => {
     expect(getByText('Favori')).toBeTruthy()
   })
 
+  it('affiche "Lu" à la place de "Vu" pour un livre', () => {
+    const { getByText, queryByText } = render(
+      <StatusPicker current="owned" onSelect={jest.fn()} mediaType="livre" />
+    )
+    expect(getByText('Lu')).toBeTruthy()
+    expect(queryByText('Vu')).toBeNull()
+  })
+
   it('appelle onSelect avec le bon statut', () => {
     const onSelect = jest.fn()
     const { getByText } = render(
       <StatusPicker current="owned" onSelect={onSelect} />
     )
     fireEvent.press(getByText('Vu'))
+    expect(onSelect).toHaveBeenCalledWith('watched')
+  })
+
+  it('appelle onSelect avec watched pour un livre cliquant sur "Lu"', () => {
+    const onSelect = jest.fn()
+    const { getByText } = render(
+      <StatusPicker current="owned" onSelect={onSelect} mediaType="livre" />
+    )
+    fireEvent.press(getByText('Lu'))
     expect(onSelect).toHaveBeenCalledWith('watched')
   })
 

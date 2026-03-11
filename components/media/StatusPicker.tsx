@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native'
-import type { ItemStatus } from '@/types/media'
+import type { ItemStatus, MediaType } from '@/types/media'
+import { getStatusLabel } from '@/constants/statuses'
 
 export const STATUS_OPTIONS: { value: ItemStatus; label: string; color: string }[] = [
   { value: 'owned', label: 'Possédé', color: '#60A5FA' },
@@ -12,9 +13,10 @@ export const STATUS_OPTIONS: { value: ItemStatus; label: string; color: string }
 interface Props {
   current: ItemStatus
   onSelect: (status: ItemStatus) => void
+  mediaType?: MediaType
 }
 
-export default function StatusPicker({ current, onSelect }: Props) {
+export default function StatusPicker({ current, onSelect, mediaType = 'film' }: Props) {
   return (
     <View className="flex-row flex-wrap gap-2">
       {STATUS_OPTIONS.map((s) => (
@@ -30,7 +32,7 @@ export default function StatusPicker({ current, onSelect }: Props) {
             className="text-sm font-medium"
             style={{ color: current === s.value ? '#0E0B0B' : s.color }}
           >
-            {s.label}
+            {getStatusLabel(s.value, mediaType)}
           </Text>
         </TouchableOpacity>
       ))}
