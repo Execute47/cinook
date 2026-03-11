@@ -60,8 +60,7 @@ export default function CircleScreen() {
               return
             }
           }
-          const newCircleId = await createCircle(uid)
-          setCircle(newCircleId, true)
+          // Pas de cercle — l'utilisatrice choisit explicitement de créer ou rejoindre
         }
       } catch {
         setInitError('Impossible de charger le cercle.')
@@ -160,6 +159,16 @@ export default function CircleScreen() {
     }
   }
 
+  const handleCreateCircle = async () => {
+    if (!uid) return
+    try {
+      const newCircleId = await createCircle(uid)
+      setCircle(newCircleId, true)
+    } catch {
+      setInitError('Impossible de créer le cercle.')
+    }
+  }
+
   const handleLeaveConfirm = async (successorUid?: string) => {
     if (!circleId || !uid) return
     setShowLeaveModal(false)
@@ -176,6 +185,27 @@ export default function CircleScreen() {
     return (
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center">
         <ActivityIndicator size="large" color="#f59e0b" />
+      </View>
+    )
+  }
+
+  if (!circleId) {
+    return (
+      <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-8">
+        <Text className="text-white text-2xl font-bold mb-2 text-center">Mon Cercle</Text>
+        <Text className="text-[#6B5E5E] text-sm mb-8 text-center">
+          Vous ne faites partie d'aucun cercle.
+        </Text>
+        {initError && <Text className="text-red-400 mb-4 text-sm text-center">{initError}</Text>}
+        <TouchableOpacity
+          onPress={handleCreateCircle}
+          className="bg-amber-500 py-4 rounded-xl w-full items-center mb-3"
+        >
+          <Text className="text-black font-bold">Créer un cercle</Text>
+        </TouchableOpacity>
+        <Text className="text-[#6B5E5E] text-xs text-center">
+          Pour rejoindre un cercle existant, ouvrez le lien d'invitation partagé par un admin.
+        </Text>
       </View>
     )
   }
