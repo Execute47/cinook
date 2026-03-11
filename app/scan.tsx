@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native'
+import { Platform, View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
@@ -9,6 +9,19 @@ import { findDuplicate } from '@/lib/duplicates'
 import BarcodeOverlay from '@/components/scan/BarcodeOverlay'
 
 export default function ScanScreen() {
+  if (Platform.OS === 'web') {
+    return (
+      <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-8">
+        <Text className="text-white text-lg font-bold mb-3 text-center">
+          Scanner non disponible sur web
+        </Text>
+        <Text className="text-[#6B5E5E] text-sm text-center">
+          Le scan de codes-barres est disponible uniquement sur l'application mobile (iOS / Android).
+        </Text>
+      </View>
+    )
+  }
+
   const [permission, requestPermission] = useCameraPermissions()
   const { result, error, isLoading, onBarcodeScanned, reset } = useBarcodeScan()
   const uid = useAuthStore((s) => s.uid)

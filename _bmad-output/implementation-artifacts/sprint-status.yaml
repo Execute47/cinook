@@ -104,5 +104,5 @@ development_status:
   6-1-mode-hors-ligne-lecture-et-ecriture: review
   6-2-export-de-la-collection-et-parametres-du-compte: review
   6-3-suppression-des-donnees-et-du-compte: review
-  6-4-configuration-pwa: ready-for-dev
+  6-4-configuration-pwa: review
   epic-6-retrospective: optional
