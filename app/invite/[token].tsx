@@ -7,7 +7,7 @@ import { joinCircle } from '@/lib/circle'
 export default function InviteScreen() {
   const { token } = useLocalSearchParams<{ token: string }>()
   const uid = useAuthStore((s) => s.uid)
-  const setCircle = useAuthStore((s) => s.setCircle)
+  const addCircleId = useAuthStore((s) => s.addCircleId)
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
 
@@ -26,7 +26,7 @@ export default function InviteScreen() {
     const join = async () => {
       const circleId = await joinCircle(uid, token)
       if (circleId) {
-        setCircle(circleId, false)
+        addCircleId(circleId)
         setStatus('success')
         setTimeout(() => router.replace('/(app)/'), 1500)
       } else {

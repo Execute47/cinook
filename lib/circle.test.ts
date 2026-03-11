@@ -8,7 +8,6 @@ const mockArrayUnion = jest.fn((v) => ({ __arrayUnion: v }))
 
 const mockDeleteDoc = jest.fn()
 const mockArrayRemove = jest.fn((v) => ({ __arrayRemove: v }))
-const mockDeleteField = jest.fn(() => 'DELETE_FIELD')
 
 jest.mock('firebase/firestore', () => ({
   addDoc: (...args: unknown[]) => mockAddDoc(...args),
@@ -18,7 +17,6 @@ jest.mock('firebase/firestore', () => ({
   getDocs: (...args: unknown[]) => mockGetDocs(...args),
   arrayUnion: (v: unknown) => mockArrayUnion(v),
   arrayRemove: (v: unknown) => mockArrayRemove(v),
-  deleteField: () => mockDeleteField(),
   doc: jest.fn((_db, ...segments) => ({ path: segments.join('/') })),
   collection: jest.fn((_db, ...segments) => ({ path: segments.join('/') })),
   query: jest.fn((...args) => args),
@@ -31,7 +29,7 @@ import { createCircle, generateInviteToken, joinCircle, removeMember, promoteMem
 beforeEach(() => jest.clearAllMocks())
 
 describe('createCircle', () => {
-  it('crée un doc circle et met à jour le profil utilisateur', async () => {
+  it('crée un doc circle et ajoute le circleId dans circleIds[]', async () => {
     mockAddDoc.mockResolvedValueOnce({ id: 'circle-1' })
     mockUpdateDoc.mockResolvedValue(undefined)
 
@@ -44,7 +42,7 @@ describe('createCircle', () => {
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-1' }),
-      { circleId: 'circle-1' }
+      { circleIds: expect.objectContaining({ __arrayUnion: 'circle-1' }) }
     )
   })
 })
@@ -65,10 +63,10 @@ describe('generateInviteToken', () => {
 })
 
 describe('joinCircle', () => {
-  it('retourne circleId et met à jour les membres si token valide', async () => {
+  it('retourne circleId, ajoute le membre et met à jour circleIds[] si token valide', async () => {
     mockGetDocs.mockResolvedValueOnce({
       empty: false,
-      docs: [{ id: 'circle-2', data: () => ({ adminId: 'admin-uid' }) }],
+      docs: [{ id: 'circle-2', data: () => ({ adminId: 'admin-uid', members: [] }) }],
     })
     mockUpdateDoc.mockResolvedValue(undefined)
 
@@ -81,8 +79,20 @@ describe('joinCircle', () => {
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-2' }),
-      { circleId: 'circle-2' }
+      { circleIds: expect.objectContaining({ __arrayUnion: 'circle-2' }) }
     )
+  })
+
+  it('retourne circleId sans updateDoc si déjà membre', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      empty: false,
+      docs: [{ id: 'circle-2', data: () => ({ adminId: 'admin-uid', members: ['uid-2'] }) }],
+    })
+
+    const result = await joinCircle('uid-2', 'valid-token')
+
+    expect(result).toBe('circle-2')
+    expect(mockUpdateDoc).not.toHaveBeenCalled()
   })
 
   it('retourne null si token invalide', async () => {
@@ -96,7 +106,7 @@ describe('joinCircle', () => {
 })
 
 describe('removeMember', () => {
-  it('retire le membre du cercle et efface son circleId', async () => {
+  it('retire le membre du cercle et supprime le circleId de circleIds[]', async () => {
     mockUpdateDoc.mockResolvedValue(undefined)
 
     await removeMember('circle-1', 'uid-target')
@@ -107,7 +117,7 @@ describe('removeMember', () => {
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-target' }),
-      { circleId: 'DELETE_FIELD' }
+      { circleIds: expect.objectContaining({ __arrayRemove: 'circle-1' }) }
     )
   })
 })
@@ -136,19 +146,17 @@ describe('leaveCircle', () => {
 
     await leaveCircle('circle-1', 'uid-admin')
 
-    // Promote uid-other first
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),
       { adminId: 'uid-other' }
     )
-    // Then remove uid-admin
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),
       { members: expect.objectContaining({ __arrayRemove: 'uid-admin' }) }
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-admin' }),
-      { circleId: 'DELETE_FIELD' }
+      { circleIds: expect.objectContaining({ __arrayRemove: 'circle-1' }) }
     )
   })
 
@@ -170,7 +178,12 @@ describe('leaveCircle', () => {
 })
 
 describe('deleteCircle', () => {
-  it('supprime le doc cercle et efface circleId de l\'admin', async () => {
+  it('supprime le doc cercle et retire circleId du circleIds[] de tous les membres', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'circle-1',
+      data: () => ({ members: ['uid-admin', 'uid-member'], adminId: 'uid-admin' }),
+    })
     mockDeleteDoc.mockResolvedValue(undefined)
     mockUpdateDoc.mockResolvedValue(undefined)
 
@@ -181,7 +194,11 @@ describe('deleteCircle', () => {
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-admin' }),
-      { circleId: 'DELETE_FIELD' }
+      { circleIds: expect.objectContaining({ __arrayRemove: 'circle-1' }) }
+    )
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'users/uid-member' }),
+      { circleIds: expect.objectContaining({ __arrayRemove: 'circle-1' }) }
     )
   })
 })

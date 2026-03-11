@@ -13,13 +13,12 @@ jest.mock('@/lib/circle', () => ({
   joinCircle: (...args: unknown[]) => mockJoinCircle(...args),
 }))
 
-const mockSetCircle = jest.fn()
+const mockAddCircleId = jest.fn()
 const mockSetPendingInviteToken = jest.fn()
 let mockUid: string | null = 'uid-test'
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ uid: mockUid, setCircle: mockSetCircle }),
-  // getState used for setPendingInviteToken
+    selector({ uid: mockUid, addCircleId: mockAddCircleId }),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...({} as any),
 }))
@@ -47,12 +46,12 @@ describe('InviteScreen', () => {
     expect(getByText('Validation du lien...')).toBeTruthy()
   })
 
-  it('redirige et appelle setCircle si token valide', async () => {
+  it('redirige et appelle addCircleId si token valide', async () => {
     mockJoinCircle.mockResolvedValueOnce('circle-1')
     render(<InviteScreen />)
 
     await waitFor(() => {
-      expect(mockSetCircle).toHaveBeenCalledWith('circle-1', false)
+      expect(mockAddCircleId).toHaveBeenCalledWith('circle-1')
     })
     await waitFor(() => {
       expect(router.replace).toHaveBeenCalledWith('/(app)/')
@@ -66,7 +65,7 @@ describe('InviteScreen', () => {
     await waitFor(() => {
       expect(getByText('Lien invalide ou expiré')).toBeTruthy()
     })
-    expect(mockSetCircle).not.toHaveBeenCalled()
+    expect(mockAddCircleId).not.toHaveBeenCalled()
   })
 
   it('stocke le token dans le store et redirige vers register si non authentifiée', async () => {

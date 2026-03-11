@@ -12,7 +12,7 @@ jest.mock('firebase/firestore', () => ({
 
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ uid: 'uid-1', circleId: 'circle-1' }),
+    selector({ uid: 'uid-1', activeCircleId: 'circle-1' }),
 }))
 
 import { renderHook, act } from '@testing-library/react-native'
@@ -39,7 +39,7 @@ describe('useCircle', () => {
     expect(result.current.loading).toBe(true)
   })
 
-  it('inscrit un listener sur /circles/{circleId}', () => {
+  it('inscrit un listener sur /circles/{activeCircleId}', () => {
     renderHook(() => useCircle())
     expect(mockOnSnapshot).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),

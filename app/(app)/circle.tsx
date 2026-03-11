@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, ActivityIndicator, Share, ScrollView, Alert, Platform } from 'react-native'
-import { doc, getDoc } from 'firebase/firestore'
+import {
+  View, Text, TouchableOpacity, ActivityIndicator, Share,
+  ScrollView, Alert, Platform,
+} from 'react-native'
+import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { router } from 'expo-router'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
@@ -13,6 +16,13 @@ import MemberList from '@/components/circle/MemberList'
 import LeaveCircleModal from '@/components/circle/LeaveCircleModal'
 
 const INVITE_BASE_URL = 'https://cinook-caf55.web.app/invite'
+
+interface CircleSummary {
+  id: string
+  adminId: string
+  adminName: string | null
+  memberCount: number
+}
 
 const confirm = (title: string, message: string, onConfirm: () => void) => {
   if (Platform.OS === 'web') {
@@ -27,40 +37,73 @@ const confirm = (title: string, message: string, onConfirm: () => void) => {
 
 export default function CircleScreen() {
   const uid = useAuthStore((s) => s.uid)
-  const circleId = useAuthStore((s) => s.circleId)
-  const setCircle = useAuthStore((s) => s.setCircle)
+  const circleIds = useAuthStore((s) => s.circleIds)
+  const activeCircleId = useAuthStore((s) => s.activeCircleId)
+  const setCircleIds = useAuthStore((s) => s.setCircleIds)
+  const setActiveCircle = useAuthStore((s) => s.setActiveCircle)
+  const addCircleId = useAuthStore((s) => s.addCircleId)
+  const removeCircleId = useAuthStore((s) => s.removeCircleId)
 
   const [initLoading, setInitLoading] = useState(true)
   const [initError, setInitError] = useState<string | null>(null)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [showLeaveModal, setShowLeaveModal] = useState(false)
+  const [circleSummaries, setCircleSummaries] = useState<CircleSummary[]>([])
 
   const { members, isAdmin, adminId, loading: circleLoading } = useCircle()
 
-  // Auto-create or load circle on first access
+  const loadSummaries = async (ids: string[], currentUid: string) => {
+    const summaries = await Promise.all(
+      ids.map(async (cid) => {
+        const circle = await getCircle(cid)
+        if (!circle) return null
+        const adminSnap = await getDoc(doc(db, 'users', circle.adminId))
+        return {
+          id: cid,
+          adminId: circle.adminId,
+          adminName: adminSnap.data()?.displayName ?? null,
+          memberCount: circle.members.length,
+        } as CircleSummary
+      })
+    )
+    return summaries.filter(Boolean) as CircleSummary[]
+  }
+
   useEffect(() => {
     if (!uid) return
 
     const init = async () => {
       try {
         const userSnap = await getDoc(doc(db, 'users', uid))
-        const storedCircleId: string | null = userSnap.data()?.circleId ?? null
+        const userData = userSnap.data()
 
-        if (storedCircleId) {
+        // Migration : ancien champ circleId → nouveau circleIds[]
+        let ids: string[] = userData?.circleIds ?? []
+        if (ids.length === 0 && userData?.circleId) {
+          ids = [userData.circleId]
+          await updateDoc(doc(db, 'users', uid), {
+            circleIds: [userData.circleId],
+            circleId: deleteField(),
+          })
+        }
+
+        // Traiter le token d'invitation en attente
+        const pendingToken = useAuthStore.getState().pendingInviteToken
+        if (pendingToken) {
           useAuthStore.getState().setPendingInviteToken(null)
-          const circle = await getCircle(storedCircleId)
-          setCircle(storedCircleId, circle?.adminId === uid)
-        } else {
-          const pendingToken = useAuthStore.getState().pendingInviteToken
-          if (pendingToken) {
-            useAuthStore.getState().setPendingInviteToken(null)
-            const joinedCircleId = await joinCircle(uid, pendingToken)
-            if (joinedCircleId) {
-              setCircle(joinedCircleId, false)
-              return
-            }
+          const joinedId = await joinCircle(uid, pendingToken)
+          if (joinedId && !ids.includes(joinedId)) {
+            ids = [...ids, joinedId]
           }
-          // Pas de cercle — l'utilisatrice choisit explicitement de créer ou rejoindre
+        }
+
+        setCircleIds(ids)
+
+        const summaries = await loadSummaries(ids, uid)
+        setCircleSummaries(summaries)
+
+        if (!useAuthStore.getState().activeCircleId && ids.length > 0) {
+          setActiveCircle(ids[0])
         }
       } catch {
         setInitError('Impossible de charger le cercle.')
@@ -73,9 +116,9 @@ export default function CircleScreen() {
   }, [uid])
 
   const handleGenerateLink = async () => {
-    if (!circleId) return
+    if (!activeCircleId) return
     try {
-      const token = await generateInviteToken(circleId)
+      const token = await generateInviteToken(activeCircleId)
       setInviteLink(`${INVITE_BASE_URL}/${token}`)
     } catch {
       setInitError("Impossible de générer le lien.")
@@ -88,13 +131,18 @@ export default function CircleScreen() {
   }
 
   const handleRemoveMember = (targetUid: string) => {
-    if (!circleId) return
+    if (!activeCircleId) return
     confirm(
       'Expulser ce membre',
       'Ce membre sera retiré du cercle.',
       async () => {
         try {
-          await removeMember(circleId, targetUid)
+          await removeMember(activeCircleId, targetUid)
+          setCircleSummaries((prev) =>
+            prev.map((s) =>
+              s.id === activeCircleId ? { ...s, memberCount: s.memberCount - 1 } : s
+            )
+          )
         } catch {
           setInitError("Impossible d'expulser ce membre.")
         }
@@ -103,14 +151,18 @@ export default function CircleScreen() {
   }
 
   const handlePromoteMember = (targetUid: string) => {
-    if (!circleId) return
+    if (!activeCircleId) return
     confirm(
       'Promouvoir en admin',
       'Cet utilisateur deviendra admin. Vous resterez membre.',
       async () => {
         try {
-          await promoteMember(circleId, targetUid)
-          setCircle(circleId, false)
+          await promoteMember(activeCircleId, targetUid)
+          setCircleSummaries((prev) =>
+            prev.map((s) =>
+              s.id === activeCircleId ? { ...s, adminId: targetUid } : s
+            )
+          )
         } catch {
           setInitError("Impossible de promouvoir ce membre.")
         }
@@ -119,42 +171,41 @@ export default function CircleScreen() {
   }
 
   const handleLeaveCircle = () => {
-    if (!circleId || !uid) return
+    if (!activeCircleId || !uid) return
 
     const otherMembers = members.filter((m) => m.uid !== uid)
 
     if (!isAdmin) {
-      // AC3 — membre simple
       confirm(
         'Quitter le cercle',
         'Vous quitterez ce cercle. Votre collection reste intacte.',
         async () => {
           try {
-            await leaveCircle(circleId, uid)
-            useAuthStore.getState().setCircle(null, false)
-            router.replace('/(app)/circle')
+            await leaveCircle(activeCircleId, uid)
+            removeCircleId(activeCircleId)
+            setCircleSummaries((prev) => prev.filter((s) => s.id !== activeCircleId))
+            setInviteLink(null)
           } catch {
             setInitError('Impossible de quitter le cercle.')
           }
         }
       )
     } else if (otherMembers.length === 0) {
-      // AC5 — admin seul
       confirm(
         'Quitter le cercle',
         'Vous êtes seul dans ce cercle. Le quitter supprimera le cercle définitivement.',
         async () => {
           try {
-            await deleteCircle(circleId, uid)
-            useAuthStore.getState().setCircle(null, false)
-            router.replace('/(app)/circle')
+            await deleteCircle(activeCircleId, uid)
+            removeCircleId(activeCircleId)
+            setCircleSummaries((prev) => prev.filter((s) => s.id !== activeCircleId))
+            setInviteLink(null)
           } catch {
             setInitError('Impossible de supprimer le cercle.')
           }
         }
       )
     } else {
-      // AC4 — admin avec d'autres membres → modal
       setShowLeaveModal(true)
     }
   }
@@ -163,25 +214,42 @@ export default function CircleScreen() {
     if (!uid) return
     try {
       const newCircleId = await createCircle(uid)
-      setCircle(newCircleId, true)
+      addCircleId(newCircleId)
+      const adminSnap = await getDoc(doc(db, 'users', uid))
+      setCircleSummaries((prev) => [
+        ...prev,
+        {
+          id: newCircleId,
+          adminId: uid,
+          adminName: adminSnap.data()?.displayName ?? null,
+          memberCount: 1,
+        },
+      ])
+      setInviteLink(null)
     } catch {
       setInitError('Impossible de créer le cercle.')
     }
   }
 
   const handleLeaveConfirm = async (successorUid?: string) => {
-    if (!circleId || !uid) return
+    if (!activeCircleId || !uid) return
     setShowLeaveModal(false)
     try {
-      await leaveCircle(circleId, uid, successorUid)
-      useAuthStore.getState().setCircle(null, false)
-      router.replace('/(app)/circle')
+      await leaveCircle(activeCircleId, uid, successorUid)
+      removeCircleId(activeCircleId)
+      setCircleSummaries((prev) => prev.filter((s) => s.id !== activeCircleId))
+      setInviteLink(null)
     } catch {
       setInitError('Impossible de quitter le cercle.')
     }
   }
 
-  if (initLoading || circleLoading) {
+  const handleSwitchCircle = (circleId: string) => {
+    setActiveCircle(circleId)
+    setInviteLink(null)
+  }
+
+  if (initLoading || (activeCircleId && circleLoading)) {
     return (
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center">
         <ActivityIndicator size="large" color="#f59e0b" />
@@ -189,7 +257,7 @@ export default function CircleScreen() {
     )
   }
 
-  if (!circleId) {
+  if (!activeCircleId) {
     return (
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-8">
         <Text className="text-white text-2xl font-bold mb-2 text-center">Mon Cercle</Text>
@@ -211,13 +279,39 @@ export default function CircleScreen() {
   }
 
   const otherMembers = members.filter((m) => m.uid !== uid)
+  const activeCircleLabel = (id: string) => {
+    const s = circleSummaries.find((s) => s.id === id)
+    if (!s) return 'Cercle'
+    return s.adminId === uid ? 'Mon cercle' : `Cercle de ${s.adminName ?? 'inconnu'}`
+  }
 
   return (
     <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 16, paddingTop: 48 }}>
-      <Text className="text-white text-2xl font-bold mb-1">Mon Cercle</Text>
-      <Text className="text-[#6B5E5E] text-sm mb-6">
+      <Text className="text-white text-2xl font-bold mb-1">Mes Cercles</Text>
+      <Text className="text-[#6B5E5E] text-sm mb-4">
         {isAdmin ? 'Administratrice' : 'Membre'}
       </Text>
+
+      {/* Switcher de cercles */}
+      {circleIds.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4" contentContainerStyle={{ gap: 8 }}>
+          {circleSummaries.map((s) => (
+            <TouchableOpacity
+              key={s.id}
+              onPress={() => handleSwitchCircle(s.id)}
+              className={`px-3 py-2 rounded-full border ${
+                activeCircleId === s.id ? 'bg-amber-500 border-amber-500' : 'border-[#3D3535]'
+              }`}
+            >
+              <Text
+                className={`text-sm ${activeCircleId === s.id ? 'text-black font-semibold' : 'text-[#6B5E5E]'}`}
+              >
+                {activeCircleLabel(s.id)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {initError && <Text className="text-red-400 mb-4 text-sm">{initError}</Text>}
 
@@ -267,13 +361,21 @@ export default function CircleScreen() {
         </View>
       )}
 
-      {/* Quitter le cercle */}
-      <TouchableOpacity
-        onPress={handleLeaveCircle}
-        className="mt-6 py-3 items-center border border-red-900 rounded-lg"
-      >
-        <Text className="text-red-400 text-sm">Quitter le cercle</Text>
-      </TouchableOpacity>
+      {/* Actions */}
+      <View className="mt-6 gap-3">
+        <TouchableOpacity
+          onPress={handleCreateCircle}
+          className="py-3 items-center border border-[#3D3535] rounded-lg"
+        >
+          <Text className="text-[#6B5E5E] text-sm">+ Créer un nouveau cercle</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleLeaveCircle}
+          className="py-3 items-center border border-red-900 rounded-lg"
+        >
+          <Text className="text-red-400 text-sm">Quitter ce cercle</Text>
+        </TouchableOpacity>
+      </View>
 
       <LeaveCircleModal
         visible={showLeaveModal}

@@ -10,7 +10,7 @@ export interface Member {
 }
 
 export function useCircle() {
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleId = useAuthStore((s) => s.activeCircleId)
   const uid = useAuthStore((s) => s.uid)
   const [members, setMembers] = useState<Member[]>([])
   const [adminId, setAdminId] = useState<string | null>(null)
