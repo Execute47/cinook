@@ -1,6 +1,6 @@
 # Story 4.7 : Cinéclub — confirmation et retrait
 
-Status: ready-for-dev
+Status: ready-for-review
 
 ## Story
 

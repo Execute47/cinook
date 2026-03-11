@@ -38,11 +38,8 @@ describe('useCineclub', () => {
 
   it('retourne le cineclub si le document existe', async () => {
     const fakeData = {
-      itemId: 'item-1',
-      itemTitle: 'Matrix',
-      itemPoster: null,
-      postedBy: 'Alice',
-      postedAt: null,
+      itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
+      itemType: 'film', postedBy: 'Alice', postedAt: null,
     }
 
     mockOnSnapshot.mockImplementationOnce(
@@ -57,7 +54,28 @@ describe('useCineclub', () => {
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
       expect(result.current.cineclub?.itemTitle).toBe('Matrix')
-      expect(result.current.cineclub?.postedBy).toBe('Alice')
+      expect(result.current.cineclub?.itemType).toBe('film')
+    })
+  })
+
+  it('utilise le fallback "film" si itemType absent du document', async () => {
+    const fakeData = {
+      itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
+      postedBy: 'Alice', postedAt: null,
+      // pas de itemType
+    }
+
+    mockOnSnapshot.mockImplementationOnce(
+      (_ref: unknown, onNext: (snap: { exists: () => boolean; data: () => typeof fakeData }) => void) => {
+        onNext({ exists: () => true, data: () => fakeData })
+        return jest.fn()
+      }
+    )
+
+    const { result } = renderHook(() => useCineclub())
+
+    await waitFor(() => {
+      expect(result.current.cineclub?.itemType).toBe('film')
     })
   })
 

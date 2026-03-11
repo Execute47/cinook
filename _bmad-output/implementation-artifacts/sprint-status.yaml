@@ -85,8 +85,8 @@ development_status:
   4-3-consulter-la-collection-et-les-notes-dun-membre: done
   4-4-envoyer-et-recevoir-des-recommandations: done
   4-5-cineclub-mettre-en-avant-un-item: done
-  4-6-gestion-avancee-des-membres-du-cercle: ready-for-dev
-  4-7-cineclub-confirmation-et-retrait: ready-for-dev
+  4-6-gestion-avancee-des-membres-du-cercle: done
+  4-7-cineclub-confirmation-et-retrait: review
   4-8-previsualisation-depuis-laccueil: ready-for-dev
   epic-4-retrospective: optional
 

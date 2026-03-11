@@ -17,6 +17,7 @@ import WatchDateModal from '@/components/media/WatchDateModal'
 import MemberOpinions from '@/components/circle/MemberOpinions'
 import RecoComposer from '@/components/circle/RecoComposer'
 import CineclubButton from '@/components/circle/CineclubButton'
+import { useCineclub } from '@/hooks/useCineclub'
 import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
 import { deleteField, Timestamp } from 'firebase/firestore'
 
@@ -31,6 +32,7 @@ export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const uid = useAuthStore((s) => s.uid)
   const { items, loading: collectionLoading } = useCollection()
+  const { cineclub } = useCineclub()
   const item = items.find((i) => i.id === id)
 
   const [isEditing, setIsEditing] = useState(false)
@@ -229,7 +231,7 @@ export default function ItemDetailScreen() {
           <Text className="text-amber-400">←</Text>
         </TouchableOpacity>
         <View className="flex-1" />
-        <CineclubButton item={item} />
+        <CineclubButton item={item} currentCineclubItemId={cineclub?.itemId} />
         <TouchableOpacity onPress={() => setShowRecoComposer(true)} className="mr-4 ml-4">
           <Text className="text-amber-400">Recommander</Text>
         </TouchableOpacity>

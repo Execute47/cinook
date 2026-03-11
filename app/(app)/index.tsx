@@ -6,11 +6,14 @@ import { useCineclub } from '@/hooks/useCineclub'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
 import { addItem } from '@/lib/firestore'
+import { deleteDoc, doc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import RecoCard from '@/components/circle/RecoCard'
 import CineclubBanner from '@/components/circle/CineclubBanner'
 
 export default function HomeScreen() {
   const uid = useAuthStore((s) => s.uid)
+  const circleId = useAuthStore((s) => s.circleId)
   const { items } = useCollection()
   const { recommendations, loading: recoLoading } = useRecommendations()
   const { cineclub, loading: cineclubLoading } = useCineclub()
@@ -68,7 +71,14 @@ export default function HomeScreen() {
 
       {/* Cinéclub */}
       {!cineclubLoading && cineclub && (
-        <CineclubBanner cineclub={cineclub} onAddToWishlist={handleAddCineclubToWishlist} />
+        <CineclubBanner
+          cineclub={cineclub}
+          onAddToWishlist={handleAddCineclubToWishlist}
+          onRemove={async () => {
+            if (!circleId) return
+            await deleteDoc(doc(db, 'circles', circleId, 'cineclub', 'current'))
+          }}
+        />
       )}
 
       {/* Recommandations */}

@@ -1,11 +1,14 @@
 import React from 'react'
 import { render, fireEvent, waitFor } from '@testing-library/react-native'
+import { Alert } from 'react-native'
 
 const mockSetDoc = jest.fn()
+const mockDeleteDoc = jest.fn()
 const mockDoc = jest.fn(() => ({}))
 const mockServerTimestamp = jest.fn(() => ({ seconds: 0 }))
 jest.mock('firebase/firestore', () => ({
   setDoc: (...args: unknown[]) => mockSetDoc(...args),
+  deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
   doc: (...args: unknown[]) => mockDoc(...args),
   serverTimestamp: () => mockServerTimestamp(),
   getFirestore: jest.fn(),
@@ -22,43 +25,99 @@ jest.mock('@/stores/authStore', () => ({
 import CineclubButton from './CineclubButton'
 import type { MediaItem } from '@/types/media'
 
-const fakeItem: MediaItem = {
-  id: 'item-1',
-  title: 'Matrix',
-  type: 'film',
-  status: 'owned',
-  tier: 'none',
-  addedVia: 'search',
+const fakeFilm: MediaItem = {
+  id: 'item-1', title: 'Matrix', type: 'film',
+  status: 'owned', tier: 'none', addedVia: 'search',
+  addedAt: { seconds: 0, nanoseconds: 0 } as never,
+}
+
+const fakeLivre: MediaItem = {
+  id: 'item-2', title: 'Dune', type: 'livre',
+  status: 'owned', tier: 'none', addedVia: 'search',
   addedAt: { seconds: 0, nanoseconds: 0 } as never,
 }
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockCircleId = 'circle-1'
+  jest.spyOn(Alert, 'alert').mockImplementation(jest.fn())
 })
 
-describe('CineclubButton', () => {
-  it('appelle setDoc avec les bons champs au press', async () => {
-    mockSetDoc.mockResolvedValueOnce(undefined)
+describe('CineclubButton — label', () => {
+  it('affiche "Cinéclub" pour un film', () => {
+    const { getByText } = render(<CineclubButton item={fakeFilm} />)
+    expect(getByText('⭐ Mettre en Cinéclub')).toBeTruthy()
+  })
 
-    const { getByText } = render(<CineclubButton item={fakeItem} />)
+  it('affiche "Coin lecture" pour un livre', () => {
+    const { getByText } = render(<CineclubButton item={fakeLivre} />)
+    expect(getByText('⭐ Mettre en Coin lecture')).toBeTruthy()
+  })
+})
+
+describe('CineclubButton — mise en avant', () => {
+  it('appelle setDoc avec itemType dans le payload', async () => {
+    mockSetDoc.mockResolvedValueOnce(undefined)
+    const { getByText } = render(<CineclubButton item={fakeFilm} />)
     fireEvent.press(getByText('⭐ Mettre en Cinéclub'))
 
     await waitFor(() => {
       expect(mockSetDoc).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({
-          itemId: 'item-1',
-          itemTitle: 'Matrix',
-          postedBy: 'Moi',
-        })
+        expect.objectContaining({ itemId: 'item-1', itemTitle: 'Matrix', itemType: 'film', postedBy: 'Moi' })
       )
     })
   })
 
+  it('appelle Alert.alert après setDoc réussi', async () => {
+    mockSetDoc.mockResolvedValueOnce(undefined)
+
+    const { getByText } = render(<CineclubButton item={fakeFilm} />)
+    fireEvent.press(getByText('⭐ Mettre en Cinéclub'))
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Cinéclub',
+        expect.stringContaining('Matrix'),
+        expect.anything()
+      )
+    })
+  })
+})
+
+describe('CineclubButton — mode retrait (AC3)', () => {
+  it('affiche "Retirer du Cinéclub" si currentCineclubItemId === item.id', () => {
+    const { getByText, queryByText } = render(
+      <CineclubButton item={fakeFilm} currentCineclubItemId="item-1" />
+    )
+    expect(getByText('Retirer du Cinéclub')).toBeTruthy()
+    expect(queryByText('⭐ Mettre en Cinéclub')).toBeNull()
+  })
+
+  it('affiche "Retirer du Coin lecture" pour un livre actif', () => {
+    const { getByText } = render(
+      <CineclubButton item={fakeLivre} currentCineclubItemId="item-2" />
+    )
+    expect(getByText('Retirer du Coin lecture')).toBeTruthy()
+  })
+
+  it('appelle deleteDoc sur le bon chemin au clic Retirer', async () => {
+    mockDeleteDoc.mockResolvedValueOnce(undefined)
+    const { getByText } = render(
+      <CineclubButton item={fakeFilm} currentCineclubItemId="item-1" />
+    )
+    fireEvent.press(getByText('Retirer du Cinéclub'))
+
+    await waitFor(() => {
+      expect(mockDeleteDoc).toHaveBeenCalledTimes(1)
+    })
+  })
+})
+
+describe('CineclubButton — sans circleId', () => {
   it('ne rend rien si pas de circleId', () => {
     mockCircleId = null
-    const { queryByText } = render(<CineclubButton item={fakeItem} />)
-    expect(queryByText('⭐ Mettre en Cinéclub')).toBeNull()
+    const { queryByText } = render(<CineclubButton item={fakeFilm} />)
+    expect(queryByText(/Cinéclub/)).toBeNull()
   })
 })

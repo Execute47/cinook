@@ -5,6 +5,7 @@ import type { Cineclub } from '@/hooks/useCineclub'
 interface Props {
   cineclub: Cineclub
   onAddToWishlist: () => void
+  onRemove: () => void
 }
 
 const formatDate = (ts: Timestamp | null): string => {
@@ -12,11 +13,16 @@ const formatDate = (ts: Timestamp | null): string => {
   return ts.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-export default function CineclubBanner({ cineclub, onAddToWishlist }: Props) {
+const getLabel = (cineclub: Cineclub): string =>
+  cineclub.itemType === 'livre' ? 'Coin lecture' : 'Cinéclub'
+
+export default function CineclubBanner({ cineclub, onAddToWishlist, onRemove }: Props) {
+  const label = getLabel(cineclub)
+
   return (
     <View className="bg-[#1C1717] border border-amber-500 rounded-xl p-4 mb-6">
       <Text className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">
-        ⭐ Cinéclub
+        ⭐ {label}
       </Text>
       <View className="flex-row">
         {cineclub.itemPoster ? (
@@ -40,12 +46,17 @@ export default function CineclubBanner({ cineclub, onAddToWishlist }: Props) {
               {cineclub.postedAt ? ` · ${formatDate(cineclub.postedAt)}` : ''}
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={onAddToWishlist}
-            className="bg-amber-500/20 border border-amber-500 rounded px-3 py-1.5 self-start mt-3"
-          >
-            <Text className="text-amber-400 text-xs font-semibold">+ À voir</Text>
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-3 mt-3">
+            <TouchableOpacity
+              onPress={onAddToWishlist}
+              className="bg-amber-500/20 border border-amber-500 rounded px-3 py-1.5"
+            >
+              <Text className="text-amber-400 text-xs font-semibold">+ À voir</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onRemove}>
+              <Text className="text-[#6B5E5E] text-xs">Retirer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>

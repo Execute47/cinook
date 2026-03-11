@@ -3,11 +3,13 @@ import { onSnapshot, doc } from 'firebase/firestore'
 import type { Timestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
+import type { MediaType } from '@/types/media'
 
 export interface Cineclub {
   itemId: string
   itemTitle: string
   itemPoster: string | null
+  itemType: MediaType
   postedBy: string
   postedAt: Timestamp | null
 }
@@ -31,6 +33,7 @@ export function useCineclub() {
           itemId: d.itemId,
           itemTitle: d.itemTitle,
           itemPoster: d.itemPoster ?? null,
+          itemType: d.itemType ?? 'film',
           postedBy: d.postedBy,
           postedAt: d.postedAt ?? null,
         })
