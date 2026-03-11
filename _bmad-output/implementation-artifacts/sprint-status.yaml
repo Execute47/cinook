@@ -72,7 +72,7 @@ development_status:
   3-2-notation-note-tier-list-et-commentaire: done
   3-3-enregistrement-et-suivi-des-prets: done
   3-4-dates-de-visionnage-et-de-lecture: done
-  3-5-statistiques-et-bilan-annuel: ready-for-dev
+  3-5-statistiques-et-bilan-annuel: review
   epic-3: in-progress
   epic-3-retrospective: optional
 
@@ -94,7 +94,7 @@ development_status:
   # Epic 5 : Découverte — Films à l'affiche
   # ─────────────────────────────────────────────────────
   epic-5: in-progress
-  5-1-parcourir-les-films-a-laffiche-et-les-ajouter: ready-for-dev
+  5-1-parcourir-les-films-a-laffiche-et-les-ajouter: in-progress
   epic-5-retrospective: optional
 
   # ─────────────────────────────────────────────────────

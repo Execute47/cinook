@@ -14,6 +14,7 @@ export default function AppLayout() {
       <Tabs.Screen name="collection" options={{ title: 'Collection' }} />
       <Tabs.Screen name="discover" options={{ title: 'Découverte' }} />
       <Tabs.Screen name="circle" options={{ title: 'Cercle' }} />
+      <Tabs.Screen name="stats" options={{ title: 'Bilan' }} />
       <Tabs.Screen name="settings" options={{ title: 'Paramètres' }} />
       <Tabs.Screen name="member/[uid]" options={{ href: null }} />
       <Tabs.Screen name="item/[id]" options={{ href: null }} />

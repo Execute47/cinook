@@ -1,6 +1,6 @@
 # Story 3.5 : Statistiques et bilan annuel
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -72,19 +72,19 @@ Afin de visualiser mon activité (comptages, tops, répartition mensuelle) et de
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Écran `app/(app)/stats.tsx`** (AC1, AC2, AC3, AC4, AC5)
-  - [ ] Créer l'écran avec ScrollView + fond `#0E0B0B`
-  - [ ] État `selectedYear: number` initialisé à `new Date().getFullYear()`
-  - [ ] Sélecteur d'année : boutons `<` / `>` avec label année au centre
-  - [ ] Désactiver `>` si `selectedYear >= currentYear` (pas de données futures)
-  - [ ] Section Comptages (AC3)
-  - [ ] Section Tops (AC4)
-  - [ ] Section Activité mensuelle (AC5)
+- [x] **Task 1 — Écran `app/(app)/stats.tsx`** (AC1, AC2, AC3, AC4, AC5)
+  - [x] Créer l'écran avec ScrollView + fond `#0E0B0B`
+  - [x] État `selectedYear: number` initialisé à `new Date().getFullYear()`
+  - [x] Sélecteur d'année : boutons `<` / `>` avec label année au centre
+  - [x] Désactiver `>` si `selectedYear >= currentYear` (pas de données futures)
+  - [x] Section Comptages (AC3)
+  - [x] Section Tops (AC4)
+  - [x] Section Activité mensuelle (AC5)
 
-- [ ] **Task 2 — Hook ou helper `useYearStats(year: number)`** (AC3, AC4, AC5, AC6)
-  - [ ] Utiliser `useCollection()` comme source de données (pas de nouvelle requête Firestore)
-  - [ ] Filtrer : `item.endedAt && item.endedAt.toDate().getFullYear() === year`
-  - [ ] Retourner :
+- [x] **Task 2 — Hook ou helper `useYearStats(year: number)`** (AC3, AC4, AC5, AC6)
+  - [x] Utiliser `useCollection()` comme source de données (pas de nouvelle requête Firestore)
+  - [x] Filtrer : `item.endedAt && item.endedAt.toDate().getFullYear() === year`
+  - [x] Retourner :
     ```typescript
     {
       counts: { film: number, serie: number, livre: number, total: number }
@@ -94,28 +94,27 @@ Afin de visualiser mon activité (comptages, tops, répartition mensuelle) et de
       hasData: boolean
     }
     ```
-  - [ ] Ordre de priorité des tiers : `['diamond','gold','silver','bronze','seen','disliked','none']`
+  - [x] Ordre de priorité des tiers : `['diamond','gold','silver','bronze','seen','disliked','none']`
 
-- [ ] **Task 3 — Intégration dans la navigation** (AC1)
-  - [ ] Ajouter l'accès à l'écran stats dans la nav principale
-  - [ ] Option A : nouveau `<Tabs.Screen name="stats" options={{ title: 'Bilan' }} />` dans `app/(app)/_layout.tsx`
-  - [ ] Option B : bouton dans le header de `app/(app)/collection.tsx`
-  - [ ] Choisir l'option la mieux adaptée visuellement (5 onglets existants)
+- [x] **Task 3 — Intégration dans la navigation** (AC1)
+  - [x] Ajouter l'accès à l'écran stats dans la nav principale
+  - [x] Option A : nouveau `<Tabs.Screen name="stats" options={{ title: 'Bilan' }} />` dans `app/(app)/_layout.tsx`
+  - [x] Choisir l'option la mieux adaptée visuellement (5 onglets existants)
 
-- [ ] **Task 4 — Composant barre mensuelle** (AC5)
-  - [ ] Composant `MonthBar` : props `count`, `label`, `maxCount`
-  - [ ] Hauteur = `(count / maxCount) * MAX_HEIGHT` (ex: MAX_HEIGHT = 80)
-  - [ ] Si `maxCount === 0` → toutes les barres à hauteur minimale (2px)
-  - [ ] Label initiale du mois sous la barre, count au-dessus si > 0
+- [x] **Task 4 — Composant barre mensuelle** (AC5)
+  - [x] Composant `MonthBar` : props `count`, `label`, `maxCount`
+  - [x] Hauteur = `(count / maxCount) * MAX_HEIGHT` (ex: MAX_HEIGHT = 80)
+  - [x] Si `maxCount === 0` → toutes les barres à hauteur minimale (2px)
+  - [x] Label initiale du mois sous la barre, count au-dessus si > 0
 
-- [ ] **Task 5 — Tests** (AC2, AC3, AC4, AC5, AC6)
-  - [ ] `useYearStats` : items sans `endedAt` → non comptabilisés
-  - [ ] `useYearStats` : items avec `endedAt` d'une autre année → non comptabilisés
-  - [ ] `useYearStats` : comptages corrects par type
-  - [ ] `useYearStats` : `byMonth` — item en mars → index 2 incrémenté
-  - [ ] `useYearStats` : topTier → diamond avant gold ; ex-aequo → max 3 items
-  - [ ] `useYearStats` : topRating → tri décroissant ; items sans rating ignorés
-  - [ ] Sélecteur d'année : bouton `>` désactivé sur l'année courante
+- [x] **Task 5 — Tests** (AC2, AC3, AC4, AC5, AC6)
+  - [x] `useYearStats` : items sans `endedAt` → non comptabilisés
+  - [x] `useYearStats` : items avec `endedAt` d'une autre année → non comptabilisés
+  - [x] `useYearStats` : comptages corrects par type
+  - [x] `useYearStats` : `byMonth` — item en mars → index 2 incrémenté
+  - [x] `useYearStats` : topTier → diamond avant gold ; ex-aequo → max 3 items
+  - [x] `useYearStats` : topRating → meilleure note uniquement ; items sans rating ignorés
+  - [x] Sélecteur d'année : bouton `>` désactivé sur l'année courante
 
 ## Dev Notes
 
@@ -174,10 +173,24 @@ Cette story est fonctionnelle dès maintenant mais les statistiques seront vides
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+- Test "tri décroissant par rating" corrigé : la spec dit "meilleure note = items au rang le plus haut (ex-aequo max 3)", pas un top-3 toutes notes confondues. Test mis à jour pour refléter la spec.
+- Timeouts sur `settings.test.tsx` et `login.test.tsx` lors de l'exécution parallèle : préexistants, passent en isolation, sans lien avec cette story.
+
 ### Completion Notes List
+- `hooks/useYearStats.ts` : hook pur basé sur `useCollection()`, calcule counts/topTier/topRating/byMonth/hasData via `useMemo`. Aucune requête Firestore supplémentaire.
+- `components/stats/MonthBar.tsx` : composant barre proportionnelle, hauteur min 2px, count affiché si > 0.
+- `app/(app)/stats.tsx` : écran ScrollView avec sélecteur d'année, sections Comptages/Tops/Activité mensuelle. Bouton `>` désactivé sur l'année courante.
+- `app/(app)/_layout.tsx` : 6e onglet "Bilan" ajouté (Option A choisie — accès direct en 1 tap).
+- 18 tests ajoutés (12 pour `useYearStats`, 6 pour `StatsScreen`), tous passent à 100%.
+
 ### File List
 
 - `app/(app)/stats.tsx` (nouveau)
+- `app/(app)/stats.test.tsx` (nouveau)
 - `hooks/useYearStats.ts` (nouveau)
-- `app/(app)/_layout.tsx` (modification — ajout onglet ou bouton nav)
+- `hooks/useYearStats.test.ts` (nouveau)
+- `components/stats/MonthBar.tsx` (nouveau)
+- `app/(app)/_layout.tsx` (modifié — ajout onglet Bilan)
