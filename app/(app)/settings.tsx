@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
-import { signOut, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import { signOut, EmailAuthProvider, GoogleAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { auth } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -86,10 +87,21 @@ export default function SettingsScreen() {
 
       <DeleteAccountModal
         visible={showDeleteModal}
+        provider={(auth.currentUser?.providerData[0]?.providerId ?? 'password') as 'password' | 'google.com'}
         onCancel={() => setShowDeleteModal(false)}
-        onConfirm={async (password) => {
+        onConfirmPassword={async (password) => {
           const user = auth.currentUser!
           const credential = EmailAuthProvider.credential(user.email!, password)
+          await reauthenticateWithCredential(user, credential)
+          await deleteAccount(user.uid, circleId ?? null)
+          useAuthStore.getState().reset()
+          router.replace('/(auth)/login')
+        }}
+        onConfirmGoogle={async () => {
+          const user = auth.currentUser!
+          const { data } = await GoogleSignin.signIn()
+          if (!data?.idToken) throw new Error('No idToken')
+          const credential = GoogleAuthProvider.credential(data.idToken)
           await reauthenticateWithCredential(user, credential)
           await deleteAccount(user.uid, circleId ?? null)
           useAuthStore.getState().reset()
