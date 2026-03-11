@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native'
+import { useRouter } from 'expo-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useRecommendations } from '@/hooks/useRecommendations'
+import type { Recommendation } from '@/hooks/useRecommendations'
 import { useCineclub } from '@/hooks/useCineclub'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
@@ -12,6 +14,7 @@ import RecoCard from '@/components/circle/RecoCard'
 import CineclubBanner from '@/components/circle/CineclubBanner'
 
 export default function HomeScreen() {
+  const router = useRouter()
   const uid = useAuthStore((s) => s.uid)
   const circleId = useAuthStore((s) => s.circleId)
   const { items } = useCollection()
@@ -26,16 +29,58 @@ export default function HomeScreen() {
     duplicateTimerRef.current = setTimeout(() => setDuplicateMessage(null), 3000)
   }
 
-  const handleAddRecoToWishlist = async (reco: ReturnType<typeof useRecommendations>['recommendations'][number]) => {
+  const handleCineclubPress = () => {
+    if (!cineclub) return
+    router.push({
+      pathname: '/item/preview',
+      params: {
+        title: cineclub.itemTitle,
+        type: cineclub.itemType ?? 'film',
+        poster: cineclub.itemPoster ?? '',
+        synopsis: cineclub.synopsis ?? '',
+        year: String(cineclub.year ?? ''),
+        director: cineclub.director ?? '',
+        author: cineclub.author ?? '',
+        tmdbId: cineclub.tmdbId ?? '',
+        googleBooksId: cineclub.googleBooksId ?? '',
+        isbn: cineclub.isbn ?? '',
+        source: 'cineclub',
+        sourceName: cineclub.postedBy,
+      },
+    })
+  }
+
+  const handleRecoPress = (reco: Recommendation) => {
+    router.push({
+      pathname: '/item/preview',
+      params: {
+        title: reco.itemTitle,
+        type: reco.itemType ?? 'film',
+        poster: reco.itemPoster ?? '',
+        synopsis: reco.synopsis ?? '',
+        year: String(reco.year ?? ''),
+        director: reco.director ?? '',
+        author: reco.author ?? '',
+        tmdbId: reco.tmdbId ?? '',
+        googleBooksId: reco.googleBooksId ?? '',
+        isbn: reco.isbn ?? '',
+        source: 'reco',
+        sourceName: reco.fromUserName,
+      },
+    })
+  }
+
+  const handleAddRecoToWishlist = async (reco: Recommendation) => {
     if (!uid) return
-    const duplicate = findDuplicate(items, { title: reco.itemTitle, type: 'film' })
+    const type = reco.itemType ?? 'film'
+    const duplicate = findDuplicate(items, { title: reco.itemTitle, type, tmdbId: reco.tmdbId ?? undefined, googleBooksId: reco.googleBooksId ?? undefined, isbn: reco.isbn ?? undefined })
     if (duplicate) {
       showDuplicateMessage()
       return
     }
     await addItem(uid, {
       title: reco.itemTitle,
-      type: 'film',
+      type,
       poster: reco.itemPoster ?? undefined,
       status: 'wishlist',
       tier: 'none',
@@ -45,14 +90,15 @@ export default function HomeScreen() {
 
   const handleAddCineclubToWishlist = async () => {
     if (!uid || !cineclub) return
-    const duplicate = findDuplicate(items, { title: cineclub.itemTitle, type: 'film' })
+    const type = cineclub.itemType ?? 'film'
+    const duplicate = findDuplicate(items, { title: cineclub.itemTitle, type, tmdbId: cineclub.tmdbId ?? undefined, googleBooksId: cineclub.googleBooksId ?? undefined, isbn: cineclub.isbn ?? undefined })
     if (duplicate) {
       showDuplicateMessage()
       return
     }
     await addItem(uid, {
       title: cineclub.itemTitle,
-      type: 'film',
+      type,
       poster: cineclub.itemPoster ?? undefined,
       status: 'wishlist',
       tier: 'none',
@@ -78,6 +124,7 @@ export default function HomeScreen() {
             if (!circleId) return
             await deleteDoc(doc(db, 'circles', circleId, 'cineclub', 'current'))
           }}
+          onPress={handleCineclubPress}
         />
       )}
 
@@ -98,6 +145,7 @@ export default function HomeScreen() {
             key={reco.id}
             reco={reco}
             onAddToWishlist={() => handleAddRecoToWishlist(reco)}
+            onPress={() => handleRecoPress(reco)}
           />
         ))
       )}

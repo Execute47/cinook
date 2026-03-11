@@ -53,4 +53,24 @@ describe('CineclubBanner', () => {
     fireEvent.press(getByText('Retirer'))
     expect(onRemove).toHaveBeenCalledTimes(1)
   })
+
+  it('appelle onPress au tap sur le titre', () => {
+    const onPress = jest.fn()
+    const { getByText } = render(
+      <CineclubBanner cineclub={fakeCineclub} onAddToWishlist={jest.fn()} onRemove={jest.fn()} onPress={onPress} />
+    )
+    fireEvent.press(getByText('Matrix'))
+    expect(onPress).toHaveBeenCalledTimes(1)
+  })
+
+  it("n'appelle pas onPress au tap sur '+ À voir'", () => {
+    const onPress = jest.fn()
+    const onAdd = jest.fn()
+    const { getByText } = render(
+      <CineclubBanner cineclub={fakeCineclub} onAddToWishlist={onAdd} onRemove={jest.fn()} onPress={onPress} />
+    )
+    fireEvent.press(getByText('+ À voir'))
+    expect(onAdd).toHaveBeenCalledTimes(1)
+    expect(onPress).not.toHaveBeenCalled()
+  })
 })

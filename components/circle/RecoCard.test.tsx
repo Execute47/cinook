@@ -31,4 +31,24 @@ describe('RecoCard', () => {
     fireEvent.press(getByText('+ À voir'))
     expect(onAdd).toHaveBeenCalledTimes(1)
   })
+
+  it('appelle onPress au tap sur le titre', () => {
+    const onPress = jest.fn()
+    const { getByText } = render(
+      <RecoCard reco={fakeReco} onAddToWishlist={jest.fn()} onPress={onPress} />
+    )
+    fireEvent.press(getByText('Matrix'))
+    expect(onPress).toHaveBeenCalledTimes(1)
+  })
+
+  it("n'appelle pas onPress au tap sur '+ À voir'", () => {
+    const onPress = jest.fn()
+    const onAdd = jest.fn()
+    const { getByText } = render(
+      <RecoCard reco={fakeReco} onAddToWishlist={onAdd} onPress={onPress} />
+    )
+    fireEvent.press(getByText('+ À voir'))
+    expect(onAdd).toHaveBeenCalledTimes(1)
+    expect(onPress).not.toHaveBeenCalled()
+  })
 })

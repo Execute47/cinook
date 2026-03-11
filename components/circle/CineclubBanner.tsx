@@ -6,6 +6,7 @@ interface Props {
   cineclub: Cineclub
   onAddToWishlist: () => void
   onRemove: () => void
+  onPress?: () => void
 }
 
 const formatDate = (ts: Timestamp | null): string => {
@@ -16,11 +17,16 @@ const formatDate = (ts: Timestamp | null): string => {
 const getLabel = (cineclub: Cineclub): string =>
   cineclub.itemType === 'livre' ? 'Coin lecture' : 'Cinéclub'
 
-export default function CineclubBanner({ cineclub, onAddToWishlist, onRemove }: Props) {
+export default function CineclubBanner({ cineclub, onAddToWishlist, onRemove, onPress }: Props) {
   const label = getLabel(cineclub)
 
   return (
-    <View className="bg-[#1C1717] border border-amber-500 rounded-xl p-4 mb-6">
+    <TouchableOpacity
+      activeOpacity={onPress ? 0.8 : 1}
+      onPress={onPress}
+      disabled={!onPress}
+      className="bg-[#1C1717] border border-amber-500 rounded-xl p-4 mb-6"
+    >
       <Text className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">
         ⭐ {label}
       </Text>
@@ -59,6 +65,7 @@ export default function CineclubBanner({ cineclub, onAddToWishlist, onRemove }: 
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   )
 }
+

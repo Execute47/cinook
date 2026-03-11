@@ -8,6 +8,7 @@ import { useCollection } from '@/hooks/useCollection'
 import { updateItem, deleteItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
 import StatusPicker, { STATUS_OPTIONS } from '@/components/media/StatusPicker'
+import { getStatusLabel } from '@/constants/statuses'
 import RatingWidget from '@/components/media/RatingWidget'
 import TierPicker from '@/components/media/TierPicker'
 import TierBadge from '@/components/media/TierBadge'
@@ -285,11 +286,11 @@ export default function ItemDetailScreen() {
           <Text className="text-[#6B5E5E] text-sm mr-2">Statut :</Text>
           <View className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
             <Text className="text-sm font-medium" style={{ color: STATUS_MAP[item.status]?.color ?? '#9CA3AF' }}>
-              {STATUS_MAP[item.status]?.label ?? item.status}
+              {getStatusLabel(item.status, item.type)}
             </Text>
           </View>
         </View>
-        <StatusPicker current={item.status} onSelect={handleStatusChange} />
+        <StatusPicker current={item.status} onSelect={handleStatusChange} mediaType={item.type} />
         {item.status === 'loaned' && item.loanTo && (
           <View className="mt-3 pt-3 border-t border-[#3D3535]">
             <Text className="text-[#6B5E5E] text-sm">

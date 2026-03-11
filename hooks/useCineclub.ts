@@ -10,6 +10,13 @@ export interface Cineclub {
   itemTitle: string
   itemPoster: string | null
   itemType: MediaType
+  synopsis?: string | null
+  year?: number | null
+  director?: string | null
+  author?: string | null
+  tmdbId?: string | null
+  googleBooksId?: string | null
+  isbn?: string | null
   postedBy: string
   postedAt: Timestamp | null
 }
@@ -34,6 +41,13 @@ export function useCineclub() {
           itemTitle: d.itemTitle,
           itemPoster: d.itemPoster ?? null,
           itemType: d.itemType ?? 'film',
+          synopsis: d.synopsis ?? null,
+          year: d.year ?? null,
+          director: d.director ?? null,
+          author: d.author ?? null,
+          tmdbId: d.tmdbId ?? null,
+          googleBooksId: d.googleBooksId ?? null,
+          isbn: d.isbn ?? null,
           postedBy: d.postedBy,
           postedAt: d.postedAt ?? null,
         })

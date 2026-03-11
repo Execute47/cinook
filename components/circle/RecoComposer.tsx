@@ -40,6 +40,14 @@ export default function RecoComposer({ item, visible, onClose }: Props) {
         itemId: item.id,
         itemTitle: item.title,
         itemPoster: item.poster ?? null,
+        itemType: item.type,
+        synopsis: item.synopsis ?? null,
+        year: item.year ?? null,
+        director: item.director ?? null,
+        author: item.author ?? null,
+        tmdbId: item.tmdbId ?? null,
+        googleBooksId: item.googleBooksId ?? null,
+        isbn: item.isbn ?? null,
         createdAt: serverTimestamp(),
       })
       setSelected([])

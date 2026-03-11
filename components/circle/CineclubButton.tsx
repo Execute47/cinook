@@ -37,6 +37,13 @@ export default function CineclubButton({ item, currentCineclubItemId }: Props) {
       itemTitle: item.title,
       itemPoster: item.poster ?? null,
       itemType: item.type,
+      synopsis: item.synopsis ?? null,
+      year: item.year ?? null,
+      director: item.director ?? null,
+      author: item.author ?? null,
+      tmdbId: item.tmdbId ?? null,
+      googleBooksId: item.googleBooksId ?? null,
+      isbn: item.isbn ?? null,
       postedBy: displayName ?? uid,
       postedAt: serverTimestamp(),
     })

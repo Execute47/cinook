@@ -3,6 +3,7 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import type { Timestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
+import type { MediaType } from '@/types/media'
 
 export interface Recommendation {
   id: string
@@ -12,6 +13,14 @@ export interface Recommendation {
   itemId: string
   itemTitle: string
   itemPoster?: string | null
+  itemType?: MediaType
+  synopsis?: string | null
+  year?: number | null
+  director?: string | null
+  author?: string | null
+  tmdbId?: string | null
+  googleBooksId?: string | null
+  isbn?: string | null
   createdAt: Timestamp
 }
 

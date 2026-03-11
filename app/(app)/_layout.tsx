@@ -17,6 +17,7 @@ export default function AppLayout() {
       <Tabs.Screen name="settings" options={{ title: 'Paramètres' }} />
       <Tabs.Screen name="member/[uid]" options={{ href: null }} />
       <Tabs.Screen name="item/[id]" options={{ href: null }} />
+      <Tabs.Screen name="item/preview" options={{ href: null }} />
     </Tabs>
   )
 }
