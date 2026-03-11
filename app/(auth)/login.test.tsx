@@ -29,10 +29,11 @@ jest.mock('@/lib/auth', () => ({
 }))
 
 const mockSetUser = jest.fn()
-const mockSetCircle = jest.fn()
+const mockSetCircleIds = jest.fn()
+const mockSetActiveCircle = jest.fn()
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: {
-    getState: () => ({ setUser: mockSetUser, setCircle: mockSetCircle }),
+    getState: () => ({ setUser: mockSetUser, setCircleIds: mockSetCircleIds, setActiveCircle: mockSetActiveCircle }),
   },
 }))
 
@@ -67,11 +68,11 @@ describe('LoginScreen', () => {
       })
     })
 
-    it('appelle setCircle si circleId présent dans Firestore', async () => {
+    it('appelle setCircleIds et setActiveCircle si circleIds présent dans Firestore', async () => {
       const fakeUser = { uid: 'uid-2', email: 'test@test.com' }
       mockSignIn.mockResolvedValueOnce({ user: fakeUser })
       mockGetDoc.mockResolvedValueOnce({
-        data: () => ({ displayName: 'Bob', circleId: 'circle-abc' }),
+        data: () => ({ displayName: 'Bob', circleIds: ['circle-abc'] }),
       })
 
       const { getByPlaceholderText, getByText } = render(<LoginScreen />)
@@ -80,7 +81,8 @@ describe('LoginScreen', () => {
       fireEvent.press(getByText('Se connecter'))
 
       await waitFor(() => {
-        expect(mockSetCircle).toHaveBeenCalledWith('circle-abc', false)
+        expect(mockSetCircleIds).toHaveBeenCalledWith(['circle-abc'])
+        expect(mockSetActiveCircle).toHaveBeenCalledWith('circle-abc')
       })
     })
   })

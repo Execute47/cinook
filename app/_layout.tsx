@@ -26,8 +26,10 @@ export default function RootLayout() {
           const userDoc = await getDoc(doc(db, 'users', user.uid))
           const data = userDoc.data()
           useAuthStore.getState().setUser(user.uid, user.email ?? '', data?.displayName ?? null)
-          if (data?.circleId) {
-            useAuthStore.getState().setCircle(data.circleId, false)
+          const circleIds: string[] = data?.circleIds ?? (data?.circleId ? [data.circleId] : [])
+          if (circleIds.length > 0) {
+            useAuthStore.getState().setCircleIds(circleIds)
+            useAuthStore.getState().setActiveCircle(circleIds[0])
           }
         } catch (e) {
           console.error('Failed to load user profile:', e)

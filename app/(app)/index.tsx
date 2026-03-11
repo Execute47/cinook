@@ -16,7 +16,7 @@ import CineclubBanner from '@/components/circle/CineclubBanner'
 export default function HomeScreen() {
   const router = useRouter()
   const uid = useAuthStore((s) => s.uid)
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleId = useAuthStore((s) => s.activeCircleId)
   const { items } = useCollection()
   const { recommendations, loading: recoLoading } = useRecommendations()
   const { cineclub, loading: cineclubLoading } = useCineclub()

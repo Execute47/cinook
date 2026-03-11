@@ -14,7 +14,7 @@ import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal'
 export default function SettingsScreen() {
   const { items } = useCollection()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleIds = useAuthStore((s) => s.circleIds)
 
   const handleSignOut = async () => {
     try {
@@ -93,7 +93,7 @@ export default function SettingsScreen() {
           const user = auth.currentUser!
           const credential = EmailAuthProvider.credential(user.email!, password)
           await reauthenticateWithCredential(user, credential)
-          await deleteAccount(user.uid, circleId ?? null)
+          await deleteAccount(user.uid, circleIds)
           useAuthStore.getState().reset()
           router.replace('/(auth)/login')
         }}
@@ -103,7 +103,7 @@ export default function SettingsScreen() {
           if (!data?.idToken) throw new Error('No idToken')
           const credential = GoogleAuthProvider.credential(data.idToken)
           await reauthenticateWithCredential(user, credential)
-          await deleteAccount(user.uid, circleId ?? null)
+          await deleteAccount(user.uid, circleIds)
           useAuthStore.getState().reset()
           router.replace('/(auth)/login')
         }}

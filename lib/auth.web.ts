@@ -11,14 +11,16 @@ async function hydrateUser(user: { uid: string; email: string | null; displayNam
     await setDoc(userRef, {
       displayName: user.displayName ?? null,
       email: user.email ?? '',
-      circleId: null,
+      circleIds: [],
       createdAt: serverTimestamp(),
     })
   }
   const profile = userSnap.exists() ? userSnap.data() : null
   useAuthStore.getState().setUser(user.uid, user.email ?? '', user.displayName ?? null)
-  if (profile?.circleId) {
-    useAuthStore.getState().setCircle(profile.circleId, false)
+  const circleIds: string[] = profile?.circleIds ?? (profile?.circleId ? [profile.circleId] : [])
+  if (circleIds.length > 0) {
+    useAuthStore.getState().setCircleIds(circleIds)
+    useAuthStore.getState().setActiveCircle(circleIds[0])
   }
 }
 

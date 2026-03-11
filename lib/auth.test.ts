@@ -43,10 +43,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({}))
 jest.mock('@/lib/firebase', () => ({ auth: {}, db: {} }))
 
 const mockSetUser = jest.fn()
-const mockSetCircle = jest.fn()
+const mockSetCircleIds = jest.fn()
+const mockSetActiveCircle = jest.fn()
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: {
-    getState: () => ({ setUser: mockSetUser, setCircle: mockSetCircle }),
+    getState: () => ({ setUser: mockSetUser, setCircleIds: mockSetCircleIds, setActiveCircle: mockSetActiveCircle }),
   },
 }))
 
@@ -92,7 +93,7 @@ describe('signInWithGoogle', () => {
       mockSignIn.mockResolvedValueOnce({ data: { idToken: 'mock-id-token' } })
       mockGoogleCredential.mockReturnValueOnce('mock-credential')
       mockSignInWithCredential.mockResolvedValueOnce({ user: fakeUser })
-      mockGetDoc.mockResolvedValueOnce({ exists: () => true, data: () => ({ circleId: null }) })
+      mockGetDoc.mockResolvedValueOnce({ exists: () => true, data: () => ({ circleIds: [] }) })
 
       const result = await signInWithGoogle()
 
@@ -101,16 +102,17 @@ describe('signInWithGoogle', () => {
       expect(result).toBe(true)
     })
 
-    it('appelle setCircle si circleId présent', async () => {
+    it('appelle setCircleIds et setActiveCircle si circleIds présent', async () => {
       mockHasPlayServices.mockResolvedValueOnce(true)
       mockSignIn.mockResolvedValueOnce({ data: { idToken: 'mock-id-token' } })
       mockGoogleCredential.mockReturnValueOnce('mock-credential')
       mockSignInWithCredential.mockResolvedValueOnce({ user: fakeUser })
-      mockGetDoc.mockResolvedValueOnce({ exists: () => true, data: () => ({ circleId: 'circle-1' }) })
+      mockGetDoc.mockResolvedValueOnce({ exists: () => true, data: () => ({ circleIds: ['circle-1'] }) })
 
       await signInWithGoogle()
 
-      expect(mockSetCircle).toHaveBeenCalledWith('circle-1', false)
+      expect(mockSetCircleIds).toHaveBeenCalledWith(['circle-1'])
+      expect(mockSetActiveCircle).toHaveBeenCalledWith('circle-1')
     })
   })
 

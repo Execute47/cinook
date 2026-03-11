@@ -14,7 +14,7 @@ let mockUid = 'uid-me'
 let mockCircleId = 'circle-1'
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ uid: mockUid, circleId: mockCircleId }),
+    selector({ uid: mockUid, activeCircleId: mockCircleId }),
 }))
 
 import { useRecommendations } from './useRecommendations'

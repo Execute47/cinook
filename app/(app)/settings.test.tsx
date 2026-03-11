@@ -6,6 +6,10 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
 }))
 
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: { signIn: jest.fn() },
+}))
+
 const mockSignOut = jest.fn()
 jest.mock('firebase/auth', () => ({
   signOut: (...args: unknown[]) => mockSignOut(...args),
@@ -22,9 +26,10 @@ jest.mock('@/lib/firebase', () => ({ auth: {}, db: {} }))
 
 const mockReset = jest.fn()
 jest.mock('@/stores/authStore', () => ({
-  useAuthStore: {
-    getState: () => ({ reset: mockReset }),
-  },
+  useAuthStore: Object.assign(
+    (selector: (s: object) => unknown) => selector({ circleIds: [] }),
+    { getState: () => ({ reset: mockReset }) }
+  ),
 }))
 
 const mockAddToast = jest.fn()

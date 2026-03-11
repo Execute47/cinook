@@ -13,10 +13,10 @@ export async function deleteAllItems(uid: string): Promise<number> {
   return snap.size
 }
 
-export async function deleteAccount(uid: string, circleId: string | null): Promise<void> {
+export async function deleteAccount(uid: string, circleIds: string[]): Promise<void> {
   await deleteAllItems(uid)
 
-  if (circleId) {
+  for (const circleId of circleIds) {
     const circle = await getCircle(circleId)
     if (circle) {
       if (circle.members.length === 1) {

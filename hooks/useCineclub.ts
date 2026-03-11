@@ -22,7 +22,7 @@ export interface Cineclub {
 }
 
 export function useCineclub() {
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleId = useAuthStore((s) => s.activeCircleId)
   const [cineclub, setCineclub] = useState<Cineclub | null>(null)
   const [loading, setLoading] = useState(true)
 

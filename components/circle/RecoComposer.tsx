@@ -15,7 +15,7 @@ interface Props {
 export default function RecoComposer({ item, visible, onClose }: Props) {
   const uid = useAuthStore((s) => s.uid)
   const displayName = useAuthStore((s) => s.displayName)
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleId = useAuthStore((s) => s.activeCircleId)
   const { members } = useCircle()
 
   const [selected, setSelected] = useState<string[]>([])

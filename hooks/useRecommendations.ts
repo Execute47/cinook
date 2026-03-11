@@ -26,7 +26,7 @@ export interface Recommendation {
 
 export function useRecommendations() {
   const uid = useAuthStore((s) => s.uid)
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleId = useAuthStore((s) => s.activeCircleId)
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

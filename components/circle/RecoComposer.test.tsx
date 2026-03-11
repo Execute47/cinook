@@ -16,7 +16,7 @@ jest.mock('@/lib/firebase', () => ({ db: {} }))
 
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ uid: 'uid-me', displayName: 'Moi', circleId: 'circle-1' }),
+    selector({ uid: 'uid-me', displayName: 'Moi', activeCircleId: 'circle-1' }),
 }))
 
 jest.mock('@/hooks/useCircle', () => ({

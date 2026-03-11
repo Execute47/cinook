@@ -23,7 +23,7 @@ const showAlert = (title: string, message: string) => {
 export default function CineclubButton({ item, currentCineclubItemId }: Props) {
   const uid = useAuthStore((s) => s.uid)
   const displayName = useAuthStore((s) => s.displayName)
-  const circleId = useAuthStore((s) => s.circleId)
+  const circleId = useAuthStore((s) => s.activeCircleId)
 
   if (!circleId) return null
 

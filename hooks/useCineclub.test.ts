@@ -13,7 +13,7 @@ jest.mock('@/lib/firebase', () => ({ db: {} }))
 let mockCircleId: string | null = 'circle-1'
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ circleId: mockCircleId }),
+    selector({ activeCircleId: mockCircleId }),
 }))
 
 import { useCineclub } from './useCineclub'
