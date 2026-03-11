@@ -8,6 +8,7 @@ export interface Member {
 
 export interface CircleData {
   id: string
+  name: string
   members: string[]
   adminId: string
   inviteToken?: string

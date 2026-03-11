@@ -17,19 +17,25 @@ const generateUUID = (): string => {
 
 export interface Circle {
   id: string
+  name: string
   members: string[]
   adminId: string
   inviteToken?: string
 }
 
-export async function createCircle(uid: string): Promise<string> {
+export async function createCircle(uid: string, name: string): Promise<string> {
   const ref = await addDoc(collection(db, 'circles'), {
+    name,
     members: [uid],
     adminId: uid,
     createdAt: serverTimestamp(),
   })
   await updateDoc(doc(db, 'users', uid), { circleIds: arrayUnion(ref.id) })
   return ref.id
+}
+
+export async function updateCircleName(circleId: string, name: string): Promise<void> {
+  await updateDoc(doc(db, 'circles', circleId), { name })
 }
 
 export async function getCircle(circleId: string): Promise<Circle | null> {

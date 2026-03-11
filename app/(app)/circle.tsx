@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, Share,
+  View, Text, TextInput, TouchableOpacity, ActivityIndicator, Share,
   ScrollView, Alert, Platform,
 } from 'react-native'
 import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import {
   createCircle, getCircle, generateInviteToken, joinCircle,
-  removeMember, promoteMember, leaveCircle, deleteCircle,
+  removeMember, promoteMember, leaveCircle, deleteCircle, updateCircleName,
 } from '@/lib/circle'
 import { useCircle } from '@/hooks/useCircle'
 import MemberList from '@/components/circle/MemberList'
@@ -19,8 +19,8 @@ const INVITE_BASE_URL = 'https://cinook-caf55.web.app/invite'
 
 interface CircleSummary {
   id: string
+  name: string
   adminId: string
-  adminName: string | null
   memberCount: number
 }
 
@@ -50,18 +50,28 @@ export default function CircleScreen() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [circleSummaries, setCircleSummaries] = useState<CircleSummary[]>([])
 
+  // Formulaire création
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [newCircleName, setNewCircleName] = useState('')
+  const [creating, setCreating] = useState(false)
+
+  // Renommage (admin)
+  const [editingName, setEditingName] = useState(false)
+  const [editNameValue, setEditNameValue] = useState('')
+
   const { members, isAdmin, adminId, loading: circleLoading } = useCircle()
 
-  const loadSummaries = async (ids: string[], currentUid: string) => {
+  const circleDisplayName = (s: CircleSummary) => s.name || 'Cercle sans nom'
+
+  const loadSummaries = async (ids: string[]) => {
     const summaries = await Promise.all(
       ids.map(async (cid) => {
         const circle = await getCircle(cid)
         if (!circle) return null
-        const adminSnap = await getDoc(doc(db, 'users', circle.adminId))
         return {
           id: cid,
+          name: circle.name ?? '',
           adminId: circle.adminId,
-          adminName: adminSnap.data()?.displayName ?? null,
           memberCount: circle.members.length,
         } as CircleSummary
       })
@@ -99,7 +109,7 @@ export default function CircleScreen() {
 
         setCircleIds(ids)
 
-        const summaries = await loadSummaries(ids, uid)
+        const summaries = await loadSummaries(ids)
         setCircleSummaries(summaries)
 
         if (!useAuthStore.getState().activeCircleId && ids.length > 0) {
@@ -172,7 +182,6 @@ export default function CircleScreen() {
 
   const handleLeaveCircle = () => {
     if (!activeCircleId || !uid) return
-
     const otherMembers = members.filter((m) => m.uid !== uid)
 
     if (!isAdmin) {
@@ -211,23 +220,37 @@ export default function CircleScreen() {
   }
 
   const handleCreateCircle = async () => {
-    if (!uid) return
+    if (!uid || !newCircleName.trim()) return
+    setCreating(true)
     try {
-      const newCircleId = await createCircle(uid)
+      const newCircleId = await createCircle(uid, newCircleName.trim())
       addCircleId(newCircleId)
-      const adminSnap = await getDoc(doc(db, 'users', uid))
       setCircleSummaries((prev) => [
         ...prev,
-        {
-          id: newCircleId,
-          adminId: uid,
-          adminName: adminSnap.data()?.displayName ?? null,
-          memberCount: 1,
-        },
+        { id: newCircleId, name: newCircleName.trim(), adminId: uid, memberCount: 1 },
       ])
+      setNewCircleName('')
+      setShowCreateForm(false)
       setInviteLink(null)
     } catch {
       setInitError('Impossible de créer le cercle.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleRenameCircle = async () => {
+    if (!activeCircleId || !editNameValue.trim()) return
+    try {
+      await updateCircleName(activeCircleId, editNameValue.trim())
+      setCircleSummaries((prev) =>
+        prev.map((s) =>
+          s.id === activeCircleId ? { ...s, name: editNameValue.trim() } : s
+        )
+      )
+      setEditingName(false)
+    } catch {
+      setInitError('Impossible de renommer le cercle.')
     }
   }
 
@@ -247,6 +270,7 @@ export default function CircleScreen() {
   const handleSwitchCircle = (circleId: string) => {
     setActiveCircle(circleId)
     setInviteLink(null)
+    setEditingName(false)
   }
 
   if (initLoading || (activeCircleId && circleLoading)) {
@@ -257,37 +281,108 @@ export default function CircleScreen() {
     )
   }
 
+  // Écran "aucun cercle" — formulaire de création ou message
   if (!activeCircleId) {
     return (
-      <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-8">
+      <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 32, paddingTop: 80 }}>
         <Text className="text-white text-2xl font-bold mb-2 text-center">Mon Cercle</Text>
         <Text className="text-[#6B5E5E] text-sm mb-8 text-center">
           Vous ne faites partie d'aucun cercle.
         </Text>
         {initError && <Text className="text-red-400 mb-4 text-sm text-center">{initError}</Text>}
-        <TouchableOpacity
-          onPress={handleCreateCircle}
-          className="bg-amber-500 py-4 rounded-xl w-full items-center mb-3"
-        >
-          <Text className="text-black font-bold">Créer un cercle</Text>
-        </TouchableOpacity>
-        <Text className="text-[#6B5E5E] text-xs text-center">
+
+        {showCreateForm ? (
+          <View className="bg-[#1C1717] rounded-xl p-4 mb-4">
+            <Text className="text-white font-semibold mb-3">Nom du cercle</Text>
+            <TextInput
+              value={newCircleName}
+              onChangeText={setNewCircleName}
+              placeholder="Ex : Famille, Cinéphiles..."
+              placeholderTextColor="#6B5E5E"
+              className="bg-[#0E0B0B] text-white px-3 py-3 rounded-lg mb-3"
+              autoFocus
+              maxLength={40}
+            />
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => { setShowCreateForm(false); setNewCircleName('') }}
+                className="flex-1 py-3 items-center border border-[#3D3535] rounded-lg"
+              >
+                <Text className="text-[#6B5E5E] text-sm">Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCreateCircle}
+                disabled={!newCircleName.trim() || creating}
+                className={`flex-1 py-3 items-center rounded-lg ${newCircleName.trim() && !creating ? 'bg-amber-500' : 'bg-[#3A2E2E]'}`}
+              >
+                <Text className={`font-semibold text-sm ${newCircleName.trim() && !creating ? 'text-black' : 'text-[#6B5E5E]'}`}>
+                  {creating ? 'Création...' : 'Créer'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => setShowCreateForm(true)}
+            className="bg-amber-500 py-4 rounded-xl w-full items-center mb-3"
+          >
+            <Text className="text-black font-bold">Créer un cercle</Text>
+          </TouchableOpacity>
+        )}
+
+        <Text className="text-[#6B5E5E] text-xs text-center mt-2">
           Pour rejoindre un cercle existant, ouvrez le lien d'invitation partagé par un admin.
         </Text>
-      </View>
+      </ScrollView>
     )
   }
 
+  const activeCircleName = circleSummaries.find((s) => s.id === activeCircleId)?.name ?? ''
   const otherMembers = members.filter((m) => m.uid !== uid)
-  const activeCircleLabel = (id: string) => {
-    const s = circleSummaries.find((s) => s.id === id)
-    if (!s) return 'Cercle'
-    return s.adminId === uid ? 'Mon cercle' : `Cercle de ${s.adminName ?? 'inconnu'}`
-  }
 
   return (
     <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 16, paddingTop: 48 }}>
-      <Text className="text-white text-2xl font-bold mb-1">Mes Cercles</Text>
+
+      {/* Nom du cercle actif + renommage admin */}
+      {editingName ? (
+        <View className="flex-row items-center gap-2 mb-1">
+          <TextInput
+            value={editNameValue}
+            onChangeText={setEditNameValue}
+            className="flex-1 bg-[#1C1717] text-white text-xl font-bold px-3 py-2 rounded-lg"
+            autoFocus
+            maxLength={40}
+          />
+          <TouchableOpacity
+            onPress={handleRenameCircle}
+            disabled={!editNameValue.trim()}
+            className="bg-amber-500 px-3 py-2 rounded-lg"
+          >
+            <Text className="text-black font-semibold text-sm">OK</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setEditingName(false)}
+            className="px-3 py-2"
+          >
+            <Text className="text-[#6B5E5E] text-sm">✕</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View className="flex-row items-center gap-2 mb-1">
+          <Text className="text-white text-2xl font-bold flex-1" numberOfLines={1}>
+            {activeCircleName || 'Cercle sans nom'}
+          </Text>
+          {isAdmin && (
+            <TouchableOpacity
+              onPress={() => { setEditNameValue(activeCircleName); setEditingName(true) }}
+              className="p-1"
+            >
+              <Text className="text-[#6B5E5E] text-sm">✎</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       <Text className="text-[#6B5E5E] text-sm mb-4">
         {isAdmin ? 'Administratrice' : 'Membre'}
       </Text>
@@ -306,7 +401,7 @@ export default function CircleScreen() {
               <Text
                 className={`text-sm ${activeCircleId === s.id ? 'text-black font-semibold' : 'text-[#6B5E5E]'}`}
               >
-                {activeCircleLabel(s.id)}
+                {circleDisplayName(s)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -361,14 +456,47 @@ export default function CircleScreen() {
         </View>
       )}
 
-      {/* Actions */}
-      <View className="mt-6 gap-3">
-        <TouchableOpacity
-          onPress={handleCreateCircle}
-          className="py-3 items-center border border-[#3D3535] rounded-lg"
-        >
-          <Text className="text-[#6B5E5E] text-sm">+ Créer un nouveau cercle</Text>
-        </TouchableOpacity>
+      {/* Créer un nouveau cercle */}
+      <View className="mt-6">
+        {showCreateForm ? (
+          <View className="bg-[#1C1717] rounded-xl p-4 mb-3">
+            <Text className="text-white font-semibold mb-3">Nom du nouveau cercle</Text>
+            <TextInput
+              value={newCircleName}
+              onChangeText={setNewCircleName}
+              placeholder="Ex : Famille, Cinéphiles..."
+              placeholderTextColor="#6B5E5E"
+              className="bg-[#0E0B0B] text-white px-3 py-3 rounded-lg mb-3"
+              autoFocus
+              maxLength={40}
+            />
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => { setShowCreateForm(false); setNewCircleName('') }}
+                className="flex-1 py-3 items-center border border-[#3D3535] rounded-lg"
+              >
+                <Text className="text-[#6B5E5E] text-sm">Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCreateCircle}
+                disabled={!newCircleName.trim() || creating}
+                className={`flex-1 py-3 items-center rounded-lg ${newCircleName.trim() && !creating ? 'bg-amber-500' : 'bg-[#3A2E2E]'}`}
+              >
+                <Text className={`font-semibold text-sm ${newCircleName.trim() && !creating ? 'text-black' : 'text-[#6B5E5E]'}`}>
+                  {creating ? 'Création...' : 'Créer'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => setShowCreateForm(true)}
+            className="py-3 items-center border border-[#3D3535] rounded-lg mb-3"
+          >
+            <Text className="text-[#6B5E5E] text-sm">+ Créer un nouveau cercle</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           onPress={handleLeaveCircle}
           className="py-3 items-center border border-red-900 rounded-lg"

@@ -24,25 +24,38 @@ jest.mock('firebase/firestore', () => ({
   serverTimestamp: jest.fn(() => 'SERVER_TIMESTAMP'),
 }))
 
-import { createCircle, generateInviteToken, joinCircle, removeMember, promoteMember, leaveCircle, deleteCircle } from './circle'
+import { createCircle, generateInviteToken, joinCircle, removeMember, promoteMember, leaveCircle, deleteCircle, updateCircleName } from './circle'
 
 beforeEach(() => jest.clearAllMocks())
 
 describe('createCircle', () => {
-  it('crée un doc circle et ajoute le circleId dans circleIds[]', async () => {
+  it('crée un doc circle avec le nom et ajoute le circleId dans circleIds[]', async () => {
     mockAddDoc.mockResolvedValueOnce({ id: 'circle-1' })
     mockUpdateDoc.mockResolvedValue(undefined)
 
-    const circleId = await createCircle('uid-1')
+    const circleId = await createCircle('uid-1', 'Famille')
 
     expect(circleId).toBe('circle-1')
     expect(mockAddDoc).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ members: ['uid-1'], adminId: 'uid-1' })
+      expect.objectContaining({ name: 'Famille', members: ['uid-1'], adminId: 'uid-1' })
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-1' }),
       { circleIds: expect.objectContaining({ __arrayUnion: 'circle-1' }) }
+    )
+  })
+})
+
+describe('updateCircleName', () => {
+  it('met à jour le nom du cercle', async () => {
+    mockUpdateDoc.mockResolvedValue(undefined)
+
+    await updateCircleName('circle-1', 'Cinéphiles')
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'circles/circle-1' }),
+      { name: 'Cinéphiles' }
     )
   })
 })
