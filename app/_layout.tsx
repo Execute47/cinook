@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { View, ActivityIndicator } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Stack, useRouter, useSegments } from 'expo-router'
+import { ToastContainer } from '@/components/ui/Toast'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
@@ -64,6 +65,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} />
+      <ToastContainer />
     </SafeAreaProvider>
   )
 }

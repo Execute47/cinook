@@ -27,10 +27,21 @@ jest.mock('@/stores/authStore', () => ({
   },
 }))
 
+const mockAddToast = jest.fn()
+const mockSetLoading = jest.fn()
 jest.mock('@/stores/uiStore', () => ({
   useUIStore: {
-    getState: () => ({ addToast: jest.fn() }),
+    getState: () => ({ addToast: mockAddToast, setLoading: mockSetLoading }),
   },
+}))
+
+const mockExportCollection = jest.fn()
+jest.mock('@/lib/export', () => ({
+  exportCollection: (...args: unknown[]) => mockExportCollection(...args),
+}))
+
+jest.mock('@/hooks/useCollection', () => ({
+  useCollection: () => ({ items: [{ id: '1', title: 'Film A', type: 'film' }], loading: false }),
 }))
 
 import { router } from 'expo-router'
@@ -50,6 +61,28 @@ describe('SettingsScreen', () => {
         expect(mockReset).toHaveBeenCalled()
         expect(router.replace).toHaveBeenCalledWith('/(auth)/login')
       })
+    })
+  })
+
+  describe('AC1 — Export CSV', () => {
+    it('appelle exportCollection avec format csv', async () => {
+      mockExportCollection.mockResolvedValueOnce(undefined)
+      const { getByText } = render(<SettingsScreen />)
+      fireEvent.press(getByText('Exporter en CSV'))
+      await waitFor(() =>
+        expect(mockExportCollection).toHaveBeenCalledWith(expect.any(Array), 'csv')
+      )
+    })
+  })
+
+  describe('AC1 — Export JSON', () => {
+    it('appelle exportCollection avec format json', async () => {
+      mockExportCollection.mockResolvedValueOnce(undefined)
+      const { getByText } = render(<SettingsScreen />)
+      fireEvent.press(getByText('Exporter en JSON'))
+      await waitFor(() =>
+        expect(mockExportCollection).toHaveBeenCalledWith(expect.any(Array), 'json')
+      )
     })
   })
 })

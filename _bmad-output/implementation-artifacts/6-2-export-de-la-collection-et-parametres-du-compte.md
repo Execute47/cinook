@@ -1,6 +1,6 @@
 # Story 6.2 : Export de la collection et paramètres du compte
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -36,32 +36,29 @@ Afin d'avoir la souveraineté sur mes données et de pouvoir me déconnecter ou 
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Créer `lib/export.ts`** (AC1, AC2)
-  - [ ] `exportCollection(items: MediaItem[], format: 'csv' | 'json'): string`
-  - [ ] CSV : colonnes titre, type, statut, note, tier, commentaire, addedAt, loanTo, loanDate
-  - [ ] JSON : tableau d'objets MediaItem sérialisé
-  - [ ] Utiliser `expo-sharing` pour partager le fichier généré
-  - [ ] Utiliser `expo-file-system` pour écrire le fichier temporaire
+- [x] **Task 1 — `lib/export.ts`** (AC1, AC2)
+  - [x] `exportCollection(items, format)` → écrit fichier temporaire + `Sharing.shareAsync`
+  - [x] CSV : 9 colonnes (titre, type, statut, note, tier, commentaire, ajouteLe, pretA, datePret), guillemets échappés
+  - [x] JSON : `JSON.stringify(items, null, 2)`
+  - [x] `expo-sharing` et `expo-file-system` installés
 
-- [ ] **Task 2 — Créer `app/(app)/settings.tsx`** (AC1, AC3, AC4)
-  - [ ] Section "Export" : bouton "Exporter en CSV" + bouton "Exporter en JSON"
-  - [ ] Section "Compte" : bouton "Se déconnecter"
-  - [ ] Section "Danger" : bouton "Supprimer mon compte" (rouge, confirmation modal)
+- [x] **Task 2 — `app/(app)/settings.tsx`** (AC1, AC3)
+  - [x] Section "Export" : "Exporter en CSV" + "Exporter en JSON", loading via `uiStore.loading.export`
+  - [x] Section "Compte" : "Se déconnecter" (existait déjà)
+  - [x] Section "Zone de danger" : bouton placeholder (AC4 déférée à Story 6.3)
 
-- [ ] **Task 3 — Déconnexion** (AC3)
-  - [ ] `signOut(auth)` → `authStore.reset()` → navigation vers `/(auth)/login`
-  - [ ] Réutiliser le pattern de Story 1.3
+- [x] **Task 3 — Déconnexion** (AC3) — déjà implémentée dans settings.tsx existant ✅
 
-- [ ] **Task 4 — Suppression du compte** (AC4 — reportée à Story 6.3, ne pas implémenter ici)
+- [x] **Task 4 — N/A** (reportée à Story 6.3)
 
-- [ ] **Task 5 — Ajouter lien Settings dans navigation** (AC1)
-  - [ ] Icône paramètres dans le header ou un onglet dédié dans `app/(app)/_layout.tsx`
+- [x] **Task 5 — Navigation** (AC1) — onglet "Paramètres" déjà présent dans `_layout.tsx` ✅
 
-- [ ] **Task 6 — Tests** (tous ACs)
-  - [ ] Test `exportCollection` CSV : colonnes correctes, tous les items présents
-  - [ ] Test `exportCollection` JSON : structure valide
-  - [ ] Test déconnexion : `signOut` + `authStore.reset()` appelés
-  - [ ] Test suppression : confirmation demandée, deleteDoc + deleteUser appelés
+- [x] **Task 6 — Tests** (AC1, AC2, AC3)
+  - [x] `exportCollection` CSV : en-têtes, données item, échappement guillemets, champs optionnels vides
+  - [x] `exportCollection` JSON : JSON valide, tous les items, extension .json
+  - [x] Settings : "Exporter en CSV" → `exportCollection(items, 'csv')`
+  - [x] Settings : "Exporter en JSON" → `exportCollection(items, 'json')`
+  - [x] Settings : déconnexion → `signOut` + `reset` + redirect
 
 ## Dev Notes
 
@@ -122,11 +119,23 @@ L'export utilise `uiStore.loading.export` (déjà défini en Story 1.1) pour blo
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
+
 ### Debug Log References
+- Dev Notes référençaient `item.mediaType` — corrigé en `item.type` (champ réel de MediaItem).
+- AC3 et Task 5 déjà implémentés dans le code existant — non re-développés.
+- AC4 (suppression compte) intentionnellement déférée à Story 6.3, bouton placeholder ajouté.
+
 ### Completion Notes List
+- `lib/export.ts` : stub → implémentation complète. `itemsToCsv` avec échappement CSV correct. `exportCollection` async via FileSystem + Sharing.
+- `app/(app)/settings.tsx` : section Export avec 2 boutons + loading + toast d'erreur. Section danger avec placeholder.
+- 11 nouveaux tests (9 lib/export + 2 settings export), 266 tests passent au total.
+
 ### File List
 
-- `lib/export.ts` (nouveau)
-- `lib/export.test.ts` (nouveau)
-- `app/(app)/settings.tsx` (nouveau)
-- `app/(app)/_layout.tsx` (lien Settings)
+- `lib/export.ts` (modifié — stub → implémentation)
+- `lib/export.test.ts` (nouveau — 9 tests)
+- `app/(app)/settings.tsx` (modifié — section Export + Zone de danger)
+- `app/(app)/settings.test.tsx` (modifié — 2 tests export)
+- `package.json` (modifié — expo-sharing, expo-file-system)
+- `package-lock.json` (modifié)

@@ -102,7 +102,7 @@ development_status:
   # ─────────────────────────────────────────────────────
   epic-6: in-progress
   6-1-mode-hors-ligne-lecture-et-ecriture: review
-  6-2-export-de-la-collection-et-parametres-du-compte: ready-for-dev
+  6-2-export-de-la-collection-et-parametres-du-compte: in-progress
   6-3-suppression-des-donnees-et-du-compte: ready-for-dev
   6-4-configuration-pwa: ready-for-dev
   epic-6-retrospective: optional
