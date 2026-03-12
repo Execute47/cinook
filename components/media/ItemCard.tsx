@@ -57,19 +57,21 @@ export default function ItemCard({ item, onPress, animationIndex }: Props) {
             <View className="bg-[#3D3535] px-2 py-0.5 rounded">
               <Text className="text-amber-400 text-xs">{TYPE_LABEL[item.type] ?? item.type}</Text>
             </View>
-            <View className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
-              <Text className="text-xs" style={{ color: STATUS_MAP[item.status]?.color ?? '#9CA3AF' }}>
-                {getStatusLabel(item.status, item.type)}
-              </Text>
-            </View>
+            {item.statuses.map((s) => (
+              <View key={s} className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
+                <Text className="text-xs font-medium" style={{ color: STATUS_MAP[s]?.color ?? '#9CA3AF' }}>
+                  {getStatusLabel(s, item.type)}
+                </Text>
+              </View>
+            ))}
           </View>
-          {item.status === 'loaned' && item.loanTo && (
+          {item.statuses.includes('loaned') && item.loanTo && (
             <View className="flex-row items-center gap-1 mt-1">
               <Ionicons name="arrow-forward" size={12} color="#FBBF24" />
               <Text className="text-amber-400 text-xs">{item.loanTo}</Text>
             </View>
           )}
-          {item.status === 'watched' && item.endedAt && (
+          {item.statuses.includes('watched') && item.endedAt && (
             <Text className="text-[#6B5E5E] text-xs mt-1">
               {item.type === 'livre' ? 'Lu le' : 'Vu le'} {item.endedAt.toDate().toLocaleDateString('fr-FR')}
             </Text>

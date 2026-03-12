@@ -60,7 +60,7 @@ export default function PreviewScreen() {
         tmdbId,
         googleBooksId,
         isbn,
-        status: 'owned',
+        statuses: ['owned'],
         tier: 'none',
         addedVia: 'discover',
       })

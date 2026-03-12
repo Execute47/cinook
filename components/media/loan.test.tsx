@@ -10,6 +10,11 @@ jest.mock('firebase/firestore', () => ({
   deleteField: jest.fn(),
 }))
 
+jest.mock('@react-native-community/datetimepicker', () => {
+  const { View } = require('react-native')
+  return (props: any) => <View testID="datetimepicker" />
+})
+
 import LoanModal from './LoanModal'
 import LoanList from './LoanList'
 
@@ -32,11 +37,11 @@ const makeLoanedItem = (overrides: Partial<MediaItem> = {}): MediaItem => ({
 // ─── LoanModal ─────────────────────────────────────────────────────────────
 describe('LoanModal', () => {
   it('affiche les champs Prêté à et Date du prêt', () => {
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText, getByText } = render(
       <LoanModal visible onValidate={jest.fn()} onCancel={jest.fn()} />
     )
     expect(getByPlaceholderText("Nom de l'emprunteur")).toBeTruthy()
-    expect(getByPlaceholderText('jj/mm/aaaa')).toBeTruthy()
+    expect(getByText('Date du prêt')).toBeTruthy()
   })
 
   it('Valider est désactivé si le nom est vide', () => {
@@ -48,16 +53,14 @@ describe('LoanModal', () => {
     expect(onValidate).not.toHaveBeenCalled()
   })
 
-  it('Valider appelle onValidate avec loanTo et un Timestamp', () => {
+  it('Valider appelle onValidate avec loanTo et un Timestamp par défaut', () => {
     const onValidate = jest.fn()
     const { getByPlaceholderText, getByText } = render(
       <LoanModal visible onValidate={onValidate} onCancel={jest.fn()} />
     )
     fireEvent.changeText(getByPlaceholderText("Nom de l'emprunteur"), 'Bob')
-    fireEvent.changeText(getByPlaceholderText('jj/mm/aaaa'), '15/01/2025')
     fireEvent.press(getByText('Valider'))
     expect(onValidate).toHaveBeenCalledWith('Bob', expect.objectContaining({ toDate: expect.any(Function) }))
-    expect(mockTimestampFromDate).toHaveBeenCalledWith(new Date(2025, 0, 15))
   })
 
   it('Annuler appelle onCancel', () => {

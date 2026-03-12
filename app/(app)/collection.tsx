@@ -70,7 +70,7 @@ export default function CollectionScreen() {
       const matchesQuery =
         !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesType = !mediaType || item.type === mediaType
-      const matchesStatus = !status || item.status === status
+      const matchesStatus = !status || item.statuses.includes(status)
       return matchesQuery && matchesType && matchesStatus
     })
   }, [items, searchQuery, mediaType, status])

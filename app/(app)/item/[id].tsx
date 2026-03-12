@@ -46,43 +46,67 @@ export default function ItemDetailScreen() {
   const [showWatchDateModal, setShowWatchDateModal] = useState(false)
   const [showRecoComposer, setShowRecoComposer] = useState(false)
 
-  const handleStatusChange = async (newStatus: ItemStatus) => {
+  const handleStatusChange = async (selectedStatus: ItemStatus) => {
     if (!uid || !item) return
-    if (newStatus === 'loaned' && item.status !== 'loaned') {
-      setShowLoanModal(true)
-      return
+    
+    const currentStatuses = [...item.statuses]
+    const index = currentStatuses.indexOf(selectedStatus)
+    let newStatuses: ItemStatus[]
+
+    if (index > -1) {
+      // Retirer le statut
+      newStatuses = currentStatuses.filter((s) => s !== selectedStatus)
+    } else {
+      // Ajouter le statut
+      if (selectedStatus === 'loaned') {
+        setShowLoanModal(true)
+        return
+      }
+      if (selectedStatus === 'watched') {
+        setShowWatchDateModal(true)
+        return
+      }
+      newStatuses = [...currentStatuses, selectedStatus]
     }
-    if (newStatus === 'watched') {
-      setShowWatchDateModal(true)
-      return
-    }
-    const updates: Record<string, unknown> = { status: newStatus }
-    if (item.status === 'loaned' && newStatus !== 'loaned') {
+
+    const updates: Record<string, unknown> = { statuses: newStatuses }
+    
+    // Si on retire 'loaned', on nettoie les infos de prêt
+    if (item.statuses.includes('loaned') && !newStatuses.includes('loaned')) {
       updates.loanTo = deleteField()
       updates.loanDate = deleteField()
     }
-    if (item.status === 'watched' && newStatus !== 'watched') {
+    // Si on retire 'watched', on nettoie les infos de visionnage
+    if (item.statuses.includes('watched') && !newStatuses.includes('watched')) {
       updates.startedAt = deleteField()
       updates.endedAt = deleteField()
     }
+
     await updateItem(uid, item.id, updates as never)
   }
 
-  const handleLoanValidate = async (loanTo: string, loanDate: Timestamp) => {
+  const handleLoanValidate = async (loanTo: string, loanDate?: Timestamp) => {
     if (!uid || !item) return
     setShowLoanModal(false)
-    await updateItem(uid, item.id, { status: 'loaned', loanTo, loanDate } as never)
+    const newStatuses = item.statuses.includes('loaned') 
+      ? item.statuses 
+      : [...item.statuses, 'loaned' as ItemStatus]
+    await updateItem(uid, item.id, {
+      statuses: newStatuses,
+      loanTo,
+      loanDate: loanDate || deleteField(),
+    } as never)
   }
 
-  const handleWatchDateValidate = async (endedAt: Timestamp, startedAt?: Timestamp) => {
+  const handleWatchDateValidate = async (endedAt?: Timestamp, startedAt?: Timestamp) => {
     if (!uid || !item) return
     setShowWatchDateModal(false)
-    const updates: Record<string, unknown> = { status: 'watched', endedAt }
-    if (startedAt) updates.startedAt = startedAt
-    if (item.status === 'loaned') {
-      updates.loanTo = deleteField()
-      updates.loanDate = deleteField()
-    }
+    const newStatuses = item.statuses.includes('watched') 
+      ? item.statuses 
+      : [...item.statuses, 'watched' as ItemStatus]
+    const updates: Record<string, unknown> = { statuses: newStatuses }
+    updates.endedAt = endedAt || deleteField()
+    updates.startedAt = startedAt || deleteField()
     await updateItem(uid, item.id, updates as never)
   }
 
@@ -296,16 +320,21 @@ export default function ItemDetailScreen() {
 
       {/* Statut */}
       <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
-        <View className="flex-row items-center mb-3">
-          <Text className="text-[#6B5E5E] text-sm mr-2">Statut :</Text>
-          <View className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
-            <Text className="text-sm font-medium" style={{ color: STATUS_MAP[item.status]?.color ?? '#9CA3AF' }}>
-              {getStatusLabel(item.status, item.type)}
-            </Text>
-          </View>
+        <View className="flex-row items-center mb-3 flex-wrap gap-2">
+          <Text className="text-[#6B5E5E] text-sm mr-1">Statuts :</Text>
+          {item.statuses.map((s) => (
+            <View key={s} className="px-2 py-0.5 rounded" style={{ backgroundColor: '#2A2222' }}>
+              <Text className="text-sm font-medium" style={{ color: STATUS_MAP[s]?.color ?? '#9CA3AF' }}>
+                {getStatusLabel(s, item.type)}
+              </Text>
+            </View>
+          ))}
+          {item.statuses.length === 0 && (
+            <Text className="text-gray-500 text-sm italic">Aucun statut</Text>
+          )}
         </View>
-        <StatusPicker current={item.status} onSelect={handleStatusChange} mediaType={item.type} />
-        {item.status === 'loaned' && item.loanTo && (
+        <StatusPicker current={item.statuses} onSelect={handleStatusChange} mediaType={item.type} />
+        {item.statuses.includes('loaned') && item.loanTo && (
           <View className="mt-3 pt-3 border-t border-[#3D3535]">
             <Text className="text-[#6B5E5E] text-sm">
               Prêté à : <Text className="text-amber-400">{item.loanTo}</Text>
@@ -317,29 +346,37 @@ export default function ItemDetailScreen() {
             )}
           </View>
         )}
-        {item.status === 'watched' && item.endedAt && (
+        {item.statuses.includes('watched') && (
           <View className="mt-3 pt-3 border-t border-[#3D3535]">
-            {item.type === 'film' ? (
-              <Text className="text-[#6B5E5E] text-sm">
-                Vu le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
-              </Text>
-            ) : (
+            {item.endedAt ? (
               <>
-                {item.startedAt && (
+                {item.type === 'film' ? (
                   <Text className="text-[#6B5E5E] text-sm">
-                    Commencé le : <Text className="text-white">{item.startedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                    Vu le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
                   </Text>
+                ) : (
+                  <>
+                    {item.startedAt && (
+                      <Text className="text-[#6B5E5E] text-sm">
+                        Commencé le : <Text className="text-white">{item.startedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                      </Text>
+                    )}
+                    <Text className="text-[#6B5E5E] text-sm mt-0.5">
+                      Terminé le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                    </Text>
+                  </>
                 )}
-                <Text className="text-[#6B5E5E] text-sm mt-0.5">
-                  Terminé le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
-                </Text>
               </>
+            ) : (
+              <Text className="text-[#6B5E5E] text-sm italic">Aucune date renseignée</Text>
             )}
             <TouchableOpacity
               onPress={() => setShowWatchDateModal(true)}
               className="mt-2"
             >
-              <Text className="text-amber-400 text-xs">Modifier les dates</Text>
+              <Text className="text-amber-400 text-xs">
+                {item.endedAt ? 'Modifier les dates' : 'Ajouter une date'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}

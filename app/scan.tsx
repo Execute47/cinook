@@ -65,7 +65,7 @@ export default function ScanScreen() {
     const item: Record<string, unknown> = {
       title: result.title,
       type: result.type,
-      status: 'owned',
+      statuses: ['owned'],
       tier: 'none',
       addedVia: 'scan',
     }

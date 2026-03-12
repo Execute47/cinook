@@ -31,7 +31,14 @@ export function useCollection(): UseCollectionReturn {
     const unsubscribe = onSnapshot(
       q,
       (snap) => {
-        setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() } as MediaItem)))
+        setItems(snap.docs.map((d) => {
+          const data = d.data()
+          return {
+            id: d.id,
+            ...data,
+            statuses: data.statuses || (data.status ? [data.status] : []),
+          } as MediaItem
+        }))
         setLoading(false)
       },
       (err) => {

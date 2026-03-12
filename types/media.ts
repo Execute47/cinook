@@ -21,7 +21,8 @@ export interface MediaItem {
   googleBooksId?: string
   isbn?: string
   ean?: string
-  status: ItemStatus
+  status?: ItemStatus
+  statuses: ItemStatus[]
   rating?: number
   tier: TierLevel
   comment?: string

@@ -1,52 +1,44 @@
-import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Modal } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, Text, TextInput, TouchableOpacity, Modal, Platform } from 'react-native'
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Timestamp } from 'firebase/firestore'
-
-const todayStr = () => {
-  const d = new Date()
-  return [
-    String(d.getDate()).padStart(2, '0'),
-    String(d.getMonth() + 1).padStart(2, '0'),
-    d.getFullYear(),
-  ].join('/')
-}
-
-const parseDate = (str: string): Date | null => {
-  const parts = str.split('/')
-  if (parts.length !== 3) return null
-  const [dd, mm, yyyy] = parts.map(Number)
-  if ([dd, mm, yyyy].some(isNaN)) return null
-  const d = new Date(yyyy, mm - 1, dd)
-  return isNaN(d.getTime()) ? null : d
-}
+import { Ionicons } from '@expo/vector-icons'
 
 interface Props {
   visible: boolean
-  onValidate: (loanTo: string, loanDate: Timestamp) => void
+  onValidate: (loanTo: string, loanDate?: Timestamp) => void
   onCancel: () => void
 }
 
 export default function LoanModal({ visible, onValidate, onCancel }: Props) {
   const [borrower, setBorrower] = useState('')
-  const [dateStr, setDateStr] = useState(todayStr())
+  const [loanDate, setLoanDate] = useState<Date | null>(new Date())
+  const [showPicker, setShowPicker] = useState(false)
 
-  const parsedDate = parseDate(dateStr)
-  const canValidate = borrower.trim().length > 0 && parsedDate !== null
+  useEffect(() => {
+    if (visible) {
+      setLoanDate(new Date())
+      setBorrower('')
+    }
+  }, [visible])
 
-  const reset = () => {
-    setBorrower('')
-    setDateStr(todayStr())
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false)
+    }
+    if (event.type === 'set' && selectedDate) {
+      setLoanDate(selectedDate)
+    }
   }
 
   const handleValidate = () => {
-    if (!canValidate || !parsedDate) return
-    onValidate(borrower.trim(), Timestamp.fromDate(parsedDate))
-    reset()
+    if (!borrower.trim()) return
+    onValidate(borrower.trim(), loanDate ? Timestamp.fromDate(loanDate) : undefined)
   }
 
-  const handleCancel = () => {
-    reset()
-    onCancel()
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Non renseigné'
+    return date.toLocaleDateString('fr-FR')
   }
 
   return (
@@ -68,24 +60,46 @@ export default function LoanModal({ visible, onValidate, onCancel }: Props) {
           />
 
           <Text className="text-[#6B5E5E] text-sm mb-1">Date du prêt</Text>
-          <TextInput
-            value={dateStr}
-            onChangeText={setDateStr}
-            placeholder="jj/mm/aaaa"
-            placeholderTextColor="#6B5E5E"
-            className="bg-[#0E0B0B] text-white border border-[#3D3535] rounded-lg px-4 py-3 mb-6"
-          />
+          <View className="flex-row gap-2 mb-6">
+            <TouchableOpacity
+              onPress={() => setShowPicker(true)}
+              className="flex-1 bg-[#0E0B0B] border border-[#3D3535] rounded-lg px-4 py-3 flex-row items-center justify-between"
+            >
+              <Text className={loanDate ? 'text-white' : 'text-[#6B5E5E]'}>
+                {formatDate(loanDate)}
+              </Text>
+              <Ionicons name="calendar-outline" size={20} color="#6B5E5E" />
+            </TouchableOpacity>
+            {loanDate && (
+              <TouchableOpacity
+                onPress={() => setLoanDate(null)}
+                className="bg-[#2A2222] px-3 rounded-lg items-center justify-center border border-[#3D3535]"
+              >
+                <Ionicons name="close-outline" size={24} color="#6B5E5E" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {showPicker && (
+            <DateTimePicker
+              value={loanDate || new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleDateChange}
+              textColor="white"
+            />
+          )}
 
           <View className="flex-row gap-3 justify-end">
-            <TouchableOpacity onPress={handleCancel} className="px-4 py-2">
+            <TouchableOpacity onPress={onCancel} className="px-4 py-2">
               <Text className="text-[#6B5E5E]">Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleValidate}
-              disabled={!canValidate}
-              className={`px-4 py-2 rounded-lg ${canValidate ? 'bg-amber-500' : 'bg-[#3D3535]'}`}
+              disabled={!borrower.trim()}
+              className={`px-6 py-2 rounded-lg ${borrower.trim() ? 'bg-amber-500' : 'bg-[#3D3535]'}`}
             >
-              <Text className={`font-semibold ${canValidate ? 'text-black' : 'text-[#6B5E5E]'}`}>
+              <Text className={`font-semibold ${borrower.trim() ? 'text-black' : 'text-[#6B5E5E]'}`}>
                 Valider
               </Text>
             </TouchableOpacity>

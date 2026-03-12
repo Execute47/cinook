@@ -1,72 +1,54 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TextInput, TouchableOpacity, Modal } from 'react-native'
+import { View, Text, TouchableOpacity, Modal, Platform } from 'react-native'
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Timestamp } from 'firebase/firestore'
+import { Ionicons } from '@expo/vector-icons'
 import type { MediaType } from '@/types/media'
-
-const todayStr = () => {
-  const d = new Date()
-  return [
-    String(d.getDate()).padStart(2, '0'),
-    String(d.getMonth() + 1).padStart(2, '0'),
-    d.getFullYear(),
-  ].join('/')
-}
-
-const parseDate = (str: string): Date | null => {
-  const parts = str.split('/')
-  if (parts.length !== 3) return null
-  const [dd, mm, yyyy] = parts.map(Number)
-  if ([dd, mm, yyyy].some(isNaN)) return null
-  const d = new Date(yyyy, mm - 1, dd)
-  return isNaN(d.getTime()) ? null : d
-}
 
 interface Props {
   visible: boolean
   type: MediaType
   initialEndedAt?: Timestamp
   initialStartedAt?: Timestamp
-  onValidate: (endedAt: Timestamp, startedAt?: Timestamp) => void
+  onValidate: (endedAt?: Timestamp, startedAt?: Timestamp) => void
   onCancel: () => void
 }
+
+type PickerMode = 'none' | 'started' | 'ended'
 
 export default function WatchDateModal({
   visible, type, initialEndedAt, initialStartedAt, onValidate, onCancel,
 }: Props) {
-  const [endedStr, setEndedStr] = useState(todayStr())
-  const [startedStr, setStartedStr] = useState('')
+  const [endedDate, setEndedDate] = useState<Date | null>(null)
+  const [startedDate, setStartedDate] = useState<Date | null>(null)
+  const [pickerMode, setPickerMode] = useState<PickerMode>('none')
 
   useEffect(() => {
     if (visible) {
-      setEndedStr(
-        initialEndedAt ? initialEndedAt.toDate().toLocaleDateString('fr-FR') : todayStr()
-      )
-      setStartedStr(
-        initialStartedAt ? initialStartedAt.toDate().toLocaleDateString('fr-FR') : ''
-      )
+      setEndedDate(initialEndedAt ? initialEndedAt.toDate() : new Date())
+      setStartedDate(initialStartedAt ? initialStartedAt.toDate() : null)
     }
-  }, [visible])
+  }, [visible, initialEndedAt, initialStartedAt])
 
-  const parsedEnded = parseDate(endedStr)
-  const parsedStarted = startedStr.trim() ? parseDate(startedStr) : null
-  const canValidate = parsedEnded !== null
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    // Sur Android, on ferme le picker dès qu'une action est faite
+    if (Platform.OS === 'android') {
+      setPickerMode('none')
+    }
 
-  const reset = () => {
-    setEndedStr(todayStr())
-    setStartedStr('')
+    if (event.type === 'set' && selectedDate) {
+      if (pickerMode === 'started') {
+        setStartedDate(selectedDate)
+      } else if (pickerMode === 'ended') {
+        setEndedDate(selectedDate)
+      }
+    }
   }
 
   const handleValidate = () => {
-    if (!canValidate || !parsedEnded) return
-    const endedAt = Timestamp.fromDate(parsedEnded)
-    const startedAt = parsedStarted ? Timestamp.fromDate(parsedStarted) : undefined
+    const endedAt = endedDate ? Timestamp.fromDate(endedDate) : undefined
+    const startedAt = startedDate ? Timestamp.fromDate(startedDate) : undefined
     onValidate(endedAt, startedAt)
-    reset()
-  }
-
-  const handleCancel = () => {
-    reset()
-    onCancel()
   }
 
   const title =
@@ -75,6 +57,11 @@ export default function WatchDateModal({
     : 'Dates de lecture'
   const endedLabel = type === 'film' ? 'Vu le' : 'Terminé le'
 
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Non renseigné'
+    return date.toLocaleDateString('fr-FR')
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View
@@ -82,42 +69,100 @@ export default function WatchDateModal({
         style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
       >
         <View className="bg-[#1C1717] border border-[#3D3535] rounded-xl p-6 w-full">
-          <Text className="text-white text-lg font-bold mb-4">{title}</Text>
+          <Text className="text-white text-lg font-bold mb-6 text-center">{title}</Text>
 
           {type !== 'film' && (
-            <>
-              <Text className="text-[#6B5E5E] text-sm mb-1">Commencé le (optionnel)</Text>
-              <TextInput
-                value={startedStr}
-                onChangeText={setStartedStr}
-                placeholder="jj/mm/aaaa"
-                placeholderTextColor="#6B5E5E"
-                className="bg-[#0E0B0B] text-white border border-[#3D3535] rounded-lg px-4 py-3 mb-4"
-              />
-            </>
+            <View className="mb-4">
+              <Text className="text-[#6B5E5E] text-sm mb-2">Commencé le</Text>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => setPickerMode('started')}
+                  className="flex-1 bg-[#0E0B0B] border border-[#3D3535] rounded-lg px-4 py-3 flex-row items-center justify-between"
+                >
+                  <Text className={startedDate ? 'text-white' : 'text-amber-500/50 italic'}>
+                    {formatDate(startedDate)}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={startedDate ? '#6B5E5E' : '#FBBF24'} />
+                </TouchableOpacity>
+                {startedDate ? (
+                  <TouchableOpacity
+                    onPress={() => setStartedDate(null)}
+                    className="bg-[#2A2222] px-3 rounded-lg items-center justify-center border border-[#3D3535]"
+                  >
+                    <Ionicons name="close-outline" size={24} color="#6B5E5E" />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setStartedDate(new Date())}
+                    className="bg-[#2A2222] px-3 rounded-lg items-center justify-center border border-amber-500/30"
+                  >
+                    <Ionicons name="add-outline" size={24} color="#FBBF24" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
           )}
 
-          <Text className="text-[#6B5E5E] text-sm mb-1">{endedLabel} *</Text>
-          <TextInput
-            value={endedStr}
-            onChangeText={setEndedStr}
-            placeholder="jj/mm/aaaa"
-            placeholderTextColor="#6B5E5E"
-            className="bg-[#0E0B0B] text-white border border-[#3D3535] rounded-lg px-4 py-3 mb-6"
-          />
+          <View className="mb-8">
+            <Text className="text-[#6B5E5E] text-sm mb-2">{endedLabel}</Text>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => setPickerMode('ended')}
+                className="flex-1 bg-[#0E0B0B] border border-[#3D3535] rounded-lg px-4 py-3 flex-row items-center justify-between"
+              >
+                <Text className={endedDate ? 'text-white' : 'text-amber-500/50 italic'}>
+                  {formatDate(endedDate)}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color={endedDate ? '#6B5E5E' : '#FBBF24'} />
+              </TouchableOpacity>
+              {endedDate ? (
+                <TouchableOpacity
+                  onPress={() => setEndedDate(null)}
+                  className="bg-[#2A2222] px-3 rounded-lg items-center justify-center border border-[#3D3535]"
+                >
+                  <Ionicons name="close-outline" size={24} color="#6B5E5E" />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setEndedDate(new Date())}
+                  className="bg-[#2A2222] px-3 rounded-lg items-center justify-center border border-amber-500/30"
+                >
+                  <Ionicons name="add-outline" size={24} color="#FBBF24" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {pickerMode !== 'none' && (
+            Platform.OS === 'web' ? (
+              // Simple simulation pour le web si nécessaire, mais le DateTimePicker
+              // devrait fonctionner. On peut aussi utiliser un input date masqué.
+              <DateTimePicker
+                value={pickerMode === 'started' ? (startedDate || new Date()) : (endedDate || new Date())}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+              />
+            ) : (
+              <DateTimePicker
+                value={pickerMode === 'started' ? (startedDate || new Date()) : (endedDate || new Date())}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                textColor="white"
+              />
+            )
+          )}
 
           <View className="flex-row gap-3 justify-end">
-            <TouchableOpacity onPress={handleCancel} className="px-4 py-2">
+            <TouchableOpacity onPress={onCancel} className="px-4 py-2">
               <Text className="text-[#6B5E5E]">Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleValidate}
-              disabled={!canValidate}
-              className={`px-4 py-2 rounded-lg ${canValidate ? 'bg-amber-500' : 'bg-[#3D3535]'}`}
+              className="px-6 py-2 rounded-lg bg-amber-500"
             >
-              <Text className={`font-semibold ${canValidate ? 'text-black' : 'text-[#6B5E5E]'}`}>
-                Valider
-              </Text>
+              <Text className="font-semibold text-black">Valider</Text>
             </TouchableOpacity>
           </View>
         </View>
