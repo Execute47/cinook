@@ -14,11 +14,6 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
-    // Récupère le circleId de l'utilisateur courant
-    function userCircleId() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.circleId;
-    }
-
     // Vérifie que l'utilisateur est membre d'un cercle donné
     function isCircleMember(circleId) {
       return isAuth() &&
@@ -33,22 +28,39 @@ service cloud.firestore {
         request.auth.uid == get(/databases/$(database)/documents/circles/$(circleId)).data.adminId;
     }
 
+    // Vérifie que le requêteur partage au moins un cercle avec le profil cible
+    // (supporte jusqu'à 3 cercles par utilisateur)
+    function sharesCircle(circleIds) {
+      return circleIds != null && circleIds.size() > 0 && (
+        isCircleMember(circleIds[0]) ||
+        (circleIds.size() > 1 && isCircleMember(circleIds[1])) ||
+        (circleIds.size() > 2 && isCircleMember(circleIds[2]))
+      );
+    }
+
+    // Vérifie que le requêteur est admin d'au moins un cercle partagé avec le profil cible
+    function isAdminOfSharedCircle(circleIds) {
+      return circleIds != null && circleIds.size() > 0 && (
+        isCircleAdmin(circleIds[0]) ||
+        (circleIds.size() > 1 && isCircleAdmin(circleIds[1])) ||
+        (circleIds.size() > 2 && isCircleAdmin(circleIds[2]))
+      );
+    }
+
     // ─── Profils utilisateur ────────────────────────────────────────────────────
 
     match /users/{userId} {
       // Un utilisateur peut lire et écrire son propre profil
       allow read, write: if isOwner(userId);
 
-      // Un admin du cercle peut effacer le circleId d'un membre (expulsion)
+      // Un admin d'un cercle commun peut modifier les circleIds d'un membre (expulsion)
       allow update: if isAuth() &&
-        resource.data.circleId != null &&
-        isCircleAdmin(resource.data.circleId) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['circleId']);
+        resource.data.circleIds != null &&
+        isAdminOfSharedCircle(resource.data.circleIds) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['circleIds']);
 
       // Un membre du même cercle peut lire le profil (pour afficher les membres)
-      allow read: if isAuth() &&
-        resource.data.circleId != null &&
-        isCircleMember(resource.data.circleId);
+      allow read: if isAuth() && sharesCircle(resource.data.circleIds);
 
       // ─── Items personnels ──────────────────────────────────────────────────
 
@@ -59,8 +71,7 @@ service cloud.firestore {
         // Un membre du même cercle peut lire les items d'un autre membre
         allow read: if isAuth() &&
           exists(/databases/$(database)/documents/users/$(userId)) &&
-          get(/databases/$(database)/documents/users/$(userId)).data.circleId != null &&
-          isCircleMember(get(/databases/$(database)/documents/users/$(userId)).data.circleId);
+          sharesCircle(get(/databases/$(database)/documents/users/$(userId)).data.circleIds);
       }
     }
 
