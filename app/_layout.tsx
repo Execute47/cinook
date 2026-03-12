@@ -1,9 +1,8 @@
 import '../global.css'
 import { useEffect, useState } from 'react'
-import { View, ActivityIndicator } from 'react-native'
+import { Platform, View, ActivityIndicator } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Stack, useRouter, useSegments } from 'expo-router'
-import { Head } from 'expo-router/head'
 import { ToastContainer } from '@/components/ui/Toast'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -16,6 +15,10 @@ export default function RootLayout() {
   const [authState, setAuthState] = useState<AuthState>('loading')
   const segments = useSegments()
   const router = useRouter()
+
+  useEffect(() => {
+    if (Platform.OS === 'web') document.title = 'Cinook'
+  }, [])
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -67,9 +70,6 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <Head>
-        <title>Cinook</title>
-      </Head>
       <Stack screenOptions={{ headerShown: false }} />
       <ToastContainer />
     </SafeAreaProvider>
