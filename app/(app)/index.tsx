@@ -35,6 +35,14 @@ export default function HomeScreen() {
   const [selectedFilm, setSelectedFilm] = useState<MediaResult | null>(null)
   const [addingFilm, setAddingFilm] = useState(false)
 
+  const handleSelectFilm = async (film: MediaResult) => {
+    setSelectedFilm(film)
+    if (film.tmdbId) {
+      const director = await getMovieDirector(film.tmdbId)
+      if (director) setSelectedFilm((prev) => prev ? { ...prev, director } : prev)
+    }
+  }
+
   const showDuplicateMessage = () => {
     if (duplicateTimerRef.current) clearTimeout(duplicateTimerRef.current)
     setDuplicateMessage('Déjà dans votre collection')
@@ -192,7 +200,7 @@ export default function HomeScreen() {
       )}
 
       {/* Films à l'affiche */}
-      <NowPlayingSection onSelectFilm={setSelectedFilm} />
+      <NowPlayingSection onSelectFilm={handleSelectFilm} />
 
       {/* Modal détail film */}
       <Modal

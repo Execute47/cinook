@@ -90,7 +90,13 @@ export default function DiscoverScreen() {
       {!loading.search && !offlineError && (
         <ScrollView className="px-4">
           {films.map((film, i) => (
-            <NowPlayingCard key={film.tmdbId ?? i} film={film} onPress={() => setSelected(film)} />
+            <NowPlayingCard key={film.tmdbId ?? i} film={film} onPress={async () => {
+              setSelected(film)
+              if (film.tmdbId) {
+                const director = await getMovieDirector(film.tmdbId)
+                if (director) setSelected((prev) => prev ? { ...prev, director } : prev)
+              }
+            }} />
           ))}
         </ScrollView>
       )}
