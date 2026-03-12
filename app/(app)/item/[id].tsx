@@ -20,6 +20,8 @@ import MemberOpinions from '@/components/circle/MemberOpinions'
 import RecoComposer from '@/components/circle/RecoComposer'
 import CineclubButton from '@/components/circle/CineclubButton'
 import { useCineclub } from '@/hooks/useCineclub'
+import { usePlaylists } from '@/hooks/usePlaylists'
+import { addItemToPlaylist, removeItemFromPlaylist } from '@/lib/playlists'
 import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
 import { deleteField, Timestamp } from 'firebase/firestore'
 
@@ -35,6 +37,7 @@ export default function ItemDetailScreen() {
   const uid = useAuthStore((s) => s.uid)
   const { items, loading: collectionLoading } = useCollection()
   const { cineclub } = useCineclub()
+  const { playlists } = usePlaylists()
   const item = items.find((i) => i.id === id)
 
   const [isEditing, setIsEditing] = useState(false)
@@ -393,6 +396,36 @@ export default function ItemDetailScreen() {
             await updateItem(uid, item.id, { comment: deleteField() } as never)
           }}
         />
+      </View>
+
+      {/* Playlists */}
+      <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
+        <Text className="text-white font-semibold mb-3">Playlists</Text>
+        {playlists.map((playlist) => {
+          const isIn = playlist.itemIds.includes(item.id)
+          return (
+            <TouchableOpacity
+              key={playlist.id}
+              onPress={() => uid && (isIn
+                ? removeItemFromPlaylist(uid, playlist.id, item.id)
+                : addItemToPlaylist(uid, playlist.id, item.id)
+              )}
+              className="flex-row items-center justify-between py-2 border-b border-[#2A2020]"
+            >
+              <Text className="text-white">{playlist.name}</Text>
+              <Ionicons
+                name={isIn ? 'checkmark-circle' : 'add-circle-outline'}
+                size={20}
+                color={isIn ? '#FBBF24' : '#6B5E5E'}
+              />
+            </TouchableOpacity>
+          )
+        })}
+        {playlists.length === 0 && (
+          <TouchableOpacity onPress={() => router.push('/(app)/playlists')}>
+            <Text className="text-[#6B5E5E] text-sm">Créer une playlist →</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Notes des membres du cercle */}

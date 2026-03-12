@@ -119,5 +119,5 @@ development_status:
   # Epic 8 : Playlists personnelles
   # ─────────────────────────────────────────────────────
   epic-8: in-progress
-  8-1-playlists-personnelles: ready-for-dev
+  8-1-playlists-personnelles: in-progress
   epic-8-retrospective: optional

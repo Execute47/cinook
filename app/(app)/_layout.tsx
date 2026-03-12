@@ -57,6 +57,8 @@ export default function AppLayout() {
       <Tabs.Screen name="member/[uid]" options={{ href: null }} />
       <Tabs.Screen name="item/[id]" options={{ href: null }} />
       <Tabs.Screen name="item/preview" options={{ href: null }} />
+      <Tabs.Screen name="playlists" options={{ href: null }} />
+      <Tabs.Screen name="playlist/[id]" options={{ href: null }} />
     </Tabs>
     </View>
   )

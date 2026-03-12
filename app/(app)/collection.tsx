@@ -80,9 +80,9 @@ export default function CollectionScreen() {
   return (
     <View className="flex-1 bg-[#0E0B0B]">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pt-12 pb-3">
-        <Text className="text-white text-2xl font-bold">Ma Collection</Text>
-        <View className="flex-row gap-2">
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 48, paddingBottom: 12 }}>
+        <Text className="text-white text-2xl font-bold" style={{ flex: 1, marginRight: 8 }} numberOfLines={1}>Ma Collection</Text>
+        <View style={{ flexDirection: 'row', gap: 8, flexShrink: 0 }}>
           <TouchableOpacity
             onPress={() => router.push('/item/search')}
             className="bg-amber-500 px-3 py-2 rounded-lg"
@@ -100,6 +100,12 @@ export default function CollectionScreen() {
             className="bg-[#1C1717] border border-[#3D3535] px-3 py-2 rounded-lg"
           >
             <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/(app)/playlists')}
+            className="bg-[#1C1717] border border-[#3D3535] px-3 py-2 rounded-lg"
+          >
+            <Ionicons name="bookmarks" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>

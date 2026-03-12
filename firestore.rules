@@ -73,6 +73,12 @@ service cloud.firestore {
           exists(/databases/$(database)/documents/users/$(userId)) &&
           sharesCircle(get(/databases/$(database)/documents/users/$(userId)).data.circleIds);
       }
+
+      // ─── Playlists personnelles ────────────────────────────────────────────
+
+      match /playlists/{playlistId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // ─── Cercles ────────────────────────────────────────────────────────────────
