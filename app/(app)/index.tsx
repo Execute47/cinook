@@ -1,17 +1,23 @@
 import { useState, useRef } from 'react'
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native'
+import {
+  View, Text, ScrollView, ActivityIndicator,
+  Modal, TouchableOpacity, Image,
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useRecommendations } from '@/hooks/useRecommendations'
 import type { Recommendation } from '@/hooks/useRecommendations'
 import { useCineclub } from '@/hooks/useCineclub'
 import { useCollection } from '@/hooks/useCollection'
+import { useUIStore } from '@/stores/uiStore'
 import { findDuplicate } from '@/lib/duplicates'
 import { addItem } from '@/lib/firestore'
 import { deleteDoc, doc, updateDoc, arrayRemove } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import RecoCard from '@/components/circle/RecoCard'
 import CineclubBanner from '@/components/circle/CineclubBanner'
+import { NowPlayingSection } from '@/components/discovery/NowPlayingSection'
+import type { MediaResult } from '@/types/api'
 
 export default function HomeScreen() {
   const router = useRouter()
@@ -20,8 +26,13 @@ export default function HomeScreen() {
   const { items } = useCollection()
   const { recommendations, loading: recoLoading } = useRecommendations()
   const { cineclub, loading: cineclubLoading } = useCineclub()
+  const { addToast } = useUIStore()
   const [duplicateMessage, setDuplicateMessage] = useState<string | null>(null)
   const duplicateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Film à l'affiche sélectionné
+  const [selectedFilm, setSelectedFilm] = useState<MediaResult | null>(null)
+  const [addingFilm, setAddingFilm] = useState(false)
 
   const showDuplicateMessage = () => {
     if (duplicateTimerRef.current) clearTimeout(duplicateTimerRef.current)
@@ -74,10 +85,7 @@ export default function HomeScreen() {
     if (!uid) return
     const type = reco.itemType ?? 'film'
     const duplicate = findDuplicate(items, { title: reco.itemTitle, type, tmdbId: reco.tmdbId ?? undefined, googleBooksId: reco.googleBooksId ?? undefined, isbn: reco.isbn ?? undefined })
-    if (duplicate) {
-      showDuplicateMessage()
-      return
-    }
+    if (duplicate) { showDuplicateMessage(); return }
     await addItem(uid, {
       title: reco.itemTitle,
       type,
@@ -99,10 +107,7 @@ export default function HomeScreen() {
     if (!uid || !cineclub) return
     const type = cineclub.itemType ?? 'film'
     const duplicate = findDuplicate(items, { title: cineclub.itemTitle, type, tmdbId: cineclub.tmdbId ?? undefined, googleBooksId: cineclub.googleBooksId ?? undefined, isbn: cineclub.isbn ?? undefined })
-    if (duplicate) {
-      showDuplicateMessage()
-      return
-    }
+    if (duplicate) { showDuplicateMessage(); return }
     await addItem(uid, {
       title: cineclub.itemTitle,
       type,
@@ -111,6 +116,33 @@ export default function HomeScreen() {
       tier: 'none',
       addedVia: 'discover',
     })
+  }
+
+  const handleAddFilm = async (status: 'owned' | 'wishlist') => {
+    if (!uid || !selectedFilm) return
+    setAddingFilm(true)
+    try {
+      const duplicate = findDuplicate(items, { title: selectedFilm.title, type: 'film', tmdbId: selectedFilm.tmdbId ?? undefined })
+      if (duplicate) { showDuplicateMessage(); setSelectedFilm(null); return }
+      await addItem(uid, {
+        title: selectedFilm.title,
+        type: 'film',
+        poster: selectedFilm.poster,
+        synopsis: selectedFilm.synopsis,
+        director: selectedFilm.director,
+        year: selectedFilm.year,
+        tmdbId: selectedFilm.tmdbId,
+        status,
+        tier: 'none',
+        addedVia: 'discover',
+      })
+      addToast(status === 'owned' ? 'Ajouté à ta collection !' : 'Ajouté à ta liste À voir !', 'success')
+      setSelectedFilm(null)
+    } catch {
+      addToast('Erreur lors de l\'ajout', 'error')
+    } finally {
+      setAddingFilm(false)
+    }
   }
 
   return (
@@ -157,6 +189,77 @@ export default function HomeScreen() {
           />
         ))
       )}
+
+      {/* Films à l'affiche */}
+      <NowPlayingSection onSelectFilm={setSelectedFilm} />
+
+      {/* Modal détail film */}
+      <Modal
+        visible={selectedFilm !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSelectedFilm(null)}
+      >
+        <View className="flex-1 justify-end bg-black/60">
+          <View className="bg-[#181212] rounded-t-2xl">
+            <ScrollView className="p-5" bounces={false}>
+              <View className="flex-row gap-4 mb-4">
+                {selectedFilm?.poster ? (
+                  <Image
+                    source={{ uri: selectedFilm.poster }}
+                    style={{ width: 80, height: 120 }}
+                    className="rounded-lg"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={{ width: 80, height: 120 }} className="rounded-lg bg-[#2A2020]" />
+                )}
+                <View className="flex-1 justify-center">
+                  <Text className="text-white text-lg font-bold mb-1" numberOfLines={3}>
+                    {selectedFilm?.title}
+                  </Text>
+                  {selectedFilm?.year && (
+                    <Text className="text-[#6B5E5E] text-sm">{selectedFilm.year}</Text>
+                  )}
+                  {selectedFilm?.director && (
+                    <Text className="text-[#6B5E5E] text-sm">Réal. {selectedFilm.director}</Text>
+                  )}
+                </View>
+              </View>
+
+              {selectedFilm?.synopsis && (
+                <Text className="text-[#B0A0A0] text-sm leading-5 mb-5">
+                  {selectedFilm.synopsis}
+                </Text>
+              )}
+
+              <TouchableOpacity
+                className="bg-[#FBBF24] rounded-xl py-3 items-center mb-3"
+                onPress={() => handleAddFilm('owned')}
+                disabled={addingFilm}
+              >
+                <Text className="text-[#0E0B0B] font-bold">Ajouter à ma collection</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="bg-[#1C1717] border border-[#3A2E2E] rounded-xl py-3 items-center mb-3"
+                onPress={() => handleAddFilm('wishlist')}
+                disabled={addingFilm}
+              >
+                <Text className="text-white font-semibold">Ajouter à À voir</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="py-3 items-center"
+                onPress={() => setSelectedFilm(null)}
+                disabled={addingFilm}
+              >
+                <Text className="text-[#6B5E5E]">Fermer</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }

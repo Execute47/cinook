@@ -32,13 +32,7 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="albums" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="discover"
-        options={{
-          title: 'Découverte',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
-        }}
-      />
+      <Tabs.Screen name="discover" options={{ href: null }} />
       <Tabs.Screen
         name="circle"
         options={{

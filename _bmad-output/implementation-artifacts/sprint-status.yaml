@@ -95,6 +95,7 @@ development_status:
   # ─────────────────────────────────────────────────────
   epic-5: in-progress
   5-1-parcourir-les-films-a-laffiche-et-les-ajouter: review
+  5-2-films-affiche-section-page-accueil: review
   epic-5-retrospective: optional
 
   # ─────────────────────────────────────────────────────
@@ -113,3 +114,10 @@ development_status:
   epic-7: in-progress
   7-1-stylisation-et-modernisation-ui: in-progress
   epic-7-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 8 : Playlists personnelles
+  # ─────────────────────────────────────────────────────
+  epic-8: in-progress
+  8-1-playlists-personnelles: ready-for-dev
+  epic-8-retrospective: optional
