@@ -9,9 +9,9 @@ jest.mock('@/lib/firebase', () => ({ auth: {}, db: {} }))
 jest.mock('@/lib/auth', () => ({ signInWithGoogle: jest.fn() }))
 
 const mockItems = [
-  { id: '1', title: 'Matrix', type: 'film', status: 'owned', tier: 'none', addedVia: 'search' },
-  { id: '2', title: 'Dune', type: 'livre', status: 'watched', tier: 'none', addedVia: 'scan' },
-  { id: '3', title: 'Breaking Bad', type: 'serie', status: 'owned', tier: 'none', addedVia: 'manual' },
+  { id: '1', title: 'Matrix', type: 'film', statuses: ['owned'], tier: 'none', addedVia: 'search' },
+  { id: '2', title: 'Dune', type: 'livre', statuses: ['watched'], tier: 'none', addedVia: 'scan' },
+  { id: '3', title: 'Breaking Bad', type: 'serie', statuses: ['owned'], tier: 'none', addedVia: 'manual' },
 ]
 
 jest.mock('@/hooks/useCollection', () => ({

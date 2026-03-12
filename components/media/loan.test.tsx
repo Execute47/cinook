@@ -25,7 +25,7 @@ const makeLoanedItem = (overrides: Partial<MediaItem> = {}): MediaItem => ({
   id: 'item-1',
   title: 'Matrix',
   type: 'film',
-  status: 'loaned',
+  statuses: ['loaned'],
   tier: 'none',
   addedVia: 'manual',
   addedAt: { toDate: () => new Date() } as never,

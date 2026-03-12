@@ -37,9 +37,10 @@ describe('useCollection', () => {
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1)
   })
 
-  it('mappe les docs Firestore en MediaItem avec id', async () => {
+  it('mappe les docs Firestore en MediaItem avec id et statuses (fallback legacy)', async () => {
     const fakeDocs = [
       { id: 'item-1', data: () => ({ title: 'Matrix', type: 'film', status: 'owned', tier: 'none', addedVia: 'search' }) },
+      { id: 'item-2', data: () => ({ title: 'Dune', type: 'livre', statuses: ['watched'], tier: 'none', addedVia: 'scan' }) },
     ]
     mockOnSnapshot.mockImplementationOnce((q, onNext) => {
       onNext({ docs: fakeDocs })
@@ -50,7 +51,8 @@ describe('useCollection', () => {
 
     await waitFor(() => {
       expect(result.current.items).toEqual([
-        { id: 'item-1', title: 'Matrix', type: 'film', status: 'owned', tier: 'none', addedVia: 'search' },
+        { id: 'item-1', title: 'Matrix', type: 'film', status: 'owned', statuses: ['owned'], tier: 'none', addedVia: 'search' },
+        { id: 'item-2', title: 'Dune', type: 'livre', statuses: ['watched'], tier: 'none', addedVia: 'scan' },
       ])
       expect(result.current.loading).toBe(false)
     })

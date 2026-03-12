@@ -34,7 +34,7 @@ function itemsToCsv(items: MediaItem[]): string {
     [
       item.title,
       item.type,
-      item.status,
+      item.statuses.join(', '),
       item.rating ?? '',
       item.tier,
       item.comment ?? '',

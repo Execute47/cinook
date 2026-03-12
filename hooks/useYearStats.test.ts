@@ -21,7 +21,7 @@ describe('useYearStats', () => {
     it('ignore les items sans endedAt', () => {
       mockItems.push({
         id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual',
-        status: 'watched',
+        statuses: ['watched'],
         // pas de endedAt
       })
       const { result } = renderHook(() => useYearStats(2024))
@@ -32,7 +32,7 @@ describe('useYearStats', () => {
     it('ignore les items avec endedAt d\'une autre année', () => {
       mockItems.push({
         id: '2', title: 'Film B', type: 'film', tier: 'none', addedVia: 'manual',
-        status: 'watched',
+        statuses: ['watched'],
         endedAt: makeTimestamp(2023, 5),
       })
       const { result } = renderHook(() => useYearStats(2024))
@@ -42,7 +42,7 @@ describe('useYearStats', () => {
     it('inclut les items avec endedAt dans l\'année sélectionnée', () => {
       mockItems.push({
         id: '3', title: 'Film C', type: 'film', tier: 'none', addedVia: 'manual',
-        status: 'watched',
+        statuses: ['watched'],
         endedAt: makeTimestamp(2024, 0),
       })
       const { result } = renderHook(() => useYearStats(2024))
@@ -54,10 +54,10 @@ describe('useYearStats', () => {
   describe('AC3 — Comptages par type', () => {
     it('compte correctement films, séries et livres', () => {
       mockItems.push(
-        { id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 0) },
-        { id: '2', title: 'Film B', type: 'film', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 1) },
-        { id: '3', title: 'Série A', type: 'serie', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 2) },
-        { id: '4', title: 'Livre A', type: 'livre', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 3) },
+        { id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 0) },
+        { id: '2', title: 'Film B', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 1) },
+        { id: '3', title: 'Série A', type: 'serie', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 2) },
+        { id: '4', title: 'Livre A', type: 'livre', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 3) },
       )
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.counts.film).toBe(2)
@@ -71,7 +71,7 @@ describe('useYearStats', () => {
     it('incrémente l\'index 2 (mars) pour un item en mars', () => {
       mockItems.push({
         id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual',
-        status: 'watched',
+        statuses: ['watched'],
         endedAt: makeTimestamp(2024, 2), // mars = index 2
       })
       const { result } = renderHook(() => useYearStats(2024))
@@ -87,7 +87,7 @@ describe('useYearStats', () => {
     it('itemsByMonth contient l\'item dans le bon mois', () => {
       mockItems.push({
         id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual',
-        status: 'watched',
+        statuses: ['watched'],
         endedAt: makeTimestamp(2024, 2),
       })
       const { result } = renderHook(() => useYearStats(2024))
@@ -99,9 +99,9 @@ describe('useYearStats', () => {
 
     it('itemsByMonth — plusieurs items dans le même mois', () => {
       mockItems.push(
-        { id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 5) },
-        { id: '2', title: 'Film B', type: 'film', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 5) },
-        { id: '3', title: 'Film C', type: 'film', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 7) },
+        { id: '1', title: 'Film A', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 5) },
+        { id: '2', title: 'Film B', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 5) },
+        { id: '3', title: 'Film C', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 7) },
       )
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.itemsByMonth[5]).toHaveLength(2)
@@ -112,8 +112,8 @@ describe('useYearStats', () => {
   describe('AC4 — topTier', () => {
     it('diamond avant gold', () => {
       mockItems.push(
-        { id: '1', title: 'Gold Film', type: 'film', tier: 'gold', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 0) },
-        { id: '2', title: 'Diamond Film', type: 'film', tier: 'diamond', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 1) },
+        { id: '1', title: 'Gold Film', type: 'film', tier: 'gold', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 0) },
+        { id: '2', title: 'Diamond Film', type: 'film', tier: 'diamond', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 1) },
       )
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.topTier[0].tier).toBe('diamond')
@@ -123,7 +123,7 @@ describe('useYearStats', () => {
       for (let i = 0; i < 5; i++) {
         mockItems.push({
           id: `${i}`, title: `Diamond ${i}`, type: 'film', tier: 'diamond',
-          addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, i),
+          addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, i),
         })
       }
       const { result } = renderHook(() => useYearStats(2024))
@@ -133,7 +133,7 @@ describe('useYearStats', () => {
     it('masque topTier si aucun item n\'a de tier (only none)', () => {
       mockItems.push({
         id: '1', title: 'Film', type: 'film', tier: 'none', addedVia: 'manual',
-        status: 'watched', endedAt: makeTimestamp(2024, 0),
+        statuses: ['watched'], endedAt: makeTimestamp(2024, 0),
       })
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.topTier).toHaveLength(0)
@@ -143,9 +143,9 @@ describe('useYearStats', () => {
   describe('AC4 — topRating', () => {
     it('retourne le(s) item(s) avec la note la plus élevée', () => {
       mockItems.push(
-        { id: '1', title: 'Film 3', type: 'film', tier: 'none', rating: 3, addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 0) },
-        { id: '2', title: 'Film 5', type: 'film', tier: 'none', rating: 5, addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 1) },
-        { id: '3', title: 'Film 4', type: 'film', tier: 'none', rating: 4, addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 2) },
+        { id: '1', title: 'Film 3', type: 'film', tier: 'none', rating: 3, addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 0) },
+        { id: '2', title: 'Film 5', type: 'film', tier: 'none', rating: 5, addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 1) },
+        { id: '3', title: 'Film 4', type: 'film', tier: 'none', rating: 4, addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 2) },
       )
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.topRating).toHaveLength(1)
@@ -154,7 +154,7 @@ describe('useYearStats', () => {
 
     it('ignore les items sans rating', () => {
       mockItems.push(
-        { id: '1', title: 'Film sans note', type: 'film', tier: 'none', addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, 0) },
+        { id: '1', title: 'Film sans note', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 0) },
       )
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.topRating).toHaveLength(0)
@@ -164,7 +164,7 @@ describe('useYearStats', () => {
       for (let i = 0; i < 5; i++) {
         mockItems.push({
           id: `${i}`, title: `Film ${i}`, type: 'film', tier: 'none', rating: 5,
-          addedVia: 'manual', status: 'watched', endedAt: makeTimestamp(2024, i),
+          addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, i),
         })
       }
       const { result } = renderHook(() => useYearStats(2024))

@@ -9,7 +9,7 @@ function makeItem(overrides: Partial<MediaItem>): MediaItem {
     id: 'id-1',
     title: 'Default Title',
     type: 'film',
-    status: 'owned',
+    statuses: ['owned'],
     tier: 'none',
     addedVia: 'manual',
     addedAt: fakeTimestamp,

@@ -38,7 +38,7 @@ function makeItem(overrides: Partial<MediaItem> = {}): MediaItem {
     id: '1',
     title: 'Test Film',
     type: 'film',
-    status: 'watched',
+    statuses: ['watched'],
     tier: 'gold',
     addedVia: 'manual',
     addedAt: { toDate: () => new Date('2024-01-15') } as any,

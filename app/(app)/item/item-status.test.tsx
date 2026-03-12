@@ -38,13 +38,13 @@ jest.mock('@/hooks/useCollection', () => ({
 import ItemDetailScreen from './[id]'
 
 const itemLoaned = {
-  id: 'item-1', title: 'Matrix', type: 'film', status: 'loaned',
+  id: 'item-1', title: 'Matrix', type: 'film', statuses: ['loaned'],
   tier: 'none', addedVia: 'search', loanTo: 'Alice',
   loanDate: { toDate: () => new Date('2025-01-01') },
 }
 
 const itemWatched = {
-  id: 'item-1', title: 'Matrix', type: 'film', status: 'watched',
+  id: 'item-1', title: 'Matrix', type: 'film', statuses: ['watched'],
   tier: 'none', addedVia: 'search',
   endedAt: { toDate: () => new Date('2024-06-15'), seconds: 0 },
 }
@@ -64,7 +64,7 @@ describe('Item detail — changement de statut', () => {
     expect(mockUpdateItem).not.toHaveBeenCalled()
   })
 
-  it('validation de la modal appelle updateItem avec status watched et endedAt', async () => {
+  it('validation de la modal appelle updateItem avec statuses incluant watched et endedAt', async () => {
     mockUpdateItem.mockResolvedValueOnce(undefined)
     const { getByText, getAllByPlaceholderText } = render(<ItemDetailScreen />)
 
@@ -75,42 +75,26 @@ describe('Item detail — changement de statut', () => {
     await waitFor(() => {
       expect(mockUpdateItem).toHaveBeenCalledWith(
         'uid-test', 'item-1',
-        expect.objectContaining({ status: 'watched', endedAt: expect.anything() })
+        expect.objectContaining({ statuses: expect.arrayContaining(['watched']), endedAt: expect.anything() })
       )
     })
   })
 
-  it('efface loanTo et loanDate quand on quitte Prêté via validation de la modal', async () => {
+  it('efface loanTo et loanDate quand on retire Prêté', async () => {
     mockUpdateItem.mockResolvedValueOnce(undefined)
-    const { getByText, getAllByPlaceholderText } = render(<ItemDetailScreen />)
+    const { getByText } = render(<ItemDetailScreen />)
 
-    fireEvent.press(getByText('Vu'))
-    fireEvent.changeText(getAllByPlaceholderText('jj/mm/aaaa')[0], '15/06/2024')
-    fireEvent.press(getByText('Valider'))
+    // On retire "Prêté"
+    fireEvent.press(getByText('Prêté'))
 
     await waitFor(() => {
       expect(mockUpdateItem).toHaveBeenCalledWith(
         'uid-test', 'item-1',
         expect.objectContaining({
-          status: 'watched',
+          statuses: [],
           loanTo: 'DELETE_FIELD_SENTINEL',
           loanDate: 'DELETE_FIELD_SENTINEL',
         })
-      )
-    })
-  })
-
-  it('ne efface pas loanTo/loanDate quand on reste sur Prêté', async () => {
-    mockUpdateItem.mockResolvedValueOnce(undefined)
-    const { getAllByText } = render(<ItemDetailScreen />)
-
-    const buttons = getAllByText('Prêté')
-    fireEvent.press(buttons[buttons.length - 1])
-
-    await waitFor(() => {
-      expect(mockUpdateItem).toHaveBeenCalledWith(
-        'uid-test', 'item-1',
-        expect.not.objectContaining({ loanTo: expect.anything() })
       )
     })
   })
@@ -121,16 +105,17 @@ describe('Item detail — quitter le statut "Vu"', () => {
     mockCollectionItems.mockReturnValue([itemWatched])
   })
 
-  it('efface startedAt et endedAt quand on passe à un autre statut', async () => {
+  it('efface startedAt et endedAt quand on retire le statut Vu', async () => {
     mockUpdateItem.mockResolvedValueOnce(undefined)
     const { getByText } = render(<ItemDetailScreen />)
 
-    fireEvent.press(getByText('Possédé'))
+    fireEvent.press(getByText('Vu'))
 
     await waitFor(() => {
       expect(mockUpdateItem).toHaveBeenCalledWith(
         'uid-test', 'item-1',
         expect.objectContaining({
+          statuses: [],
           startedAt: 'DELETE_FIELD_SENTINEL',
           endedAt: 'DELETE_FIELD_SENTINEL',
         })

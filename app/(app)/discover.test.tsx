@@ -95,14 +95,14 @@ describe('DiscoverScreen — AC3 : ajouter à la collection', () => {
     await waitFor(() =>
       expect(mockAddItem).toHaveBeenCalledWith(
         'uid-test',
-        expect.objectContaining({ addedVia: 'discover', status: 'owned' })
+        expect.objectContaining({ addedVia: 'discover', statuses: ['owned'] })
       )
     )
   })
 })
 
 describe('DiscoverScreen — AC4 : ajouter à la wishlist', () => {
-  it('appelle addItem avec status: wishlist', async () => {
+  it('appelle addItem avec statuses: [wishlist]', async () => {
     mockGetNowPlaying.mockResolvedValueOnce([fakeFilm])
     mockAddItem.mockResolvedValueOnce('new-id')
     const { getByText } = render(<DiscoverScreen />)
@@ -115,7 +115,7 @@ describe('DiscoverScreen — AC4 : ajouter à la wishlist', () => {
     await waitFor(() =>
       expect(mockAddItem).toHaveBeenCalledWith(
         'uid-test',
-        expect.objectContaining({ status: 'wishlist', addedVia: 'discover' })
+        expect.objectContaining({ statuses: ['wishlist'], addedVia: 'discover' })
       )
     )
   })

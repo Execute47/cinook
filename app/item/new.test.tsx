@@ -54,12 +54,12 @@ describe('NewItemScreen', () => {
       const { getByPlaceholderText, getByText } = render(<NewItemScreen />)
       fireEvent.changeText(getByPlaceholderText('Titre'), 'Inception')
       fireEvent.press(getByText('Ajouter à ma collection'))
-
-      await waitFor(() => {
-        expect(mockAddItem).toHaveBeenCalledWith(
-          'uid-test',
-          expect.objectContaining({ title: 'Inception', addedVia: 'manual', status: 'owned', tier: 'none' })
-        )
+await waitFor(() => {
+  expect(mockAddItem).toHaveBeenCalledWith(
+    'uid-123',
+    expect.objectContaining({ title: 'Inception', addedVia: 'manual', statuses: ['owned'], tier: 'none' })
+  )
+})
         expect(router.back).toHaveBeenCalled()
       })
     })
@@ -112,7 +112,7 @@ describe('NewItemScreen', () => {
           id: 'existing-film',
           title: 'Inception',
           type: 'film',
-          status: 'owned',
+          statuses: ['owned'],
           tier: 'none',
           addedVia: 'search',
           addedAt: fakeTimestamp,
@@ -132,7 +132,7 @@ describe('NewItemScreen', () => {
           id: 'existing-film',
           title: 'Inception',
           type: 'film',
-          status: 'owned',
+          statuses: ['owned'],
           tier: 'none',
           addedVia: 'search',
           addedAt: fakeTimestamp,

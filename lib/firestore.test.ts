@@ -29,7 +29,7 @@ describe('lib/firestore.ts — addItem', () => {
   const item = {
     title: 'Inception',
     type: 'film' as const,
-    status: 'owned' as const,
+    statuses: ['owned'] as const,
     tier: 'none' as const,
     addedVia: 'scan' as const,
   }

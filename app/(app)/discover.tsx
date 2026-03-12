@@ -50,7 +50,7 @@ export default function DiscoverScreen() {
         director,
         year: selected.year,
         tmdbId: selected.tmdbId,
-        status,
+        statuses: [status],
         tier: 'none',
         addedVia: 'discover',
       })
