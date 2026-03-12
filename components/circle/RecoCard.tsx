@@ -1,4 +1,5 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import type { Timestamp } from 'firebase/firestore'
 import type { Recommendation } from '@/hooks/useRecommendations'
 
@@ -6,6 +7,7 @@ interface Props {
   reco: Recommendation
   onAddToWishlist: () => void
   onPress?: () => void
+  onDismiss?: () => void
 }
 
 const formatDate = (ts: Timestamp | null | undefined): string => {
@@ -13,7 +15,7 @@ const formatDate = (ts: Timestamp | null | undefined): string => {
   return ts.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-export default function RecoCard({ reco, onAddToWishlist, onPress }: Props) {
+export default function RecoCard({ reco, onAddToWishlist, onPress, onDismiss }: Props) {
   return (
     <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-3 mb-3 flex-row">
       <TouchableOpacity
@@ -43,12 +45,20 @@ export default function RecoCard({ reco, onAddToWishlist, onPress }: Props) {
           </Text>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={onAddToWishlist}
-        className="bg-amber-500/20 border border-amber-500 rounded px-3 py-1 self-start mt-6"
-      >
-        <Text className="text-amber-400 text-xs font-semibold">+ À voir</Text>
-      </TouchableOpacity>
+
+      <View className="items-end justify-between">
+        {onDismiss && (
+          <TouchableOpacity onPress={onDismiss} hitSlop={8} testID="dismiss-reco">
+            <Ionicons name="close-circle" size={18} color="#6B5E5E" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={onAddToWishlist}
+          className="bg-amber-500/20 border border-amber-500 rounded px-3 py-1 mt-1"
+        >
+          <Text className="text-amber-400 text-xs font-semibold">+ À voir</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }

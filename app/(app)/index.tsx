@@ -8,7 +8,7 @@ import { useCineclub } from '@/hooks/useCineclub'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
 import { addItem } from '@/lib/firestore'
-import { deleteDoc, doc } from 'firebase/firestore'
+import { deleteDoc, doc, updateDoc, arrayRemove } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import RecoCard from '@/components/circle/RecoCard'
 import CineclubBanner from '@/components/circle/CineclubBanner'
@@ -88,6 +88,13 @@ export default function HomeScreen() {
     })
   }
 
+  const handleDismissReco = async (reco: Recommendation) => {
+    if (!uid || !circleId) return
+    await updateDoc(doc(db, 'circles', circleId, 'recommendations', reco.id), {
+      toUserIds: arrayRemove(uid),
+    })
+  }
+
   const handleAddCineclubToWishlist = async () => {
     if (!uid || !cineclub) return
     const type = cineclub.itemType ?? 'film'
@@ -146,6 +153,7 @@ export default function HomeScreen() {
             reco={reco}
             onAddToWishlist={() => handleAddRecoToWishlist(reco)}
             onPress={() => handleRecoPress(reco)}
+            onDismiss={() => handleDismissReco(reco)}
           />
         ))
       )}

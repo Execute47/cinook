@@ -51,4 +51,20 @@ describe('RecoCard', () => {
     expect(onAdd).toHaveBeenCalledTimes(1)
     expect(onPress).not.toHaveBeenCalled()
   })
+
+  it('appelle onDismiss au tap sur le bouton dismiss', () => {
+    const onDismiss = jest.fn()
+    const { getByTestId } = render(
+      <RecoCard reco={fakeReco} onAddToWishlist={jest.fn()} onDismiss={onDismiss} />
+    )
+    fireEvent.press(getByTestId('dismiss-reco'))
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it("n'affiche pas le bouton dismiss si onDismiss absent", () => {
+    const { queryByTestId } = render(
+      <RecoCard reco={fakeReco} onAddToWishlist={jest.fn()} />
+    )
+    expect(queryByTestId('dismiss-reco')).toBeNull()
+  })
 })
