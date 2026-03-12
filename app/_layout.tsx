@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { Platform, View, ActivityIndicator } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Stack, useRouter, useSegments } from 'expo-router'
+import { useFonts } from 'expo-font'
+import { Ionicons } from '@expo/vector-icons'
 import { ToastContainer } from '@/components/ui/Toast'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -13,6 +15,7 @@ type AuthState = 'loading' | 'authenticated' | 'unauthenticated'
 
 export default function RootLayout() {
   const [authState, setAuthState] = useState<AuthState>('loading')
+  const [fontsLoaded] = useFonts({ ...Ionicons.font })
   const segments = useSegments()
   const router = useRouter()
 
@@ -58,7 +61,7 @@ export default function RootLayout() {
     }
   }, [authState, segments])
 
-  if (authState === 'loading') {
+  if (authState === 'loading' || !fontsLoaded) {
     return (
       <SafeAreaProvider>
         <View className="flex-1 bg-[#0E0B0B] items-center justify-center">
