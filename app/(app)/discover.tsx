@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, Modal, TouchableOpacity,
   Image, ActivityIndicator,
 } from 'react-native'
-import { getNowPlaying } from '@/lib/tmdb'
+import { getNowPlaying, getMovieDirector } from '@/lib/tmdb'
 import { addItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -41,12 +41,13 @@ export default function DiscoverScreen() {
     if (!uid || !selected) return
     setAdding(true)
     try {
+      const director = selected.tmdbId ? await getMovieDirector(selected.tmdbId) : undefined
       await addItem(uid, {
         title: selected.title,
         type: 'film',
         poster: selected.poster,
         synopsis: selected.synopsis,
-        director: selected.director,
+        director,
         year: selected.year,
         tmdbId: selected.tmdbId,
         status,

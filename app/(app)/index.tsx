@@ -12,6 +12,7 @@ import { useCollection } from '@/hooks/useCollection'
 import { useUIStore } from '@/stores/uiStore'
 import { findDuplicate } from '@/lib/duplicates'
 import { addItem } from '@/lib/firestore'
+import { getMovieDirector } from '@/lib/tmdb'
 import { deleteDoc, doc, updateDoc, arrayRemove } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import RecoCard from '@/components/circle/RecoCard'
@@ -129,7 +130,7 @@ export default function HomeScreen() {
         type: 'film',
         poster: selectedFilm.poster,
         synopsis: selectedFilm.synopsis,
-        director: selectedFilm.director,
+        director: selectedFilm.tmdbId ? await getMovieDirector(selectedFilm.tmdbId) : undefined,
         year: selectedFilm.year,
         tmdbId: selectedFilm.tmdbId,
         status,

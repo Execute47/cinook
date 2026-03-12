@@ -6,6 +6,7 @@ import {
 import { router } from 'expo-router'
 import { useMediaSearch } from '@/hooks/useMediaSearch'
 import { addItem } from '@/lib/firestore'
+import { getMovieDirector } from '@/lib/tmdb'
 import { useAuthStore } from '@/stores/authStore'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
@@ -49,7 +50,8 @@ export default function SearchScreen() {
     }
     if (selected.poster !== undefined) item.poster = selected.poster
     if (selected.synopsis !== undefined) item.synopsis = selected.synopsis
-    if (selected.director !== undefined) item.director = selected.director
+    const director = selected.director ?? (selected.type === 'film' && selected.tmdbId ? await getMovieDirector(selected.tmdbId) : undefined)
+    if (director !== undefined) item.director = director
     if (selected.author !== undefined) item.author = selected.author
     if (selected.year !== undefined) item.year = selected.year
     if (selected.tmdbId !== undefined) item.tmdbId = selected.tmdbId

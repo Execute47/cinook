@@ -32,6 +32,20 @@ export async function searchByEan(ean: string): Promise<MediaResult | null> {
   return first ? mapMovie(first) : null
 }
 
+export async function getMovieDirector(tmdbId: string): Promise<string | undefined> {
+  try {
+    const url = `${BASE_URL}/movie/${tmdbId}/credits?language=fr-FR`
+    const res = await fetch(url, { headers: authHeader() })
+    if (!res.ok) return undefined
+    const json = await res.json()
+    const director = (json.crew ?? []).find((p: { job: string }) => p.job === 'Director')
+    return director?.name ?? undefined
+  } catch (e) {
+    console.error('getMovieDirector failed:', e)
+    return undefined
+  }
+}
+
 export async function getNowPlaying(): Promise<MediaResult[]> {
   const url = `${BASE_URL}/movie/now_playing?language=fr-FR&page=1`
   const res = await fetch(url, { headers: authHeader() })

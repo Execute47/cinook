@@ -49,6 +49,9 @@ export default function ItemCard({ item, onPress, animationIndex }: Props) {
         )}
         <View className="flex-1">
           <Text className="text-white font-semibold" numberOfLines={2}>{item.title}</Text>
+          {item.type === 'film' && item.director && (
+            <Text className="text-[#6B5E5E] text-xs mt-0.5" numberOfLines={1}>{item.director}</Text>
+          )}
           <View className="flex-row items-center gap-2 mt-1 flex-wrap">
             {item.year && <Text className="text-[#6B5E5E] text-sm">{item.year}</Text>}
             <View className="bg-[#3D3535] px-2 py-0.5 rounded">
