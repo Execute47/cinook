@@ -30,44 +30,44 @@ afin que l'app soit agréable à utiliser au quotidien et reflète la qualité d
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Icônes tab bar (AC1)
-  - [ ] Importer `Ionicons` depuis `@expo/vector-icons` dans `app/(app)/_layout.tsx`
-  - [ ] Ajouter `tabBarIcon` dans les options de chaque `Tabs.Screen` (index, collection, discover, circle, stats, settings)
-  - [ ] Choisir les icônes : `home`, `albums`, `compass`, `people`, `bar-chart`, `settings-outline`
-  - [ ] Vérifier rendu actif/inactif sur iOS, Android et Web
+- [x] Task 1 — Icônes tab bar (AC1)
+  - [x] Importer `Ionicons` depuis `@expo/vector-icons` dans `app/(app)/_layout.tsx`
+  - [x] Ajouter `tabBarIcon` dans les options de chaque `Tabs.Screen` (index, collection, discover, circle, stats, settings)
+  - [x] Choisir les icônes : `home`, `albums`, `compass`, `people`, `bar-chart`, `settings-outline`
+  - [x] Vérifier rendu actif/inactif sur iOS, Android et Web
 
-- [ ] Task 2 — Icônes boutons header Collection (AC2)
-  - [ ] Remplacer les emojis 🔍 → `<Ionicons name="search" />`, 📷 → `<Ionicons name="barcode" />`, ✏️ → `<Ionicons name="create-outline" />`
-  - [ ] Taille 20, couleur `#FBBF24` pour la recherche (bouton primaire), `#FFFFFF` pour les secondaires
-  - [ ] Ajuster le padding des boutons si nécessaire
+- [x] Task 2 — Icônes boutons header Collection (AC2)
+  - [x] Remplacer les emojis 🔍 → `<Ionicons name="search" />`, 📷 → `<Ionicons name="barcode" />`, ✏️ → `<Ionicons name="create-outline" />`
+  - [x] Taille 20, couleur `#FBBF24` pour la recherche (bouton primaire), `#FFFFFF` pour les secondaires
+  - [x] Ajuster le padding des boutons si nécessaire
 
-- [ ] Task 3 — Chevrons navigation (AC3)
-  - [ ] `components/media/ItemCard.tsx` : remplacer `→ {item.loanTo}` par `<Ionicons name="arrow-forward" size={12} color="#FBBF24" />` + texte
-  - [ ] Rechercher toutes les autres occurrences de `→` ou `>` utilisées comme navigation dans les composants
+- [x] Task 3 — Chevrons navigation (AC3)
+  - [x] `components/media/ItemCard.tsx` : remplacer `→ {item.loanTo}` par `<Ionicons name="arrow-forward" size={12} color="#FBBF24" />` + texte
+  - [x] Rechercher toutes les autres occurrences de `→` ou `>` utilisées comme navigation dans les composants
 
-- [ ] Task 4 — Icône CineclubButton (AC4)
-  - [ ] `components/circle/CineclubButton.tsx` : remplacer `⭐` par `<Ionicons name="star" size={14} color="#FBBF24" />`
-  - [ ] Maintenir l'alignement flex-row avec le texte
+- [x] Task 4 — Icône CineclubButton (AC4)
+  - [x] `components/circle/CineclubButton.tsx` : remplacer `⭐` par `<Ionicons name="star" size={14} color="#FBBF24" />`
+  - [x] Maintenir l'alignement flex-row avec le texte
 
-- [ ] Task 5 — Animation ItemCard (AC5)
-  - [ ] Créer un composant `AnimatedItemCard` ou ajouter la logique dans `ItemCard` via une prop `animationIndex?: number`
-  - [ ] Utiliser `Animated.timing` (opacity + translateY) avec délai basé sur index
-  - [ ] Limiter à 6 items max animés (index 0-5), les suivants apparaissent directement
-  - [ ] S'assurer que l'animation ne joue qu'au montage initial (useRef pour le flag)
+- [x] Task 5 — Animation ItemCard (AC5)
+  - [x] Créer un composant `AnimatedItemCard` ou ajouter la logique dans `ItemCard` via une prop `animationIndex?: number`
+  - [x] Utiliser `Animated.timing` (opacity + translateY) avec délai basé sur index
+  - [x] Limiter à 6 items max animés (index 0-5), les suivants apparaissent directement
+  - [x] S'assurer que l'animation ne joue qu'au montage initial (useRef pour le flag)
 
-- [ ] Task 6 — Animation chips filtre (AC6)
-  - [ ] Créer un composant `FilterChip` réutilisable (ou wrapper) qui gère l'animation `Animated.spring`
-  - [ ] Utiliser `scale` avec `useRef(new Animated.Value(1))` par chip
-  - [ ] Déclencher l'animation `onPressIn` (scale 0.95) et `onPressOut` (scale 1.0)
-  - [ ] Remplacer les `TouchableOpacity` chips dans `collection.tsx` par ce composant
+- [x] Task 6 — Animation chips filtre (AC6)
+  - [x] Créer un composant `FilterChip` réutilisable (ou wrapper) qui gère l'animation `Animated.spring`
+  - [x] Utiliser `scale` avec `useRef(new Animated.Value(1))` par chip
+  - [x] Déclencher l'animation `onPressIn` (scale 0.95) et `onPressOut` (scale 1.0)
+  - [x] Remplacer les `TouchableOpacity` chips dans `collection.tsx` par ce composant
 
-- [ ] Task 7 — Bouton effacer filtres (AC7)
-  - [ ] `app/(app)/collection.tsx` : remplacer `✕ Effacer les filtres` par `<Ionicons name="close-circle" />` + `<Text>Effacer</Text>`
-  - [ ] Layout flex-row, aligné à droite ou à gauche selon le design choisi
+- [x] Task 7 — Bouton effacer filtres (AC7)
+  - [x] `app/(app)/collection.tsx` : remplacer `✕ Effacer les filtres` par `<Ionicons name="close-circle" />` + `<Text>Effacer</Text>`
+  - [x] Layout flex-row, aligné à droite ou à gauche selon le design choisi
 
-- [ ] Task 8 — Vérification aucune régression (AC8)
-  - [ ] Lancer `npx jest --no-coverage` et confirmer 283 tests passants
-  - [ ] Tester visuellement sur simulateur iOS et/ou Android
+- [x] Task 8 — Vérification aucune régression (AC8)
+  - [x] Lancer `npx jest --no-coverage` et confirmer 283 tests passants
+  - [x] Tester visuellement sur simulateur iOS et/ou Android
 
 ## Dev Notes
 

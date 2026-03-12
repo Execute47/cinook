@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
-  FlatList, ActivityIndicator, ScrollView,
+  FlatList, ActivityIndicator, ScrollView, Animated,
 } from 'react-native'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useCollection } from '@/hooks/useCollection'
 import { useFiltersStore } from '@/stores/filtersStore'
 import ItemCard from '@/components/media/ItemCard'
@@ -23,6 +24,40 @@ const STATUS_OPTIONS: { value: ItemStatus; label: string }[] = [
   { value: 'loaned', label: 'Prêté' },
   { value: 'favorite', label: 'Favori' },
 ]
+
+interface FilterChipProps {
+  label: string
+  active: boolean
+  onPress: () => void
+}
+
+function FilterChip({ label, active, onPress }: FilterChipProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start()
+  }
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()
+  }
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        className={`px-3 py-1.5 rounded-full border ${
+          active ? 'bg-amber-500 border-amber-500' : 'bg-[#1C1717] border-[#3D3535]'
+        }`}
+      >
+        <Text className={`text-sm ${active ? 'text-black font-semibold' : 'text-white'}`}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
 
 export default function CollectionScreen() {
   const router = useRouter()
@@ -52,19 +87,19 @@ export default function CollectionScreen() {
             onPress={() => router.push('/item/search')}
             className="bg-amber-500 px-3 py-2 rounded-lg"
           >
-            <Text className="text-black font-semibold text-sm">🔍</Text>
+            <Ionicons name="search" size={20} color="#000000" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push('/scan')}
             className="bg-[#1C1717] border border-[#3D3535] px-3 py-2 rounded-lg"
           >
-            <Text className="text-white text-sm">📷</Text>
+            <Ionicons name="barcode" size={20} color="#FFFFFF" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push('/item/new')}
             className="bg-[#1C1717] border border-[#3D3535] px-3 py-2 rounded-lg"
           >
-            <Text className="text-white text-sm">✏️</Text>
+            <Ionicons name="create-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -88,19 +123,12 @@ export default function CollectionScreen() {
         contentContainerStyle={{ gap: 8 }}
       >
         {TYPE_OPTIONS.map((t) => (
-          <TouchableOpacity
+          <FilterChip
             key={t.value}
+            label={t.label}
+            active={mediaType === t.value}
             onPress={() => setMediaType(mediaType === t.value ? null : t.value)}
-            className={`px-3 py-1.5 rounded-full border ${
-              mediaType === t.value
-                ? 'bg-amber-500 border-amber-500'
-                : 'bg-[#1C1717] border-[#3D3535]'
-            }`}
-          >
-            <Text className={`text-sm ${mediaType === t.value ? 'text-black font-semibold' : 'text-white'}`}>
-              {t.label}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>
 
@@ -112,26 +140,20 @@ export default function CollectionScreen() {
         contentContainerStyle={{ gap: 8 }}
       >
         {STATUS_OPTIONS.map((s) => (
-          <TouchableOpacity
+          <FilterChip
             key={s.value}
+            label={s.label}
+            active={status === s.value}
             onPress={() => setStatus(status === s.value ? null : s.value)}
-            className={`px-3 py-1.5 rounded-full border ${
-              status === s.value
-                ? 'bg-amber-500 border-amber-500'
-                : 'bg-[#1C1717] border-[#3D3535]'
-            }`}
-          >
-            <Text className={`text-sm ${status === s.value ? 'text-black font-semibold' : 'text-white'}`}>
-              {s.label}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>
 
       {/* Bouton effacer filtres */}
       {hasActiveFilters && (
-        <TouchableOpacity onPress={clearFilters} className="mx-4 mb-2">
-          <Text className="text-amber-400 text-sm">✕ Effacer les filtres</Text>
+        <TouchableOpacity onPress={clearFilters} className="mx-4 mb-2 flex-row items-center gap-1">
+          <Ionicons name="close-circle" size={16} color="#FBBF24" />
+          <Text className="text-amber-400 text-sm">Effacer</Text>
         </TouchableOpacity>
       )}
 
@@ -154,8 +176,12 @@ export default function CollectionScreen() {
         <FlatList
           data={filteredItems}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <ItemCard item={item} onPress={(id) => router.push(`/(app)/item/${id}`)} />
+          renderItem={({ item, index }) => (
+            <ItemCard
+              item={item}
+              onPress={(id) => router.push(`/(app)/item/${id}`)}
+              animationIndex={index}
+            />
           )}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}

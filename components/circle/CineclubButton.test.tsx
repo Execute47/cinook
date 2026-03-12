@@ -46,12 +46,12 @@ beforeEach(() => {
 describe('CineclubButton — label', () => {
   it('affiche "Cinéclub" pour un film', () => {
     const { getByText } = render(<CineclubButton item={fakeFilm} />)
-    expect(getByText('⭐ Mettre en Cinéclub')).toBeTruthy()
+    expect(getByText('Mettre en Cinéclub')).toBeTruthy()
   })
 
   it('affiche "Coin lecture" pour un livre', () => {
     const { getByText } = render(<CineclubButton item={fakeLivre} />)
-    expect(getByText('⭐ Mettre en Coin lecture')).toBeTruthy()
+    expect(getByText('Mettre en Coin lecture')).toBeTruthy()
   })
 })
 
@@ -59,7 +59,7 @@ describe('CineclubButton — mise en avant', () => {
   it('appelle setDoc avec itemType dans le payload', async () => {
     mockSetDoc.mockResolvedValueOnce(undefined)
     const { getByText } = render(<CineclubButton item={fakeFilm} />)
-    fireEvent.press(getByText('⭐ Mettre en Cinéclub'))
+    fireEvent.press(getByText('Mettre en Cinéclub'))
 
     await waitFor(() => {
       expect(mockSetDoc).toHaveBeenCalledWith(
@@ -73,7 +73,7 @@ describe('CineclubButton — mise en avant', () => {
     mockSetDoc.mockResolvedValueOnce(undefined)
 
     const { getByText } = render(<CineclubButton item={fakeFilm} />)
-    fireEvent.press(getByText('⭐ Mettre en Cinéclub'))
+    fireEvent.press(getByText('Mettre en Cinéclub'))
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -91,7 +91,7 @@ describe('CineclubButton — mode retrait (AC3)', () => {
       <CineclubButton item={fakeFilm} currentCineclubItemId="item-1" />
     )
     expect(getByText('Retirer du Cinéclub')).toBeTruthy()
-    expect(queryByText('⭐ Mettre en Cinéclub')).toBeNull()
+    expect(queryByText('Mettre en Cinéclub')).toBeNull()
   })
 
   it('affiche "Retirer du Coin lecture" pour un livre actif', () => {

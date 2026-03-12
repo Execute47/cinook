@@ -1,5 +1,6 @@
-import { Alert, Platform, TouchableOpacity, Text } from 'react-native'
+import { Alert, Platform, TouchableOpacity, Text, View } from 'react-native'
 import { setDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { Ionicons } from '@expo/vector-icons'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import type { MediaItem, MediaType } from '@/types/media'
@@ -71,7 +72,10 @@ export default function CineclubButton({ item, currentCineclubItemId }: Props) {
       onPress={handleSet}
       className="bg-[#1C1717] border border-amber-500 rounded-lg px-4 py-2"
     >
-      <Text className="text-amber-400 font-semibold text-sm">⭐ Mettre en {label}</Text>
+      <View className="flex-row items-center gap-1">
+        <Ionicons name="star" size={14} color="#FBBF24" />
+        <Text className="text-amber-400 font-semibold text-sm">Mettre en {label}</Text>
+      </View>
     </TouchableOpacity>
   )
 }

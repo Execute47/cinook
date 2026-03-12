@@ -3,6 +3,7 @@ import {
   View, Text, Image, TouchableOpacity, ScrollView,
   TextInput, Alert, ActivityIndicator, Platform,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useCollection } from '@/hooks/useCollection'
 import { updateItem, deleteItem } from '@/lib/firestore'
@@ -148,7 +149,10 @@ export default function ItemDetailScreen() {
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-6">
         <Text className="text-red-400 text-lg font-bold mb-2">Item introuvable</Text>
         <TouchableOpacity onPress={() => router.push('/(app)/collection')}>
-          <Text className="text-amber-400">← Retour à la collection</Text>
+          <View className="flex-row items-center gap-1">
+            <Ionicons name="chevron-back" size={16} color="#FBBF24" />
+            <Text className="text-amber-400">Retour à la collection</Text>
+          </View>
         </TouchableOpacity>
       </View>
     )
@@ -159,7 +163,10 @@ export default function ItemDetailScreen() {
       <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 24 }}>
         <View className="flex-row items-center mb-6">
           <TouchableOpacity onPress={() => setIsEditing(false)} className="mr-3">
-            <Text className="text-amber-400">← Annuler</Text>
+            <View className="flex-row items-center gap-1">
+              <Ionicons name="chevron-back" size={16} color="#FBBF24" />
+              <Text className="text-amber-400">Annuler</Text>
+            </View>
           </TouchableOpacity>
           <Text className="text-white text-xl font-bold flex-1">Modifier</Text>
           <TouchableOpacity onPress={handleSave} disabled={isSaving}>
@@ -227,21 +234,25 @@ export default function ItemDetailScreen() {
   return (
     <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 24 }}>
       {/* Header */}
-      <View className="flex-row items-center mb-4">
-        <TouchableOpacity onPress={() => router.push('/(app)/collection')} className="mr-3">
-          <Text className="text-amber-400">←</Text>
-        </TouchableOpacity>
-        <View className="flex-1" />
-        <CineclubButton item={item} currentCineclubItemId={cineclub?.itemId} />
-        <TouchableOpacity onPress={() => setShowRecoComposer(true)} className="mr-4 ml-4">
-          <Text className="text-amber-400">Recommander</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={startEditing} className="mr-4">
-          <Text className="text-amber-400">Modifier</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete}>
-          <Text className="text-red-400">Supprimer</Text>
-        </TouchableOpacity>
+      <View className="mb-4">
+        <View className="flex-row items-center mb-3">
+          <TouchableOpacity onPress={() => router.push('/(app)/collection')} className="mr-3">
+            <Ionicons name="chevron-back" size={22} color="#FBBF24" />
+          </TouchableOpacity>
+          <View className="flex-1" />
+          <CineclubButton item={item} currentCineclubItemId={cineclub?.itemId} />
+        </View>
+        <View className="flex-row justify-end gap-4">
+          <TouchableOpacity onPress={() => setShowRecoComposer(true)}>
+            <Text className="text-amber-400">Recommander</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={startEditing}>
+            <Text className="text-amber-400">Modifier</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDelete}>
+            <Text className="text-red-400">Supprimer</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Affiche */}

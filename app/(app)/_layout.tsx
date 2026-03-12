@@ -1,5 +1,6 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { SyncIndicator } from '@/components/ui/SyncIndicator'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 
@@ -17,12 +18,48 @@ export default function AppLayout() {
         tabBarInactiveTintColor: '#6B5E5E',
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Accueil' }} />
-      <Tabs.Screen name="collection" options={{ title: 'Collection' }} />
-      <Tabs.Screen name="discover" options={{ title: 'Découverte' }} />
-      <Tabs.Screen name="circle" options={{ title: 'Cercle' }} />
-      <Tabs.Screen name="stats" options={{ title: 'Bilan' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Paramètres' }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Accueil',
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="collection"
+        options={{
+          title: 'Collection',
+          tabBarIcon: ({ color, size }) => <Ionicons name="albums" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="discover"
+        options={{
+          title: 'Découverte',
+          tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="circle"
+        options={{
+          title: 'Cercle',
+          tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'Bilan',
+          tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Paramètres',
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+        }}
+      />
       <Tabs.Screen name="member/[uid]" options={{ href: null }} />
       <Tabs.Screen name="item/[id]" options={{ href: null }} />
       <Tabs.Screen name="item/preview" options={{ href: null }} />

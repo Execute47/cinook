@@ -1,4 +1,5 @@
 import { View, Text, FlatList, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import type { MediaItem } from '@/types/media'
 
 interface Props {
@@ -32,7 +33,10 @@ export default function LoanList({ items, onPress }: Props) {
               <Text className="text-white font-semibold" numberOfLines={1}>
                 {item.title}
               </Text>
-              <Text className="text-amber-400 text-sm mt-0.5">→ {item.loanTo}</Text>
+              <View className="flex-row items-center gap-1 mt-0.5">
+                <Ionicons name="arrow-forward" size={12} color="#FBBF24" />
+                <Text className="text-amber-400 text-sm">{item.loanTo}</Text>
+              </View>
             </View>
             <Text className="text-[#6B5E5E] text-sm ml-3">{dateStr}</Text>
           </TouchableOpacity>

@@ -89,7 +89,7 @@ describe('LoanList', () => {
       <LoanList items={[makeLoanedItem()]} onPress={jest.fn()} />
     )
     expect(getByText('Matrix')).toBeTruthy()
-    expect(getByText('→ Alice')).toBeTruthy()
+    expect(getByText('Alice')).toBeTruthy()
   })
 
   it('affiche la date de prêt formatée', () => {
