@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useCollection } from '@/hooks/useCollection'
-import { updateItem, deleteItem } from '@/lib/firestore'
+import { addItem, updateItem, deleteItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
 import StatusPicker, { STATUS_OPTIONS } from '@/components/media/StatusPicker'
 import { getStatusLabel } from '@/constants/statuses'
@@ -66,6 +66,58 @@ export default function ItemDetailScreen() {
   const isMemberView = !!memberUid
   const item = isMemberView ? (memberItem ?? undefined) : items.find((i) => i.id === id)
   const loading = isMemberView ? memberItemLoading : collectionLoading
+  const alreadyInCollection = isMemberView && !!item && items.some((i) => i.title === item.title && i.type === item.type)
+
+  const [showAddPanel, setShowAddPanel] = useState(false)
+  const [addStatuses, setAddStatuses] = useState<ItemStatus[]>([])
+  const [showAddLoanModal, setShowAddLoanModal] = useState(false)
+  const [showAddBorrowModal, setShowAddBorrowModal] = useState(false)
+  const [showAddWatchModal, setShowAddWatchModal] = useState(false)
+  const [addLoanData, setAddLoanData] = useState<{ loanTo: string; loanDate?: Timestamp } | null>(null)
+  const [addBorrowData, setAddBorrowData] = useState<{ borrowedFrom: string; borrowDate?: Timestamp } | null>(null)
+  const [addWatchData, setAddWatchData] = useState<{
+    endedAt?: Timestamp; startedAt?: Timestamp
+    endedAtPrecision?: DatePrecision; startedAtPrecision?: DatePrecision
+  } | null>(null)
+
+  const handleAddStatusChange = (selectedStatus: ItemStatus) => {
+    const index = addStatuses.indexOf(selectedStatus)
+    if (index > -1) {
+      setAddStatuses(addStatuses.filter((s) => s !== selectedStatus))
+      if (selectedStatus === 'loaned') setAddLoanData(null)
+      if (selectedStatus === 'borrowed') setAddBorrowData(null)
+      if (selectedStatus === 'watched') setAddWatchData(null)
+    } else {
+      if (selectedStatus === 'loaned') { setShowAddLoanModal(true); return }
+      if (selectedStatus === 'borrowed') { setShowAddBorrowModal(true); return }
+      if (selectedStatus === 'watched') { setShowAddWatchModal(true); return }
+      setAddStatuses([...addStatuses, selectedStatus])
+    }
+  }
+
+  const handleAddToCollection = async () => {
+    if (!uid || !item) return
+    const data: Record<string, unknown> = {
+      title: item.title,
+      type: item.type,
+      statuses: addStatuses,
+      ...(item.year !== undefined && { year: item.year }),
+      ...(item.director !== undefined && { director: item.director }),
+      ...(item.author !== undefined && { author: item.author }),
+      ...(item.synopsis !== undefined && { synopsis: item.synopsis }),
+      ...(item.poster !== undefined && { poster: item.poster }),
+    }
+    if (addLoanData) { data.loanTo = addLoanData.loanTo; if (addLoanData.loanDate) data.loanDate = addLoanData.loanDate }
+    if (addBorrowData) { data.borrowedFrom = addBorrowData.borrowedFrom; if (addBorrowData.borrowDate) data.borrowDate = addBorrowData.borrowDate }
+    if (addWatchData) {
+      if (addWatchData.endedAt) data.endedAt = addWatchData.endedAt
+      if (addWatchData.startedAt) data.startedAt = addWatchData.startedAt
+      if (addWatchData.endedAtPrecision) data.endedAtPrecision = addWatchData.endedAtPrecision
+      if (addWatchData.startedAtPrecision) data.startedAtPrecision = addWatchData.startedAtPrecision
+    }
+    await addItem(uid, data as never)
+    setShowAddPanel(false)
+  }
 
   const { confirm } = useAlert()
   const [isEditing, setIsEditing] = useState(false)
@@ -313,7 +365,7 @@ export default function ItemDetailScreen() {
       {/* Header */}
       <View className="mb-4">
         <View className="flex-row items-center mb-3">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
+          <TouchableOpacity onPress={() => isMemberView ? router.push(`/(app)/member/${memberUid}`) : router.push('/(app)/collection')} className="mr-3">
             <Ionicons name="chevron-back" size={22} color="#FBBF24" />
           </TouchableOpacity>
           <View className="flex-1" />
@@ -330,6 +382,17 @@ export default function ItemDetailScreen() {
             <TouchableOpacity onPress={handleDelete}>
               <Text className="text-red-400">Supprimer</Text>
             </TouchableOpacity>
+          </View>
+        )}
+        {isMemberView && (
+          <View className="flex-row justify-end">
+            {alreadyInCollection ? (
+              <Text className="text-gray-500">✓ Dans ta collection</Text>
+            ) : (
+              <TouchableOpacity onPress={() => setShowAddPanel(true)} disabled={showAddPanel}>
+                <Text className={showAddPanel ? 'text-gray-500' : 'text-amber-400'}>+ Ajouter à ma collection</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -448,68 +511,74 @@ export default function ItemDetailScreen() {
         )}
       </View>
 
-      <LoanModal
-        visible={showLoanModal}
-        onValidate={handleLoanValidate}
-        onCancel={() => setShowLoanModal(false)}
-      />
-      <BorrowModal
-        visible={showBorrowModal}
-        onValidate={handleBorrowValidate}
-        onCancel={() => setShowBorrowModal(false)}
-      />
-      <WatchDateModal
-        visible={showWatchDateModal}
-        type={item.type}
-        initialEndedAt={item.endedAt}
-        initialStartedAt={item.startedAt}
-        initialEndedAtPrecision={item.endedAtPrecision}
-        initialStartedAtPrecision={item.startedAtPrecision}
-        onValidate={handleWatchDateValidate}
-        onCancel={() => setShowWatchDateModal(false)}
-      />
+      {!isMemberView && (
+        <>
+          <LoanModal
+            visible={showLoanModal}
+            onValidate={handleLoanValidate}
+            onCancel={() => setShowLoanModal(false)}
+          />
+          <BorrowModal
+            visible={showBorrowModal}
+            onValidate={handleBorrowValidate}
+            onCancel={() => setShowBorrowModal(false)}
+          />
+          <WatchDateModal
+            visible={showWatchDateModal}
+            type={item.type}
+            initialEndedAt={item.endedAt}
+            initialStartedAt={item.startedAt}
+            initialEndedAtPrecision={item.endedAtPrecision}
+            initialStartedAtPrecision={item.startedAtPrecision}
+            onValidate={handleWatchDateValidate}
+            onCancel={() => setShowWatchDateModal(false)}
+          />
+        </>
+      )}
 
       {/* Mon avis */}
-      <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-white font-semibold">Mon avis</Text>
-          <TierBadge tier={item.tier} />
+      {!isMemberView && (
+        <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-white font-semibold">Mon avis</Text>
+            <TierBadge tier={item.tier} />
+          </View>
+
+          <Text className="text-[#6B5E5E] text-sm mb-2">Note</Text>
+          <RatingWidget
+            value={item.rating ?? null}
+            onRate={async (val) => {
+              if (!uid) return
+              await updateItem(uid, item.id, { rating: val === null ? deleteField() : val } as never)
+            }}
+          />
+
+          <Text className="text-[#6B5E5E] text-sm mt-4 mb-2">Tier</Text>
+          <TierPicker
+            current={item.tier}
+            onSelect={async (tier: TierLevel) => {
+              if (!uid) return
+              await updateItem(uid, item.id, { tier } as never)
+            }}
+          />
+
+          <Text className="text-[#6B5E5E] text-sm mt-4 mb-2">Commentaire</Text>
+          <CommentInput
+            value={item.comment}
+            onSave={async (comment) => {
+              if (!uid) return
+              await updateItem(uid, item.id, { comment } as never)
+            }}
+            onClear={async () => {
+              if (!uid) return
+              await updateItem(uid, item.id, { comment: deleteField() } as never)
+            }}
+          />
         </View>
-
-        <Text className="text-[#6B5E5E] text-sm mb-2">Note</Text>
-        <RatingWidget
-          value={item.rating ?? null}
-          onRate={async (val) => {
-            if (!uid) return
-            await updateItem(uid, item.id, { rating: val === null ? deleteField() : val } as never)
-          }}
-        />
-
-        <Text className="text-[#6B5E5E] text-sm mt-4 mb-2">Tier</Text>
-        <TierPicker
-          current={item.tier}
-          onSelect={async (tier: TierLevel) => {
-            if (!uid) return
-            await updateItem(uid, item.id, { tier } as never)
-          }}
-        />
-
-        <Text className="text-[#6B5E5E] text-sm mt-4 mb-2">Commentaire</Text>
-        <CommentInput
-          value={item.comment}
-          onSave={async (comment) => {
-            if (!uid) return
-            await updateItem(uid, item.id, { comment } as never)
-          }}
-          onClear={async () => {
-            if (!uid) return
-            await updateItem(uid, item.id, { comment: deleteField() } as never)
-          }}
-        />
-      </View>
+      )}
 
       {/* Playlists */}
-      <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
+      {!isMemberView && <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
         <Text className="text-white font-semibold mb-3">Playlists</Text>
         {playlists.map((playlist) => {
           const isIn = playlist.itemIds.includes(item.id)
@@ -536,16 +605,57 @@ export default function ItemDetailScreen() {
             <Text className="text-[#6B5E5E] text-sm">Créer une playlist →</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </View>}
 
       {/* Notes des membres du cercle */}
       <MemberOpinions item={item} />
 
-      <RecoComposer
-        item={item}
-        visible={showRecoComposer}
-        onClose={() => setShowRecoComposer(false)}
-      />
+      {/* Ajout à ma collection (mode vue membre) */}
+      {isMemberView && showAddPanel && (
+        <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg p-4 mt-2">
+          <Text className="text-white font-semibold mb-3">Ajouter à ma collection</Text>
+          <StatusPicker current={addStatuses} onSelect={handleAddStatusChange} mediaType={item.type} />
+          <TouchableOpacity
+            onPress={handleAddToCollection}
+            className="bg-amber-500 rounded-lg py-3 mt-4 items-center"
+          >
+            <Text className="text-black font-semibold">Confirmer l'ajout</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {isMemberView && (
+        <>
+          <LoanModal
+            visible={showAddLoanModal}
+            onValidate={(loanTo, loanDate) => { setShowAddLoanModal(false); setAddLoanData({ loanTo, loanDate }); if (!addStatuses.includes('loaned')) setAddStatuses([...addStatuses, 'loaned']) }}
+            onCancel={() => setShowAddLoanModal(false)}
+          />
+          <BorrowModal
+            visible={showAddBorrowModal}
+            onValidate={(borrowedFrom, borrowDate) => { setShowAddBorrowModal(false); setAddBorrowData({ borrowedFrom, borrowDate }); if (!addStatuses.includes('borrowed')) setAddStatuses([...addStatuses, 'borrowed']) }}
+            onCancel={() => setShowAddBorrowModal(false)}
+          />
+          <WatchDateModal
+            visible={showAddWatchModal}
+            type={item.type}
+            onValidate={(endedAt, startedAt, endedAtPrecision, startedAtPrecision) => {
+              setShowAddWatchModal(false)
+              setAddWatchData({ endedAt, startedAt, endedAtPrecision, startedAtPrecision })
+              if (!addStatuses.includes('watched')) setAddStatuses([...addStatuses, 'watched'])
+            }}
+            onCancel={() => setShowAddWatchModal(false)}
+          />
+        </>
+      )}
+
+      {!isMemberView && (
+        <RecoComposer
+          item={item}
+          visible={showRecoComposer}
+          onClose={() => setShowRecoComposer(false)}
+        />
+      )}
     </ScrollView>
   )
 }

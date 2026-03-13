@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { getDocs, collection, query, orderBy } from 'firebase/firestore'
 import { useLocalSearchParams, router } from 'expo-router'
 import { db } from '@/lib/firebase'
@@ -43,7 +44,7 @@ export default function MemberCollectionScreen() {
     <View className="flex-1 bg-[#0E0B0B]">
       <View className="flex-row items-center px-4 pt-12 pb-4">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <Text className="text-amber-400">←</Text>
+          <Ionicons name="chevron-back" size={22} color="#FBBF24" />
         </TouchableOpacity>
         <Text className="text-white text-xl font-bold flex-1">
           {member?.displayName ?? member?.email ?? 'Membre'}
