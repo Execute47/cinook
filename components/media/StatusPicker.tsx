@@ -6,6 +6,7 @@ export const STATUS_OPTIONS: { value: ItemStatus; label: string; color: string }
   { value: 'owned', label: 'Possédé', color: '#60A5FA' },
   { value: 'watched', label: 'Vu', color: '#34D399' },
   { value: 'loaned', label: 'Prêté', color: '#FBBF24' },
+  { value: 'borrowed', label: 'Emprunté', color: '#22D3EE' },
   { value: 'wishlist', label: 'À voir', color: '#A78BFA' },
   { value: 'favorite', label: 'Favori', color: '#F87171' },
 ]

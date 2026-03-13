@@ -12,6 +12,7 @@ import BarcodeOverlay from '@/components/scan/BarcodeOverlay'
 import WebScanner from '@/components/scan/WebScanner'
 import StatusPicker from '@/components/media/StatusPicker'
 import LoanModal from '@/components/media/LoanModal'
+import BorrowModal from '@/components/media/BorrowModal'
 import WatchDateModal from '@/components/media/WatchDateModal'
 import type { ItemStatus, DatePrecision } from '@/types/media'
 
@@ -23,8 +24,10 @@ export default function ScanScreen() {
 
   const [statuses, setStatuses] = useState<ItemStatus[]>([])
   const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showBorrowModal, setShowBorrowModal] = useState(false)
   const [showWatchDateModal, setShowWatchDateModal] = useState(false)
   const [loanData, setLoanData] = useState<{ loanTo: string; loanDate?: Timestamp } | null>(null)
+  const [borrowData, setBorrowData] = useState<{ borrowedFrom: string; borrowDate?: Timestamp } | null>(null)
   const [watchData, setWatchData] = useState<{
     endedAt?: Timestamp
     startedAt?: Timestamp
@@ -47,9 +50,11 @@ export default function ScanScreen() {
     if (index > -1) {
       setStatuses(statuses.filter((s) => s !== selectedStatus))
       if (selectedStatus === 'loaned') setLoanData(null)
+      if (selectedStatus === 'borrowed') setBorrowData(null)
       if (selectedStatus === 'watched') setWatchData(null)
     } else {
       if (selectedStatus === 'loaned') { setShowLoanModal(true); return }
+      if (selectedStatus === 'borrowed') { setShowBorrowModal(true); return }
       if (selectedStatus === 'watched') { setShowWatchDateModal(true); return }
       setStatuses([...statuses, selectedStatus])
     }
@@ -59,6 +64,12 @@ export default function ScanScreen() {
     setShowLoanModal(false)
     setLoanData({ loanTo, loanDate })
     if (!statuses.includes('loaned')) setStatuses([...statuses, 'loaned'])
+  }
+
+  const handleBorrowValidate = (borrowedFrom: string, borrowDate?: Timestamp) => {
+    setShowBorrowModal(false)
+    setBorrowData({ borrowedFrom, borrowDate })
+    if (!statuses.includes('borrowed')) setStatuses([...statuses, 'borrowed'])
   }
 
   const handleWatchDateValidate = (
@@ -92,6 +103,10 @@ export default function ScanScreen() {
     if (loanData) {
       item.loanTo = loanData.loanTo
       if (loanData.loanDate) item.loanDate = loanData.loanDate
+    }
+    if (borrowData) {
+      item.borrowedFrom = borrowData.borrowedFrom
+      if (borrowData.borrowDate) item.borrowDate = borrowData.borrowDate
     }
     if (watchData) {
       if (watchData.endedAt) item.endedAt = watchData.endedAt
@@ -183,6 +198,11 @@ export default function ScanScreen() {
           visible={showLoanModal}
           onValidate={handleLoanValidate}
           onCancel={() => setShowLoanModal(false)}
+        />
+        <BorrowModal
+          visible={showBorrowModal}
+          onValidate={handleBorrowValidate}
+          onCancel={() => setShowBorrowModal(false)}
         />
         <WatchDateModal
           visible={showWatchDateModal}

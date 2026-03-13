@@ -15,6 +15,7 @@ import TierPicker from '@/components/media/TierPicker'
 import TierBadge from '@/components/media/TierBadge'
 import CommentInput from '@/components/media/CommentInput'
 import LoanModal from '@/components/media/LoanModal'
+import BorrowModal from '@/components/media/BorrowModal'
 import WatchDateModal from '@/components/media/WatchDateModal'
 import MemberOpinions from '@/components/circle/MemberOpinions'
 import RecoComposer from '@/components/circle/RecoComposer'
@@ -38,7 +39,7 @@ export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const uid = useAuthStore((s) => s.uid)
   const { items, loading: collectionLoading } = useCollection()
-  const { cineclub } = useCineclub()
+  const { cineclubs } = useCineclub()
   const { playlists } = usePlaylists()
   const item = items.find((i) => i.id === id)
 
@@ -46,6 +47,7 @@ export default function ItemDetailScreen() {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showBorrowModal, setShowBorrowModal] = useState(false)
   const [showWatchDateModal, setShowWatchDateModal] = useState(false)
   const [showRecoComposer, setShowRecoComposer] = useState(false)
 
@@ -65,6 +67,10 @@ export default function ItemDetailScreen() {
         setShowLoanModal(true)
         return
       }
+      if (selectedStatus === 'borrowed') {
+        setShowBorrowModal(true)
+        return
+      }
       if (selectedStatus === 'watched') {
         setShowWatchDateModal(true)
         return
@@ -79,6 +85,11 @@ export default function ItemDetailScreen() {
       updates.loanTo = deleteField()
       updates.loanDate = deleteField()
     }
+    // Si on retire 'borrowed', on nettoie les infos d'emprunt
+    if (item.statuses.includes('borrowed') && !newStatuses.includes('borrowed')) {
+      updates.borrowedFrom = deleteField()
+      updates.borrowDate = deleteField()
+    }
     // Si on retire 'watched', on nettoie les infos de visionnage
     if (item.statuses.includes('watched') && !newStatuses.includes('watched')) {
       updates.startedAt = deleteField()
@@ -91,13 +102,26 @@ export default function ItemDetailScreen() {
   const handleLoanValidate = async (loanTo: string, loanDate?: Timestamp) => {
     if (!uid || !item) return
     setShowLoanModal(false)
-    const newStatuses = item.statuses.includes('loaned') 
-      ? item.statuses 
+    const newStatuses = item.statuses.includes('loaned')
+      ? item.statuses
       : [...item.statuses, 'loaned' as ItemStatus]
     await updateItem(uid, item.id, {
       statuses: newStatuses,
       loanTo,
       loanDate: loanDate || deleteField(),
+    } as never)
+  }
+
+  const handleBorrowValidate = async (borrowedFrom: string, borrowDate?: Timestamp) => {
+    if (!uid || !item) return
+    setShowBorrowModal(false)
+    const newStatuses = item.statuses.includes('borrowed')
+      ? item.statuses
+      : [...item.statuses, 'borrowed' as ItemStatus]
+    await updateItem(uid, item.id, {
+      statuses: newStatuses,
+      borrowedFrom,
+      borrowDate: borrowDate || deleteField(),
     } as never)
   }
 
@@ -269,7 +293,7 @@ export default function ItemDetailScreen() {
             <Ionicons name="chevron-back" size={22} color="#FBBF24" />
           </TouchableOpacity>
           <View className="flex-1" />
-          <CineclubButton item={item} currentCineclubItemId={cineclub?.itemId} />
+          <CineclubButton item={item} cineclubItemIds={cineclubs.map((c) => c.itemId)} />
         </View>
         <View className="flex-row justify-end gap-4">
           <TouchableOpacity onPress={() => setShowRecoComposer(true)}>
@@ -348,6 +372,18 @@ export default function ItemDetailScreen() {
             )}
           </View>
         )}
+        {item.statuses.includes('borrowed') && item.borrowedFrom && (
+          <View className="mt-3 pt-3 border-t border-[#3D3535]">
+            <Text className="text-[#6B5E5E] text-sm">
+              Emprunté à : <Text style={{ color: '#22D3EE' }}>{item.borrowedFrom}</Text>
+            </Text>
+            {item.borrowDate && (
+              <Text className="text-[#6B5E5E] text-sm mt-0.5">
+                Depuis le : {item.borrowDate.toDate().toLocaleDateString('fr-FR')}
+              </Text>
+            )}
+          </View>
+        )}
         {item.statuses.includes('watched') && (
           <View className="mt-3 pt-3 border-t border-[#3D3535]">
             {item.endedAt ? (
@@ -388,6 +424,11 @@ export default function ItemDetailScreen() {
         visible={showLoanModal}
         onValidate={handleLoanValidate}
         onCancel={() => setShowLoanModal(false)}
+      />
+      <BorrowModal
+        visible={showBorrowModal}
+        onValidate={handleBorrowValidate}
+        onCancel={() => setShowBorrowModal(false)}
       />
       <WatchDateModal
         visible={showWatchDateModal}

@@ -1,9 +1,13 @@
 import { renderHook, waitFor } from '@testing-library/react-native'
 
 const mockOnSnapshot = jest.fn()
-const mockDoc = jest.fn((_db, ...segments) => ({ path: segments.join('/') }))
+const mockCollection = jest.fn((_db, ...segments) => ({ path: segments.join('/') }))
+const mockQuery = jest.fn((...args: unknown[]) => args[0])
+const mockOrderBy = jest.fn()
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
+  collection: (...args: unknown[]) => mockCollection(...args),
+  query: (...args: unknown[]) => mockQuery(...args),
+  orderBy: (...args: unknown[]) => mockOrderBy(...args),
   onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
   getFirestore: jest.fn(),
 }))
@@ -36,15 +40,17 @@ describe('useCineclub', () => {
     expect(mockUnsub).toHaveBeenCalledTimes(1)
   })
 
-  it('retourne le cineclub si le document existe', async () => {
-    const fakeData = {
-      itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
-      itemType: 'film', postedBy: 'Alice', postedAt: null,
+  it('retourne les cineclubs si des documents existent', async () => {
+    const fakeDoc = {
+      data: () => ({
+        itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
+        itemType: 'film', postedBy: 'Alice', postedAt: null,
+      }),
     }
 
     mockOnSnapshot.mockImplementationOnce(
-      (_ref: unknown, onNext: (snap: { exists: () => boolean; data: () => typeof fakeData }) => void) => {
-        onNext({ exists: () => true, data: () => fakeData })
+      (_ref: unknown, onNext: (snap: { docs: typeof fakeDoc[] }) => void) => {
+        onNext({ docs: [fakeDoc] })
         return jest.fn()
       }
     )
@@ -53,21 +59,24 @@ describe('useCineclub', () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
-      expect(result.current.cineclub?.itemTitle).toBe('Matrix')
-      expect(result.current.cineclub?.itemType).toBe('film')
+      expect(result.current.cineclubs).toHaveLength(1)
+      expect(result.current.cineclubs[0].itemTitle).toBe('Matrix')
+      expect(result.current.cineclubs[0].itemType).toBe('film')
     })
   })
 
   it('utilise le fallback "film" si itemType absent du document', async () => {
-    const fakeData = {
-      itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
-      postedBy: 'Alice', postedAt: null,
-      // pas de itemType
+    const fakeDoc = {
+      data: () => ({
+        itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
+        postedBy: 'Alice', postedAt: null,
+        // pas de itemType
+      }),
     }
 
     mockOnSnapshot.mockImplementationOnce(
-      (_ref: unknown, onNext: (snap: { exists: () => boolean; data: () => typeof fakeData }) => void) => {
-        onNext({ exists: () => true, data: () => fakeData })
+      (_ref: unknown, onNext: (snap: { docs: typeof fakeDoc[] }) => void) => {
+        onNext({ docs: [fakeDoc] })
         return jest.fn()
       }
     )
@@ -75,14 +84,40 @@ describe('useCineclub', () => {
     const { result } = renderHook(() => useCineclub())
 
     await waitFor(() => {
-      expect(result.current.cineclub?.itemType).toBe('film')
+      expect(result.current.cineclubs[0].itemType).toBe('film')
     })
   })
 
-  it('retourne null si le document nexiste pas', async () => {
+  it('ignore les documents sans itemId', async () => {
+    const validDoc = {
+      data: () => ({
+        itemId: 'item-1', itemTitle: 'Matrix', itemPoster: null,
+        itemType: 'film', postedBy: 'Alice', postedAt: null,
+      }),
+    }
+    const invalidDoc = {
+      data: () => ({ itemTitle: 'Orphan', postedBy: 'Bob', postedAt: null }),
+    }
+
     mockOnSnapshot.mockImplementationOnce(
-      (_ref: unknown, onNext: (snap: { exists: () => boolean }) => void) => {
-        onNext({ exists: () => false })
+      (_ref: unknown, onNext: (snap: { docs: (typeof validDoc | typeof invalidDoc)[] }) => void) => {
+        onNext({ docs: [validDoc, invalidDoc] })
+        return jest.fn()
+      }
+    )
+
+    const { result } = renderHook(() => useCineclub())
+
+    await waitFor(() => {
+      expect(result.current.cineclubs).toHaveLength(1)
+      expect(result.current.cineclubs[0].itemId).toBe('item-1')
+    })
+  })
+
+  it('retourne un tableau vide si aucun document', async () => {
+    mockOnSnapshot.mockImplementationOnce(
+      (_ref: unknown, onNext: (snap: { docs: [] }) => void) => {
+        onNext({ docs: [] })
         return jest.fn()
       }
     )
@@ -91,18 +126,18 @@ describe('useCineclub', () => {
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
-      expect(result.current.cineclub).toBeNull()
+      expect(result.current.cineclubs).toEqual([])
     })
   })
 
-  it('retourne null et loading false si pas de circleId', async () => {
+  it('retourne un tableau vide et loading false si pas de circleId', async () => {
     mockCircleId = null
 
     const { result } = renderHook(() => useCineclub())
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
-      expect(result.current.cineclub).toBeNull()
+      expect(result.current.cineclubs).toEqual([])
     })
     expect(mockOnSnapshot).not.toHaveBeenCalled()
   })

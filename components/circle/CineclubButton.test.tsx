@@ -48,12 +48,12 @@ beforeEach(() => {
 
 describe('CineclubButton — label', () => {
   it('affiche "Cinéclub" pour un film', () => {
-    const { getByText } = render(<CineclubButton item={fakeFilm} />)
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
     expect(getByText('Mettre en Cinéclub')).toBeTruthy()
   })
 
   it('affiche "Coin lecture" pour un livre', () => {
-    const { getByText } = render(<CineclubButton item={fakeLivre} />)
+    const { getByText } = render(<CineclubButton item={fakeLivre} cineclubItemIds={[]} />)
     expect(getByText('Mettre en Coin lecture')).toBeTruthy()
   })
 })
@@ -61,7 +61,7 @@ describe('CineclubButton — label', () => {
 describe('CineclubButton — mise en avant', () => {
   it('appelle setDoc avec itemType dans le payload', async () => {
     mockSetDoc.mockResolvedValueOnce(undefined)
-    const { getByText } = render(<CineclubButton item={fakeFilm} />)
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
     fireEvent.press(getByText('Mettre en Cinéclub'))
 
     await waitFor(() => {
@@ -75,7 +75,7 @@ describe('CineclubButton — mise en avant', () => {
   it('affiche une alerte après setDoc réussi', async () => {
     mockSetDoc.mockResolvedValueOnce(undefined)
 
-    const { getByText } = render(<CineclubButton item={fakeFilm} />)
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
     fireEvent.press(getByText('Mettre en Cinéclub'))
 
     await waitFor(() => {
@@ -85,12 +85,24 @@ describe('CineclubButton — mise en avant', () => {
       )
     })
   })
+
+  it('affiche une alerte si la limite de 5 est atteinte', async () => {
+    const { getByText } = render(
+      <CineclubButton item={fakeFilm} cineclubItemIds={['a', 'b', 'c', 'd', 'e']} />
+    )
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith('Cinéclub', expect.stringContaining('5'))
+      expect(mockSetDoc).not.toHaveBeenCalled()
+    })
+  })
 })
 
-describe('CineclubButton — mode retrait (AC3)', () => {
-  it('affiche "Retirer du Cinéclub" si currentCineclubItemId === item.id', () => {
+describe('CineclubButton — mode retrait', () => {
+  it('affiche "Retirer du Cinéclub" si item.id est dans cineclubItemIds', () => {
     const { getByText, queryByText } = render(
-      <CineclubButton item={fakeFilm} currentCineclubItemId="item-1" />
+      <CineclubButton item={fakeFilm} cineclubItemIds={['item-1']} />
     )
     expect(getByText('Retirer du Cinéclub')).toBeTruthy()
     expect(queryByText('Mettre en Cinéclub')).toBeNull()
@@ -98,20 +110,21 @@ describe('CineclubButton — mode retrait (AC3)', () => {
 
   it('affiche "Retirer du Coin lecture" pour un livre actif', () => {
     const { getByText } = render(
-      <CineclubButton item={fakeLivre} currentCineclubItemId="item-2" />
+      <CineclubButton item={fakeLivre} cineclubItemIds={['item-2']} />
     )
     expect(getByText('Retirer du Coin lecture')).toBeTruthy()
   })
 
-  it('appelle deleteDoc sur le bon chemin au clic Retirer', async () => {
+  it('appelle deleteDoc avec item.id au clic Retirer', async () => {
     mockDeleteDoc.mockResolvedValueOnce(undefined)
     const { getByText } = render(
-      <CineclubButton item={fakeFilm} currentCineclubItemId="item-1" />
+      <CineclubButton item={fakeFilm} cineclubItemIds={['item-1']} />
     )
     fireEvent.press(getByText('Retirer du Cinéclub'))
 
     await waitFor(() => {
       expect(mockDeleteDoc).toHaveBeenCalledTimes(1)
+      expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'circles', 'circle-1', 'cineclub', 'item-1')
     })
   })
 })
@@ -119,7 +132,7 @@ describe('CineclubButton — mode retrait (AC3)', () => {
 describe('CineclubButton — sans circleId', () => {
   it('ne rend rien si pas de circleId', () => {
     mockCircleId = null
-    const { queryByText } = render(<CineclubButton item={fakeFilm} />)
+    const { queryByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
     expect(queryByText(/Cinéclub/)).toBeNull()
   })
 })

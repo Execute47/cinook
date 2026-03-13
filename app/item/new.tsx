@@ -10,6 +10,7 @@ import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
 import StatusPicker from '@/components/media/StatusPicker'
 import LoanModal from '@/components/media/LoanModal'
+import BorrowModal from '@/components/media/BorrowModal'
 import WatchDateModal from '@/components/media/WatchDateModal'
 import type { MediaType, ItemStatus, DatePrecision } from '@/types/media'
 
@@ -34,8 +35,10 @@ export default function NewItemScreen() {
 
   const [statuses, setStatuses] = useState<ItemStatus[]>([])
   const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showBorrowModal, setShowBorrowModal] = useState(false)
   const [showWatchDateModal, setShowWatchDateModal] = useState(false)
   const [loanData, setLoanData] = useState<{ loanTo: string; loanDate?: Timestamp } | null>(null)
+  const [borrowData, setBorrowData] = useState<{ borrowedFrom: string; borrowDate?: Timestamp } | null>(null)
   const [watchData, setWatchData] = useState<{
     endedAt?: Timestamp
     startedAt?: Timestamp
@@ -54,11 +57,16 @@ export default function NewItemScreen() {
       // Retirer le statut et nettoyer les données associées
       setStatuses(statuses.filter((s) => s !== selectedStatus))
       if (selectedStatus === 'loaned') setLoanData(null)
+      if (selectedStatus === 'borrowed') setBorrowData(null)
       if (selectedStatus === 'watched') setWatchData(null)
     } else {
       // Ajouter le statut — certains nécessitent une modale
       if (selectedStatus === 'loaned') {
         setShowLoanModal(true)
+        return
+      }
+      if (selectedStatus === 'borrowed') {
+        setShowBorrowModal(true)
         return
       }
       if (selectedStatus === 'watched') {
@@ -72,9 +80,13 @@ export default function NewItemScreen() {
   const handleLoanValidate = (loanTo: string, loanDate?: Timestamp) => {
     setShowLoanModal(false)
     setLoanData({ loanTo, loanDate })
-    if (!statuses.includes('loaned')) {
-      setStatuses([...statuses, 'loaned'])
-    }
+    if (!statuses.includes('loaned')) setStatuses([...statuses, 'loaned'])
+  }
+
+  const handleBorrowValidate = (borrowedFrom: string, borrowDate?: Timestamp) => {
+    setShowBorrowModal(false)
+    setBorrowData({ borrowedFrom, borrowDate })
+    if (!statuses.includes('borrowed')) setStatuses([...statuses, 'borrowed'])
   }
 
   const handleWatchDateValidate = (
@@ -115,6 +127,10 @@ export default function NewItemScreen() {
     if (loanData) {
       item.loanTo = loanData.loanTo
       if (loanData.loanDate) item.loanDate = loanData.loanDate
+    }
+    if (borrowData) {
+      item.borrowedFrom = borrowData.borrowedFrom
+      if (borrowData.borrowDate) item.borrowDate = borrowData.borrowDate
     }
     if (watchData) {
       if (watchData.endedAt) item.endedAt = watchData.endedAt
@@ -244,6 +260,11 @@ export default function NewItemScreen() {
         visible={showLoanModal}
         onValidate={handleLoanValidate}
         onCancel={() => setShowLoanModal(false)}
+      />
+      <BorrowModal
+        visible={showBorrowModal}
+        onValidate={handleBorrowValidate}
+        onCancel={() => setShowBorrowModal(false)}
       />
       <WatchDateModal
         visible={showWatchDateModal}

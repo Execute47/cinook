@@ -5,7 +5,7 @@ export type { DatePrecision }
 
 export type MediaType = 'film' | 'serie' | 'livre'
 
-export type ItemStatus = 'owned' | 'watched' | 'loaned' | 'wishlist' | 'favorite'
+export type ItemStatus = 'owned' | 'watched' | 'loaned' | 'borrowed' | 'wishlist' | 'favorite'
 
 export type TierLevel = 'none' | 'disliked' | 'bronze' | 'silver' | 'gold' | 'diamond'
 
@@ -31,6 +31,8 @@ export interface MediaItem {
   comment?: string
   loanTo?: string
   loanDate?: Timestamp
+  borrowedFrom?: string
+  borrowDate?: Timestamp
   startedAt?: Timestamp
   endedAt?: Timestamp
   startedAtPrecision?: DatePrecision

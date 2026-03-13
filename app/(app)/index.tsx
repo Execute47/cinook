@@ -26,7 +26,7 @@ export default function HomeScreen() {
   const circleId = useAuthStore((s) => s.activeCircleId)
   const { items } = useCollection()
   const { recommendations, loading: recoLoading } = useRecommendations()
-  const { cineclub, loading: cineclubLoading } = useCineclub()
+  const { cineclubs, loading: cineclubLoading } = useCineclub()
   const { addToast } = useUIStore()
   const [duplicateMessage, setDuplicateMessage] = useState<string | null>(null)
   const duplicateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -49,8 +49,7 @@ export default function HomeScreen() {
     duplicateTimerRef.current = setTimeout(() => setDuplicateMessage(null), 3000)
   }
 
-  const handleCineclubPress = () => {
-    if (!cineclub) return
+  const handleCineclubPress = (cineclub: (typeof cineclubs)[number]) => {
     router.push({
       pathname: '/item/preview',
       params: {
@@ -112,8 +111,8 @@ export default function HomeScreen() {
     })
   }
 
-  const handleAddCineclubToWishlist = async () => {
-    if (!uid || !cineclub) return
+  const handleAddCineclubToWishlist = async (cineclub: (typeof cineclubs)[number]) => {
+    if (!uid) return
     const type = cineclub.itemType ?? 'film'
     const duplicate = findDuplicate(items, { title: cineclub.itemTitle, type, tmdbId: cineclub.tmdbId ?? undefined, googleBooksId: cineclub.googleBooksId ?? undefined, isbn: cineclub.isbn ?? undefined })
     if (duplicate) { showDuplicateMessage(); return }
@@ -164,17 +163,18 @@ export default function HomeScreen() {
       )}
 
       {/* Cinéclub */}
-      {!cineclubLoading && cineclub && (
+      {!cineclubLoading && cineclubs.map((cineclub) => (
         <CineclubBanner
+          key={cineclub.itemId}
           cineclub={cineclub}
-          onAddToWishlist={handleAddCineclubToWishlist}
+          onAddToWishlist={() => handleAddCineclubToWishlist(cineclub)}
           onRemove={async () => {
             if (!circleId) return
-            await deleteDoc(doc(db, 'circles', circleId, 'cineclub', 'current'))
+            await deleteDoc(doc(db, 'circles', circleId, 'cineclub', cineclub.itemId))
           }}
-          onPress={handleCineclubPress}
+          onPress={() => handleCineclubPress(cineclub)}
         />
-      )}
+      ))}
 
       {/* Recommandations */}
       <Text className="text-white font-semibold mb-3">Recommandations reçues</Text>

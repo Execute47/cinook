@@ -4,17 +4,18 @@ import { Ionicons } from '@expo/vector-icons'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import { useAlert } from '@/hooks/useAlert'
+import { CINECLUB_MAX } from '@/hooks/useCineclub'
 import type { MediaItem, MediaType } from '@/types/media'
 
 interface Props {
   item: MediaItem
-  currentCineclubItemId?: string
+  cineclubItemIds: string[]
 }
 
 const getLabel = (type: MediaType): string =>
   type === 'livre' ? 'Coin lecture' : 'Cinéclub'
 
-export default function CineclubButton({ item, currentCineclubItemId }: Props) {
+export default function CineclubButton({ item, cineclubItemIds }: Props) {
   const uid = useAuthStore((s) => s.uid)
   const displayName = useAuthStore((s) => s.displayName)
   const circleId = useAuthStore((s) => s.activeCircleId)
@@ -23,11 +24,15 @@ export default function CineclubButton({ item, currentCineclubItemId }: Props) {
   if (!circleId) return null
 
   const label = getLabel(item.type)
-  const isActive = currentCineclubItemId === item.id
+  const isActive = cineclubItemIds.includes(item.id)
 
   const handleSet = async () => {
     if (!uid || !circleId) return
-    await setDoc(doc(db, 'circles', circleId, 'cineclub', 'current'), {
+    if (cineclubItemIds.length >= CINECLUB_MAX) {
+      alert(label, `Vous avez atteint la limite de ${CINECLUB_MAX} œuvres en avant. Retirez-en une pour en ajouter une nouvelle.`)
+      return
+    }
+    await setDoc(doc(db, 'circles', circleId, 'cineclub', item.id), {
       itemId: item.id,
       itemTitle: item.title,
       itemPoster: item.poster ?? null,
@@ -47,7 +52,7 @@ export default function CineclubButton({ item, currentCineclubItemId }: Props) {
 
   const handleRemove = async () => {
     if (!circleId) return
-    await deleteDoc(doc(db, 'circles', circleId, 'cineclub', 'current'))
+    await deleteDoc(doc(db, 'circles', circleId, 'cineclub', item.id))
   }
 
   if (isActive) {
