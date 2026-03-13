@@ -39,6 +39,8 @@ export function useYearStats(year: number): YearStats {
     const byMonth = Array(12).fill(0) as number[]
     const itemsByMonth: MediaItem[][] = Array.from({ length: 12 }, () => [])
     filtered.forEach((item) => {
+      // Les items year-only ne sont pas attribués à un mois spécifique
+      if (item.endedAtPrecision === 'year') return
       const month = item.endedAt!.toDate().getMonth()
       byMonth[month]++
       itemsByMonth[month].push(item)

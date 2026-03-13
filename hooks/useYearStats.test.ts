@@ -79,6 +79,34 @@ describe('useYearStats', () => {
       expect(result.current.byMonth[0]).toBe(0)
     })
 
+    it('n\'attribue pas les items year-only à un mois dans byMonth', () => {
+      mockItems.push(
+        { id: '1', title: 'Film year-only', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 0, 1), endedAtPrecision: 'year' },
+        { id: '2', title: 'Film jour', type: 'film', tier: 'none', addedVia: 'manual', statuses: ['watched'], endedAt: makeTimestamp(2024, 5, 15) },
+      )
+      const { result } = renderHook(() => useYearStats(2024))
+      // Total = 2 (les deux sont dans l'année)
+      expect(result.current.counts.total).toBe(2)
+      // Mais byMonth ne compte que l'item avec précision day
+      const totalByMonth = result.current.byMonth.reduce((s: number, n: number) => s + n, 0)
+      expect(totalByMonth).toBe(1)
+      // L'item year-only ne doit pas être compté en janvier
+      expect(result.current.byMonth[0]).toBe(0)
+      // L'item day est bien en juin (index 5)
+      expect(result.current.byMonth[5]).toBe(1)
+    })
+
+    it('attribue les items month-only à leur mois correct', () => {
+      mockItems.push({
+        id: '1', title: 'Film mars', type: 'film', tier: 'none', addedVia: 'manual',
+        statuses: ['watched'],
+        endedAt: makeTimestamp(2024, 2, 1), // 1er mars (month precision)
+        endedAtPrecision: 'month',
+      })
+      const { result } = renderHook(() => useYearStats(2024))
+      expect(result.current.byMonth[2]).toBe(1) // mars = index 2
+    })
+
     it('retourne un tableau de 12 valeurs', () => {
       const { result } = renderHook(() => useYearStats(2024))
       expect(result.current.byMonth).toHaveLength(12)

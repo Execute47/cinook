@@ -1,4 +1,7 @@
 import type { Timestamp } from 'firebase/firestore'
+import type { DatePrecision } from '@/lib/dateUtils'
+
+export type { DatePrecision }
 
 export type MediaType = 'film' | 'serie' | 'livre'
 
@@ -30,6 +33,8 @@ export interface MediaItem {
   loanDate?: Timestamp
   startedAt?: Timestamp
   endedAt?: Timestamp
+  startedAtPrecision?: DatePrecision
+  endedAtPrecision?: DatePrecision
   addedAt: Timestamp
   updatedAt?: Timestamp
   addedVia: AddedVia
