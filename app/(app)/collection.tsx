@@ -1,7 +1,7 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
-  FlatList, ActivityIndicator, ScrollView, Animated,
+  FlatList, ActivityIndicator, Modal, Pressable,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -25,37 +25,18 @@ const STATUS_OPTIONS: { value: ItemStatus; label: string }[] = [
   { value: 'favorite', label: 'Favori' },
 ]
 
-interface FilterChipProps {
-  label: string
-  active: boolean
-  onPress: () => void
-}
-
-function FilterChip({ label, active, onPress }: FilterChipProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start()
-  }
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()
-  }
-
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        className={`px-3 py-1.5 rounded-full border ${
-          active ? 'bg-amber-500 border-amber-500' : 'bg-[#1C1717] border-[#3D3535]'
-        }`}
-      >
-        <Text className={`text-sm ${active ? 'text-black font-semibold' : 'text-white'}`}>
-          {label}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
+    <TouchableOpacity
+      onPress={onPress}
+      className={`px-4 py-2 rounded-full border mr-2 mb-2 ${
+        active ? 'bg-amber-500 border-amber-500' : 'bg-[#1C1717] border-[#3D3535]'
+      }`}
+    >
+      <Text className={`text-sm ${active ? 'text-black font-semibold' : 'text-white'}`}>
+        {label}
+      </Text>
+    </TouchableOpacity>
   )
 }
 
@@ -64,6 +45,7 @@ export default function CollectionScreen() {
   const { items, loading } = useCollection()
   const { searchQuery, mediaType, status, setSearchQuery, setMediaType, setStatus, clearFilters } =
     useFiltersStore()
+  const [filterModalVisible, setFilterModalVisible] = useState(false)
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -75,7 +57,7 @@ export default function CollectionScreen() {
     })
   }, [items, searchQuery, mediaType, status])
 
-  const hasActiveFilters = !!searchQuery || !!mediaType || !!status
+  const hasActiveFilters = !!mediaType || !!status
 
   return (
     <View className="flex-1 bg-[#0E0B0B]">
@@ -110,58 +92,29 @@ export default function CollectionScreen() {
         </View>
       </View>
 
-      {/* Barre de recherche */}
-      <View className="px-4 mb-2">
+      {/* Barre de recherche + bouton filtre */}
+      <View className="px-4 mb-3 flex-row items-center gap-2">
         <TextInput
           placeholder="Rechercher dans ma collection..."
           placeholderTextColor="#6B5E5E"
           value={searchQuery}
           onChangeText={setSearchQuery}
           className="bg-[#1C1717] text-white border border-[#3D3535] rounded-lg px-4 py-2"
+          style={{ flex: 1 }}
         />
-      </View>
-
-      {/* Chips type */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-4 mb-2"
-        contentContainerStyle={{ gap: 8 }}
-      >
-        {TYPE_OPTIONS.map((t) => (
-          <FilterChip
-            key={t.value}
-            label={t.label}
-            active={mediaType === t.value}
-            onPress={() => setMediaType(mediaType === t.value ? null : t.value)}
+        <TouchableOpacity
+          onPress={() => setFilterModalVisible(true)}
+          className={`px-3 py-2 rounded-lg border ${
+            hasActiveFilters ? 'bg-amber-500 border-amber-500' : 'bg-[#1C1717] border-[#3D3535]'
+          }`}
+        >
+          <Ionicons
+            name="options-outline"
+            size={20}
+            color={hasActiveFilters ? '#000000' : '#FFFFFF'}
           />
-        ))}
-      </ScrollView>
-
-      {/* Chips statut */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-4 mb-2"
-        contentContainerStyle={{ gap: 8 }}
-      >
-        {STATUS_OPTIONS.map((s) => (
-          <FilterChip
-            key={s.value}
-            label={s.label}
-            active={status === s.value}
-            onPress={() => setStatus(status === s.value ? null : s.value)}
-          />
-        ))}
-      </ScrollView>
-
-      {/* Bouton effacer filtres */}
-      {hasActiveFilters && (
-        <TouchableOpacity onPress={clearFilters} className="mx-4 mb-2 flex-row items-center gap-1">
-          <Ionicons name="close-circle" size={16} color="#FBBF24" />
-          <Text className="text-amber-400 text-sm">Effacer</Text>
         </TouchableOpacity>
-      )}
+      </View>
 
       {/* Liste */}
       {loading ? (
@@ -171,12 +124,12 @@ export default function CollectionScreen() {
       ) : filteredItems.length === 0 ? (
         <EmptyState
           message={
-            hasActiveFilters
+            hasActiveFilters || searchQuery
               ? 'Aucun item ne correspond à ces filtres.'
               : 'Ta collection est vide. Ajoute ton premier item !'
           }
-          ctaLabel={hasActiveFilters ? undefined : 'Commencer'}
-          onCtaPress={hasActiveFilters ? undefined : () => router.push('/item/search')}
+          ctaLabel={hasActiveFilters || searchQuery ? undefined : 'Commencer'}
+          onCtaPress={hasActiveFilters || searchQuery ? undefined : () => router.push('/item/search')}
         />
       ) : (
         <FlatList
@@ -193,6 +146,65 @@ export default function CollectionScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Modale filtres */}
+      <Modal
+        visible={filterModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onPress={() => setFilterModalVisible(false)}
+        />
+        <View className="bg-[#0E0B0B] border-t border-[#3D3535] px-6 pt-5 pb-8">
+          {/* Titre + fermer */}
+          <View className="flex-row items-center justify-between mb-5">
+            <Text className="text-white text-lg font-bold">Filtres</Text>
+            <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+              <Ionicons name="close" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Type */}
+          <Text className="text-[#6B5E5E] text-xs font-semibold uppercase mb-2 tracking-wider">Type</Text>
+          <View className="flex-row flex-wrap mb-4">
+            {TYPE_OPTIONS.map((t) => (
+              <Chip
+                key={t.value}
+                label={t.label}
+                active={mediaType === t.value}
+                onPress={() => setMediaType(mediaType === t.value ? null : t.value)}
+              />
+            ))}
+          </View>
+
+          {/* Statut */}
+          <Text className="text-[#6B5E5E] text-xs font-semibold uppercase mb-2 tracking-wider">Statut</Text>
+          <View className="flex-row flex-wrap mb-5">
+            {STATUS_OPTIONS.map((s) => (
+              <Chip
+                key={s.value}
+                label={s.label}
+                active={status === s.value}
+                onPress={() => setStatus(status === s.value ? null : s.value)}
+              />
+            ))}
+          </View>
+
+          {/* Effacer */}
+          {hasActiveFilters && (
+            <TouchableOpacity
+              onPress={() => { clearFilters(); setFilterModalVisible(false) }}
+              className="flex-row items-center justify-center gap-1 py-3"
+            >
+              <Ionicons name="close-circle" size={16} color="#FBBF24" />
+              <Text className="text-amber-400 text-sm">Effacer les filtres</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </Modal>
     </View>
   )
 }
