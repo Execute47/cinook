@@ -9,13 +9,13 @@ import type { MediaItem, MediaType } from '@/types/media'
 
 interface Props {
   item: MediaItem
-  cineclubItemIds: string[]
+  cineclubItemIds?: string[]
 }
 
 const getLabel = (type: MediaType): string =>
   type === 'livre' ? 'Coin lecture' : 'Cinéclub'
 
-export default function CineclubButton({ item, cineclubItemIds }: Props) {
+export default function CineclubButton({ item, cineclubItemIds = [] }: Props) {
   const uid = useAuthStore((s) => s.uid)
   const displayName = useAuthStore((s) => s.displayName)
   const circleId = useAuthStore((s) => s.activeCircleId)

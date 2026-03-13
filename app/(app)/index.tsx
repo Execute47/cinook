@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useRecommendations } from '@/hooks/useRecommendations'
 import type { Recommendation } from '@/hooks/useRecommendations'
 import { useCineclub } from '@/hooks/useCineclub'
+import type { Cineclub } from '@/hooks/useCineclub'
 import { useCollection } from '@/hooks/useCollection'
 import { useUIStore } from '@/stores/uiStore'
 import { findDuplicate } from '@/lib/duplicates'
@@ -49,7 +50,7 @@ export default function HomeScreen() {
     duplicateTimerRef.current = setTimeout(() => setDuplicateMessage(null), 3000)
   }
 
-  const handleCineclubPress = (cineclub: (typeof cineclubs)[number]) => {
+  const handleCineclubPress = (cineclub: Cineclub) => {
     router.push({
       pathname: '/item/preview',
       params: {
@@ -111,7 +112,7 @@ export default function HomeScreen() {
     })
   }
 
-  const handleAddCineclubToWishlist = async (cineclub: (typeof cineclubs)[number]) => {
+  const handleAddCineclubToWishlist = async (cineclub: Cineclub) => {
     if (!uid) return
     const type = cineclub.itemType ?? 'film'
     const duplicate = findDuplicate(items, { title: cineclub.itemTitle, type, tmdbId: cineclub.tmdbId ?? undefined, googleBooksId: cineclub.googleBooksId ?? undefined, isbn: cineclub.isbn ?? undefined })
@@ -163,6 +164,9 @@ export default function HomeScreen() {
       )}
 
       {/* Cinéclub */}
+      {!cineclubLoading && cineclubs.length > 0 && (
+        <Text className="text-white font-semibold mb-3">En avant dans le cercle</Text>
+      )}
       {!cineclubLoading && cineclubs.map((cineclub) => (
         <CineclubBanner
           key={cineclub.itemId}

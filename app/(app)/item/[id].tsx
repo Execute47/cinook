@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View, Text, Image, TouchableOpacity, ScrollView,
   TextInput, ActivityIndicator,
@@ -24,9 +24,10 @@ import { useCineclub } from '@/hooks/useCineclub'
 import { useAlert } from '@/hooks/useAlert'
 import { usePlaylists } from '@/hooks/usePlaylists'
 import { addItemToPlaylist, removeItemFromPlaylist } from '@/lib/playlists'
-import type { MediaType, ItemStatus, TierLevel, DatePrecision } from '@/types/media'
+import type { MediaItem, MediaType, ItemStatus, TierLevel, DatePrecision } from '@/types/media'
 import { formatPartialDate } from '@/lib/dateUtils'
-import { deleteField, Timestamp } from 'firebase/firestore'
+import { deleteField, Timestamp, getDoc, doc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 const TYPE_LABEL: Record<string, string> = { film: 'Film', serie: 'Série', livre: 'Livre' }
 const TYPES: { value: MediaType; label: string }[] = [
@@ -36,12 +37,35 @@ const TYPES: { value: MediaType; label: string }[] = [
 ]
 
 export default function ItemDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, memberUid } = useLocalSearchParams<{ id: string; memberUid?: string }>()
   const uid = useAuthStore((s) => s.uid)
   const { items, loading: collectionLoading } = useCollection()
   const { cineclubs } = useCineclub()
   const { playlists } = usePlaylists()
-  const item = items.find((i) => i.id === id)
+
+  const [memberItem, setMemberItem] = useState<MediaItem | null>(null)
+  const [memberItemLoading, setMemberItemLoading] = useState(!!memberUid)
+
+  useEffect(() => {
+    if (!memberUid) return
+    setMemberItemLoading(true)
+    getDoc(doc(db, 'users', memberUid, 'items', id))
+      .then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data()
+          setMemberItem({
+            id: snap.id,
+            ...data,
+            statuses: data.statuses || (data.status ? [data.status] : []),
+          } as MediaItem)
+        }
+      })
+      .finally(() => setMemberItemLoading(false))
+  }, [memberUid, id])
+
+  const isMemberView = !!memberUid
+  const item = isMemberView ? (memberItem ?? undefined) : items.find((i) => i.id === id)
+  const loading = isMemberView ? memberItemLoading : collectionLoading
 
   const { confirm } = useAlert()
   const [isEditing, setIsEditing] = useState(false)
@@ -189,7 +213,7 @@ export default function ItemDetailScreen() {
     }, { confirmLabel: 'Supprimer', destructive: true })
   }
 
-  if (collectionLoading) {
+  if (loading) {
     return (
       <View className="flex-1 bg-[#0E0B0B] items-center justify-center">
         <ActivityIndicator size="large" color="#f59e0b" />
@@ -289,23 +313,25 @@ export default function ItemDetailScreen() {
       {/* Header */}
       <View className="mb-4">
         <View className="flex-row items-center mb-3">
-          <TouchableOpacity onPress={() => router.push('/(app)/collection')} className="mr-3">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3">
             <Ionicons name="chevron-back" size={22} color="#FBBF24" />
           </TouchableOpacity>
           <View className="flex-1" />
-          <CineclubButton item={item} cineclubItemIds={cineclubs.map((c) => c.itemId)} />
+          {!isMemberView && <CineclubButton item={item} cineclubItemIds={cineclubs.map((c) => c.itemId)} />}
         </View>
-        <View className="flex-row justify-end gap-4">
-          <TouchableOpacity onPress={() => setShowRecoComposer(true)}>
-            <Text className="text-amber-400">Recommander</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={startEditing}>
-            <Text className="text-amber-400">Modifier</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete}>
-            <Text className="text-red-400">Supprimer</Text>
-          </TouchableOpacity>
-        </View>
+        {!isMemberView && (
+          <View className="flex-row justify-end gap-4">
+            <TouchableOpacity onPress={() => setShowRecoComposer(true)}>
+              <Text className="text-amber-400">Recommander</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={startEditing}>
+              <Text className="text-amber-400">Modifier</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDelete}>
+              <Text className="text-red-400">Supprimer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Affiche */}
@@ -359,8 +385,8 @@ export default function ItemDetailScreen() {
             <Text className="text-gray-500 text-sm italic">Aucun statut</Text>
           )}
         </View>
-        <StatusPicker current={item.statuses} onSelect={handleStatusChange} mediaType={item.type} />
-        {item.statuses.includes('loaned') && item.loanTo && (
+        {!isMemberView && <StatusPicker current={item.statuses} onSelect={handleStatusChange} mediaType={item.type} />}
+        {!isMemberView && item.statuses.includes('loaned') && item.loanTo && (
           <View className="mt-3 pt-3 border-t border-[#3D3535]">
             <Text className="text-[#6B5E5E] text-sm">
               Prêté à : <Text className="text-amber-400">{item.loanTo}</Text>
@@ -372,7 +398,7 @@ export default function ItemDetailScreen() {
             )}
           </View>
         )}
-        {item.statuses.includes('borrowed') && item.borrowedFrom && (
+        {!isMemberView && item.statuses.includes('borrowed') && item.borrowedFrom && (
           <View className="mt-3 pt-3 border-t border-[#3D3535]">
             <Text className="text-[#6B5E5E] text-sm">
               Emprunté à : <Text style={{ color: '#22D3EE' }}>{item.borrowedFrom}</Text>
@@ -408,14 +434,16 @@ export default function ItemDetailScreen() {
             ) : (
               <Text className="text-[#6B5E5E] text-sm italic">Aucune date renseignée</Text>
             )}
-            <TouchableOpacity
-              onPress={() => setShowWatchDateModal(true)}
-              className="mt-2"
-            >
-              <Text className="text-amber-400 text-xs">
-                {item.endedAt ? 'Modifier les dates' : 'Ajouter une date'}
-              </Text>
-            </TouchableOpacity>
+            {!isMemberView && (
+              <TouchableOpacity
+                onPress={() => setShowWatchDateModal(true)}
+                className="mt-2"
+              >
+                <Text className="text-amber-400 text-xs">
+                  {item.endedAt ? 'Modifier les dates' : 'Ajouter une date'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>

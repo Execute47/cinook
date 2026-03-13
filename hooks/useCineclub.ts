@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { onSnapshot, collection, query, orderBy } from 'firebase/firestore'
+import { onSnapshot, collection } from 'firebase/firestore'
 import type { Timestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
@@ -35,14 +35,9 @@ export function useCineclub() {
       return
     }
 
-    const q = query(
-      collection(db, 'circles', circleId, 'cineclub'),
-      orderBy('postedAt', 'asc'),
-    )
-
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(collection(db, 'circles', circleId, 'cineclub'), (snap) => {
       const items: Cineclub[] = snap.docs
-        .filter((doc) => doc.data().itemId)
+        .filter((doc) => doc.data().itemId && doc.id !== 'current')
         .map((doc) => {
           const d = doc.data()
           return {
@@ -60,6 +55,11 @@ export function useCineclub() {
             postedBy: d.postedBy,
             postedAt: d.postedAt ?? null,
           }
+        })
+        .sort((a, b) => {
+          if (!a.postedAt) return -1
+          if (!b.postedAt) return 1
+          return a.postedAt.seconds - b.postedAt.seconds
         })
       setCineclubs(items)
       setLoading(false)

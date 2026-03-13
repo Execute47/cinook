@@ -2,12 +2,8 @@ import { renderHook, waitFor } from '@testing-library/react-native'
 
 const mockOnSnapshot = jest.fn()
 const mockCollection = jest.fn((_db, ...segments) => ({ path: segments.join('/') }))
-const mockQuery = jest.fn((...args: unknown[]) => args[0])
-const mockOrderBy = jest.fn()
 jest.mock('firebase/firestore', () => ({
   collection: (...args: unknown[]) => mockCollection(...args),
-  query: (...args: unknown[]) => mockQuery(...args),
-  orderBy: (...args: unknown[]) => mockOrderBy(...args),
   onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
   getFirestore: jest.fn(),
 }))
@@ -85,6 +81,29 @@ describe('useCineclub', () => {
 
     await waitFor(() => {
       expect(result.current.cineclubs[0].itemType).toBe('film')
+    })
+  })
+
+  it('ignore le document legacy avec id "current"', async () => {
+    const legacyDoc = {
+      id: 'current',
+      data: () => ({
+        itemId: 'item-old', itemTitle: 'OldFilm', itemPoster: null,
+        itemType: 'film', postedBy: 'Alice', postedAt: null,
+      }),
+    }
+
+    mockOnSnapshot.mockImplementationOnce(
+      (_ref: unknown, onNext: (snap: { docs: typeof legacyDoc[] }) => void) => {
+        onNext({ docs: [legacyDoc] })
+        return jest.fn()
+      }
+    )
+
+    const { result } = renderHook(() => useCineclub())
+
+    await waitFor(() => {
+      expect(result.current.cineclubs).toHaveLength(0)
     })
   })
 

@@ -58,7 +58,7 @@ export default function MemberCollectionScreen() {
         <FlatList
           data={items}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ItemCard item={item} onPress={(id) => router.push(`/(app)/item/${id}`)} />}
+          renderItem={({ item }) => <ItemCard item={item} onPress={(id) => router.push(`/(app)/item/${id}?memberUid=${memberUid}`)} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           ListEmptyComponent={
             <Text className="text-[#6B5E5E] text-center mt-8">Collection vide</Text>

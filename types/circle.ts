@@ -27,10 +27,3 @@ export interface Recommendation {
   createdAt: Timestamp
 }
 
-export interface Cineclub {
-  itemId: string
-  itemTitle: string
-  itemPoster?: string
-  postedBy: string
-  postedAt: Timestamp
-}
