@@ -44,7 +44,7 @@ export default function SearchScreen() {
     const item: Record<string, unknown> = {
       title: selected.title,
       type: selected.type,
-      statuses: ['owned'],
+      statuses: [],
       tier: 'none',
       addedVia: 'search',
     }

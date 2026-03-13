@@ -92,7 +92,7 @@ describe('preview.tsx — item absent de la collection', () => {
     await waitFor(() => {
       expect(mockAddItem).toHaveBeenCalledWith(
         'uid-me',
-        expect.objectContaining({ title: 'Matrix', type: 'film', statuses: ['owned'], addedVia: 'discover' })
+        expect.objectContaining({ title: 'Matrix', type: 'film', statuses: [], addedVia: 'discover' })
       )
       expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('new-item-id'))
     })

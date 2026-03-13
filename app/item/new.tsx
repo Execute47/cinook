@@ -45,7 +45,7 @@ export default function NewItemScreen() {
     const item: Record<string, unknown> = {
       title: title.trim(),
       type: mediaType,
-      statuses: ['owned'],
+      statuses: [],
       tier: 'none',
       addedVia: 'manual',
     }

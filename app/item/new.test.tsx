@@ -56,13 +56,12 @@ describe('NewItemScreen', () => {
       fireEvent.press(getByText('Ajouter à ma collection'))
 await waitFor(() => {
   expect(mockAddItem).toHaveBeenCalledWith(
-    'uid-123',
-    expect.objectContaining({ title: 'Inception', addedVia: 'manual', statuses: ['owned'], tier: 'none' })
+    'uid-test',
+    expect.objectContaining({ title: 'Inception', addedVia: 'manual', statuses: [], tier: 'none' })
   )
 })
-        expect(router.back).toHaveBeenCalled()
+      expect(router.back).toHaveBeenCalled()
       })
-    })
 
     it('inclut les champs optionnels si renseignés', async () => {
       mockAddItem.mockResolvedValueOnce('new-id')

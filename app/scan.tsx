@@ -7,21 +7,9 @@ import { useAuthStore } from '@/stores/authStore'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
 import BarcodeOverlay from '@/components/scan/BarcodeOverlay'
+import WebScanner from '@/components/scan/WebScanner'
 
 export default function ScanScreen() {
-  if (Platform.OS === 'web') {
-    return (
-      <View className="flex-1 bg-[#0E0B0B] items-center justify-center px-8">
-        <Text className="text-white text-lg font-bold mb-3 text-center">
-          Scanner non disponible sur web
-        </Text>
-        <Text className="text-[#6B5E5E] text-sm text-center">
-          Le scan de codes-barres est disponible uniquement sur l'application mobile (iOS / Android).
-        </Text>
-      </View>
-    )
-  }
-
   const [permission, requestPermission] = useCameraPermissions()
   const { result, error, isLoading, onBarcodeScanned, reset } = useBarcodeScan()
   const uid = useAuthStore((s) => s.uid)
@@ -37,35 +25,12 @@ export default function ScanScreen() {
       })
     : undefined
 
-  if (!permission) {
-    return <View className="flex-1 bg-black" />
-  }
-
-  if (!permission.granted) {
-    return (
-      <View className="flex-1 bg-black items-center justify-center px-8">
-        <Text className="text-white text-lg text-center mb-4">
-          Cinook a besoin d'accéder à la caméra pour scanner les codes-barres.
-        </Text>
-        <TouchableOpacity
-          className="bg-amber-500 px-6 py-3 rounded-lg mb-4"
-          onPress={requestPermission}
-        >
-          <Text className="text-black font-semibold">Autoriser la caméra</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-gray-400">Annuler</Text>
-        </TouchableOpacity>
-      </View>
-    )
-  }
-
   const handleAdd = async () => {
     if (!result || !uid) return
     const item: Record<string, unknown> = {
       title: result.title,
       type: result.type,
-      statuses: ['owned'],
+      statuses: [],
       tier: 'none',
       addedVia: 'scan',
     }
@@ -147,6 +112,35 @@ export default function ScanScreen() {
         )}
         <TouchableOpacity onPress={reset} className="py-3">
           <Text className="text-gray-400 text-center">Annuler</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  if (Platform.OS === 'web') {
+    return (
+      <WebScanner onBarcodeScanned={onBarcodeScanned} />
+    )
+  }
+
+  if (!permission) {
+    return <View className="flex-1 bg-black" />
+  }
+
+  if (!permission.granted) {
+    return (
+      <View className="flex-1 bg-black items-center justify-center px-8">
+        <Text className="text-white text-lg text-center mb-4">
+          Cinook a besoin d'accéder à la caméra pour scanner les codes-barres.
+        </Text>
+        <TouchableOpacity
+          className="bg-amber-500 px-6 py-3 rounded-lg mb-4"
+          onPress={requestPermission}
+        >
+          <Text className="text-black font-semibold">Autoriser la caméra</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text className="text-gray-400">Annuler</Text>
         </TouchableOpacity>
       </View>
     )
