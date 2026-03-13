@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
-  FlatList, ActivityIndicator, Modal, Pressable,
+  ActivityIndicator, Modal, Pressable,
 } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import Fuse from 'fuse.js'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useCollection } from '@/hooks/useCollection'
@@ -47,15 +49,27 @@ export default function CollectionScreen() {
     useFiltersStore()
   const [filterModalVisible, setFilterModalVisible] = useState(false)
 
+  const fuse = useMemo(
+    () => new Fuse(items, {
+      keys: ['title', 'director', 'author'],
+      threshold: 0.35,
+      ignoreLocation: true,
+      minMatchCharLength: 2,
+    }),
+    [items]
+  )
+
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchesQuery =
-        !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const searched = searchQuery.length >= 2
+      ? fuse.search(searchQuery).map((r) => r.item)
+      : items
+
+    return searched.filter((item) => {
       const matchesType = !mediaType || item.type === mediaType
       const matchesStatus = !status || item.statuses.includes(status)
-      return matchesQuery && matchesType && matchesStatus
+      return matchesType && matchesStatus
     })
-  }, [items, searchQuery, mediaType, status])
+  }, [fuse, items, searchQuery, mediaType, status])
 
   const hasActiveFilters = !!mediaType || !!status
 
@@ -132,14 +146,14 @@ export default function CollectionScreen() {
           onCtaPress={hasActiveFilters || searchQuery ? undefined : () => router.push('/item/search')}
         />
       ) : (
-        <FlatList
+        <FlashList
           data={filteredItems}
           keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
+          estimatedItemSize={70}
+          renderItem={({ item }) => (
             <ItemCard
               item={item}
               onPress={(id) => router.push(`/(app)/item/${id}`)}
-              animationIndex={index}
             />
           )}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
