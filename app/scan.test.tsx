@@ -20,6 +20,17 @@ jest.mock('@/hooks/useBarcodeScan', () => ({
   }),
 }))
 jest.mock('@/components/scan/BarcodeOverlay', () => 'BarcodeOverlay')
+jest.mock('@/components/scan/WebScanner', () => ({
+  __esModule: true,
+  default: () => {
+    const { View, Text } = require('react-native')
+    return (
+      <View>
+        <Text testID="web-scanner">WebScanner</Text>
+      </View>
+    )
+  },
+}))
 jest.mock('firebase/firestore', () => ({
   getFirestore: jest.fn(),
   initializeFirestore: jest.fn(),
@@ -41,16 +52,15 @@ afterEach(() => {
 })
 
 describe('ScanScreen', () => {
-  it('AC4 — web : affiche le message de substitution', () => {
+  it('AC4 — web : affiche le WebScanner (PWA)', () => {
     setPlatformOS('web')
-    const { getByText } = render(<ScanScreen />)
-    expect(getByText('Scanner non disponible sur web')).toBeTruthy()
-    expect(getByText(/disponible uniquement sur l'application mobile/)).toBeTruthy()
+    const { getByTestId } = render(<ScanScreen />)
+    expect(getByTestId('web-scanner')).toBeTruthy()
   })
 
-  it('AC4 — mobile : n\'affiche pas le message de substitution', () => {
+  it('AC4 — mobile : n\'affiche pas le WebScanner', () => {
     setPlatformOS('ios')
-    const { queryByText } = render(<ScanScreen />)
-    expect(queryByText('Scanner non disponible sur web')).toBeNull()
+    const { queryByTestId } = render(<ScanScreen />)
+    expect(queryByTestId('web-scanner')).toBeNull()
   })
 })
