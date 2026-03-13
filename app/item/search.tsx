@@ -4,6 +4,7 @@ import {
   FlatList, Image, ActivityIndicator, ScrollView,
 } from 'react-native'
 import { router } from 'expo-router'
+import { Timestamp } from 'firebase/firestore'
 import { useMediaSearch } from '@/hooks/useMediaSearch'
 import { addItem } from '@/lib/firestore'
 import { getMovieDirector } from '@/lib/tmdb'
@@ -11,8 +12,11 @@ import { useAuthStore } from '@/stores/authStore'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
 import SearchResultCard from '@/components/media/SearchResultCard'
+import StatusPicker from '@/components/media/StatusPicker'
+import LoanModal from '@/components/media/LoanModal'
+import WatchDateModal from '@/components/media/WatchDateModal'
 import type { MediaResult } from '@/types/api'
-import type { MediaType } from '@/types/media'
+import type { MediaType, ItemStatus, DatePrecision } from '@/types/media'
 
 const TYPES: { value: MediaType; label: string }[] = [
   { value: 'film', label: 'Film' },
@@ -28,6 +32,17 @@ export default function SearchScreen() {
   const [selected, setSelected] = useState<MediaResult | null>(null)
   const [isAdding, setIsAdding] = useState(false)
 
+  const [statuses, setStatuses] = useState<ItemStatus[]>([])
+  const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showWatchDateModal, setShowWatchDateModal] = useState(false)
+  const [loanData, setLoanData] = useState<{ loanTo: string; loanDate?: Timestamp } | null>(null)
+  const [watchData, setWatchData] = useState<{
+    endedAt?: Timestamp
+    startedAt?: Timestamp
+    endedAtPrecision?: DatePrecision
+    startedAtPrecision?: DatePrecision
+  } | null>(null)
+
   const existingItem = selected
     ? findDuplicate(items, {
         title: selected.title,
@@ -38,13 +53,57 @@ export default function SearchScreen() {
       })
     : undefined
 
+  const handleSelect = (item: MediaResult) => {
+    setSelected(item)
+    setStatuses([])
+    setLoanData(null)
+    setWatchData(null)
+  }
+
+  const handleBack = () => {
+    setSelected(null)
+    setStatuses([])
+    setLoanData(null)
+    setWatchData(null)
+  }
+
+  const handleStatusChange = (selectedStatus: ItemStatus) => {
+    const index = statuses.indexOf(selectedStatus)
+    if (index > -1) {
+      setStatuses(statuses.filter((s) => s !== selectedStatus))
+      if (selectedStatus === 'loaned') setLoanData(null)
+      if (selectedStatus === 'watched') setWatchData(null)
+    } else {
+      if (selectedStatus === 'loaned') { setShowLoanModal(true); return }
+      if (selectedStatus === 'watched') { setShowWatchDateModal(true); return }
+      setStatuses([...statuses, selectedStatus])
+    }
+  }
+
+  const handleLoanValidate = (loanTo: string, loanDate?: Timestamp) => {
+    setShowLoanModal(false)
+    setLoanData({ loanTo, loanDate })
+    if (!statuses.includes('loaned')) setStatuses([...statuses, 'loaned'])
+  }
+
+  const handleWatchDateValidate = (
+    endedAt?: Timestamp,
+    startedAt?: Timestamp,
+    endedAtPrecision?: DatePrecision,
+    startedAtPrecision?: DatePrecision,
+  ) => {
+    setShowWatchDateModal(false)
+    setWatchData({ endedAt, startedAt, endedAtPrecision, startedAtPrecision })
+    if (!statuses.includes('watched')) setStatuses([...statuses, 'watched'])
+  }
+
   const handleAdd = async () => {
     if (!selected || !uid) return
     setIsAdding(true)
     const item: Record<string, unknown> = {
       title: selected.title,
       type: selected.type,
-      statuses: [],
+      statuses,
       tier: 'none',
       addedVia: 'search',
     }
@@ -57,6 +116,16 @@ export default function SearchScreen() {
     if (selected.tmdbId !== undefined) item.tmdbId = selected.tmdbId
     if (selected.googleBooksId !== undefined) item.googleBooksId = selected.googleBooksId
     if (selected.isbn !== undefined) item.isbn = selected.isbn
+    if (loanData) {
+      item.loanTo = loanData.loanTo
+      if (loanData.loanDate) item.loanDate = loanData.loanDate
+    }
+    if (watchData) {
+      if (watchData.endedAt) item.endedAt = watchData.endedAt
+      if (watchData.startedAt) item.startedAt = watchData.startedAt
+      if (watchData.endedAtPrecision) item.endedAtPrecision = watchData.endedAtPrecision
+      if (watchData.startedAtPrecision) item.startedAtPrecision = watchData.startedAtPrecision
+    }
 
     await addItem(uid, item as never)
     setIsAdding(false)
@@ -66,58 +135,78 @@ export default function SearchScreen() {
   // Vue fiche détail après sélection
   if (selected) {
     return (
-      <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 24 }}>
-        <TouchableOpacity onPress={() => setSelected(null)} className="mb-4">
-          <Text className="text-amber-400">← Retour aux résultats</Text>
-        </TouchableOpacity>
-        <Text className="text-white text-2xl font-bold mb-4 text-center">{selected.title}</Text>
-        {selected.poster && (
-          <Image
-            source={{ uri: selected.poster }}
-            className="w-40 h-60 rounded-lg mb-4 self-center"
-            resizeMode="cover"
-          />
-        )}
-        {selected.year && (
-          <Text className="text-[#6B5E5E] text-center mb-1">{selected.year}</Text>
-        )}
-        {(selected.director || selected.author) && (
-          <Text className="text-gray-300 text-center mb-1">
-            {selected.director ?? selected.author}
-          </Text>
-        )}
-        {selected.synopsis && (
-          <Text className="text-gray-300 text-sm text-center mb-6 px-2" numberOfLines={5}>
-            {selected.synopsis}
-          </Text>
-        )}
-        {existingItem ? (
-          <View className="items-center gap-3">
-            <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg px-4 py-2">
-              <Text className="text-[#6B5E5E] text-sm text-center">Déjà dans votre collection</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => router.push(`/(app)/item/${existingItem.id}`)}
-              className="bg-amber-500 py-4 rounded-xl w-full"
-            >
-              <Text className="text-black font-bold text-center">Voir la fiche</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            onPress={handleAdd}
-            disabled={isAdding}
-            className="bg-amber-500 py-4 rounded-xl mb-3"
-          >
-            <Text className="text-black font-bold text-center text-lg">
-              {isAdding ? 'Ajout...' : 'Ajouter à ma collection'}
-            </Text>
+      <>
+        <ScrollView className="flex-1 bg-[#0E0B0B]" contentContainerStyle={{ padding: 24 }}>
+          <TouchableOpacity onPress={handleBack} className="mb-4">
+            <Text className="text-amber-400">← Retour aux résultats</Text>
           </TouchableOpacity>
-        )}
-        <TouchableOpacity onPress={() => setSelected(null)} className="py-3">
-          <Text className="text-[#6B5E5E] text-center">Annuler</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Text className="text-white text-2xl font-bold mb-4 text-center">{selected.title}</Text>
+          {selected.poster && (
+            <Image
+              source={{ uri: selected.poster }}
+              className="w-40 h-60 rounded-lg mb-4 self-center"
+              resizeMode="cover"
+            />
+          )}
+          {selected.year && (
+            <Text className="text-[#6B5E5E] text-center mb-1">{selected.year}</Text>
+          )}
+          {(selected.director || selected.author) && (
+            <Text className="text-gray-300 text-center mb-1">
+              {selected.director ?? selected.author}
+            </Text>
+          )}
+          {selected.synopsis && (
+            <Text className="text-gray-300 text-sm text-center mb-6 px-2" numberOfLines={5}>
+              {selected.synopsis}
+            </Text>
+          )}
+          {existingItem ? (
+            <View className="items-center gap-3">
+              <View className="bg-[#1C1717] border border-[#3D3535] rounded-lg px-4 py-2">
+                <Text className="text-[#6B5E5E] text-sm text-center">Déjà dans votre collection</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push(`/(app)/item/${existingItem.id}`)}
+                className="bg-amber-500 py-4 rounded-xl w-full"
+              >
+                <Text className="text-black font-bold text-center">Voir la fiche</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text className="text-[#6B5E5E] text-sm mb-2">Statuts (optionnel)</Text>
+              <View className="mb-6">
+                <StatusPicker current={statuses} onSelect={handleStatusChange} mediaType={selected.type} />
+              </View>
+              <TouchableOpacity
+                onPress={handleAdd}
+                disabled={isAdding}
+                className="bg-amber-500 py-4 rounded-xl mb-3"
+              >
+                <Text className="text-black font-bold text-center text-lg">
+                  {isAdding ? 'Ajout...' : 'Ajouter à ma collection'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+          <TouchableOpacity onPress={handleBack} className="py-3">
+            <Text className="text-[#6B5E5E] text-center">Annuler</Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        <LoanModal
+          visible={showLoanModal}
+          onValidate={handleLoanValidate}
+          onCancel={() => setShowLoanModal(false)}
+        />
+        <WatchDateModal
+          visible={showWatchDateModal}
+          type={selected.type}
+          onValidate={handleWatchDateValidate}
+          onCancel={() => setShowWatchDateModal(false)}
+        />
+      </>
     )
   }
 
@@ -191,7 +280,7 @@ export default function SearchScreen() {
           data={results}
           keyExtractor={(item, index) => `${item.tmdbId ?? item.googleBooksId ?? index}`}
           renderItem={({ item }) => (
-            <SearchResultCard item={item} onPress={setSelected} />
+            <SearchResultCard item={item} onPress={handleSelect} />
           )}
           showsVerticalScrollIndicator={false}
         />

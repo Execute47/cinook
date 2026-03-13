@@ -3,11 +3,15 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { router } from 'expo-router'
+import { Timestamp } from 'firebase/firestore'
 import { addItem } from '@/lib/firestore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCollection } from '@/hooks/useCollection'
 import { findDuplicate } from '@/lib/duplicates'
-import type { MediaType } from '@/types/media'
+import StatusPicker from '@/components/media/StatusPicker'
+import LoanModal from '@/components/media/LoanModal'
+import WatchDateModal from '@/components/media/WatchDateModal'
+import type { MediaType, ItemStatus, DatePrecision } from '@/types/media'
 
 const TYPES: { value: MediaType; label: string }[] = [
   { value: 'film', label: 'Film' },
@@ -28,9 +32,63 @@ export default function NewItemScreen() {
   const [titleError, setTitleError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  const [statuses, setStatuses] = useState<ItemStatus[]>([])
+  const [showLoanModal, setShowLoanModal] = useState(false)
+  const [showWatchDateModal, setShowWatchDateModal] = useState(false)
+  const [loanData, setLoanData] = useState<{ loanTo: string; loanDate?: Timestamp } | null>(null)
+  const [watchData, setWatchData] = useState<{
+    endedAt?: Timestamp
+    startedAt?: Timestamp
+    endedAtPrecision?: DatePrecision
+    startedAtPrecision?: DatePrecision
+  } | null>(null)
+
   const duplicateItem = title.trim()
     ? findDuplicate(items, { title, type: mediaType })
     : undefined
+
+  const handleStatusChange = (selectedStatus: ItemStatus) => {
+    const index = statuses.indexOf(selectedStatus)
+
+    if (index > -1) {
+      // Retirer le statut et nettoyer les données associées
+      setStatuses(statuses.filter((s) => s !== selectedStatus))
+      if (selectedStatus === 'loaned') setLoanData(null)
+      if (selectedStatus === 'watched') setWatchData(null)
+    } else {
+      // Ajouter le statut — certains nécessitent une modale
+      if (selectedStatus === 'loaned') {
+        setShowLoanModal(true)
+        return
+      }
+      if (selectedStatus === 'watched') {
+        setShowWatchDateModal(true)
+        return
+      }
+      setStatuses([...statuses, selectedStatus])
+    }
+  }
+
+  const handleLoanValidate = (loanTo: string, loanDate?: Timestamp) => {
+    setShowLoanModal(false)
+    setLoanData({ loanTo, loanDate })
+    if (!statuses.includes('loaned')) {
+      setStatuses([...statuses, 'loaned'])
+    }
+  }
+
+  const handleWatchDateValidate = (
+    endedAt?: Timestamp,
+    startedAt?: Timestamp,
+    endedAtPrecision?: DatePrecision,
+    startedAtPrecision?: DatePrecision,
+  ) => {
+    setShowWatchDateModal(false)
+    setWatchData({ endedAt, startedAt, endedAtPrecision, startedAtPrecision })
+    if (!statuses.includes('watched')) {
+      setStatuses([...statuses, 'watched'])
+    }
+  }
 
   const handleAdd = async () => {
     if (!title.trim()) {
@@ -45,7 +103,7 @@ export default function NewItemScreen() {
     const item: Record<string, unknown> = {
       title: title.trim(),
       type: mediaType,
-      statuses: [],
+      statuses,
       tier: 'none',
       addedVia: 'manual',
     }
@@ -54,6 +112,16 @@ export default function NewItemScreen() {
     if (mediaType === 'livre' && author.trim()) item.author = author.trim()
     if (mediaType !== 'livre' && director.trim()) item.director = director.trim()
     if (synopsis.trim()) item.synopsis = synopsis.trim()
+    if (loanData) {
+      item.loanTo = loanData.loanTo
+      if (loanData.loanDate) item.loanDate = loanData.loanDate
+    }
+    if (watchData) {
+      if (watchData.endedAt) item.endedAt = watchData.endedAt
+      if (watchData.startedAt) item.startedAt = watchData.startedAt
+      if (watchData.endedAtPrecision) item.endedAtPrecision = watchData.endedAtPrecision
+      if (watchData.startedAtPrecision) item.startedAtPrecision = watchData.startedAtPrecision
+    }
 
     await addItem(uid, item as never)
     setIsLoading(false)
@@ -150,9 +218,15 @@ export default function NewItemScreen() {
           multiline
           numberOfLines={4}
           textAlignVertical="top"
-          className="bg-[#1C1717] text-white border border-[#3D3535] rounded-lg px-4 py-3 mb-6"
+          className="bg-[#1C1717] text-white border border-[#3D3535] rounded-lg px-4 py-3 mb-4"
           style={{ minHeight: 100 }}
         />
+
+        {/* Statuts */}
+        <Text className="text-[#6B5E5E] text-sm mb-2">Statuts (optionnel)</Text>
+        <View className="mb-6">
+          <StatusPicker current={statuses} onSelect={handleStatusChange} mediaType={mediaType} />
+        </View>
 
         {/* Bouton */}
         <TouchableOpacity
@@ -165,6 +239,18 @@ export default function NewItemScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <LoanModal
+        visible={showLoanModal}
+        onValidate={handleLoanValidate}
+        onCancel={() => setShowLoanModal(false)}
+      />
+      <WatchDateModal
+        visible={showWatchDateModal}
+        type={mediaType}
+        onValidate={handleWatchDateValidate}
+        onCancel={() => setShowWatchDateModal(false)}
+      />
     </KeyboardAvoidingView>
   )
 }

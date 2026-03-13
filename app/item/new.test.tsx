@@ -24,6 +24,8 @@ jest.mock('@/hooks/useCollection', () => ({
   useCollection: () => ({ items: mockCollectionItems(), loading: false, error: null }),
 }))
 
+jest.mock('@react-native-community/datetimepicker', () => 'DateTimePicker')
+
 import { router } from 'expo-router'
 import type { Timestamp } from 'firebase/firestore'
 
@@ -99,6 +101,57 @@ await waitFor(() => {
         expect(mockAddItem).toHaveBeenCalledWith(
           'uid-test',
           expect.objectContaining({ type: 'livre', author: 'Frank Herbert' })
+        )
+      })
+    })
+  })
+
+  describe('AC4 — Sélection de statuts à l\'ajout', () => {
+    it('crée l\'item avec statuts simples sélectionnés', async () => {
+      mockAddItem.mockResolvedValueOnce('new-id')
+
+      const { getByPlaceholderText, getByText } = render(<NewItemScreen />)
+      fireEvent.changeText(getByPlaceholderText('Titre'), 'Inception')
+      fireEvent.press(getByText('Possédé'))
+      fireEvent.press(getByText('Favori'))
+      fireEvent.press(getByText('Ajouter à ma collection'))
+
+      await waitFor(() => {
+        expect(mockAddItem).toHaveBeenCalledWith(
+          'uid-test',
+          expect.objectContaining({ statuses: ['owned', 'favorite'] })
+        )
+      })
+    })
+
+    it('désélectionne un statut au second appui', async () => {
+      mockAddItem.mockResolvedValueOnce('new-id')
+
+      const { getByPlaceholderText, getByText } = render(<NewItemScreen />)
+      fireEvent.changeText(getByPlaceholderText('Titre'), 'Inception')
+      fireEvent.press(getByText('Possédé'))
+      fireEvent.press(getByText('Possédé')) // désélection
+      fireEvent.press(getByText('Ajouter à ma collection'))
+
+      await waitFor(() => {
+        expect(mockAddItem).toHaveBeenCalledWith(
+          'uid-test',
+          expect.objectContaining({ statuses: [] })
+        )
+      })
+    })
+
+    it('crée l\'item sans statuts si aucun sélectionné', async () => {
+      mockAddItem.mockResolvedValueOnce('new-id')
+
+      const { getByPlaceholderText, getByText } = render(<NewItemScreen />)
+      fireEvent.changeText(getByPlaceholderText('Titre'), 'Inception')
+      fireEvent.press(getByText('Ajouter à ma collection'))
+
+      await waitFor(() => {
+        expect(mockAddItem).toHaveBeenCalledWith(
+          'uid-test',
+          expect.objectContaining({ statuses: [] })
         )
       })
     })

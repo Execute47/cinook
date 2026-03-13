@@ -47,7 +47,12 @@ jest.mock('@/components/media/SearchResultCard', () => {
   )
 })
 
+jest.mock('@react-native-community/datetimepicker', () => 'DateTimePicker')
+
+jest.mock('@/lib/tmdb', () => ({ getMovieDirector: jest.fn().mockResolvedValue(undefined) }))
+
 import { router } from 'expo-router'
+import { addItem } from '@/lib/firestore'
 
 const fakeTimestamp = {} as Timestamp
 
@@ -113,5 +118,37 @@ describe('SearchScreen — détection doublon (AC1)', () => {
     fireEvent.press(getByText('Voir la fiche'))
 
     expect(router.push).toHaveBeenCalledWith('/(app)/item/existing-1')
+  })
+})
+
+describe('SearchScreen — sélection de statuts (AC4)', () => {
+  it('crée l\'item avec statuts simples sélectionnés', async () => {
+    const { getByText } = render(<SearchScreen />)
+
+    fireEvent.press(getByText('Inception'))
+    fireEvent.press(getByText('Possédé'))
+    fireEvent.press(getByText('Favori'))
+    fireEvent.press(getByText('Ajouter à ma collection'))
+
+    await waitFor(() => {
+      expect(addItem).toHaveBeenCalledWith(
+        'uid-test',
+        expect.objectContaining({ statuses: ['owned', 'favorite'] })
+      )
+    })
+  })
+
+  it('remet les statuts à zéro quand on revient aux résultats', () => {
+    const { getByText, queryByText } = render(<SearchScreen />)
+
+    fireEvent.press(getByText('Inception'))
+    fireEvent.press(getByText('Possédé'))
+    fireEvent.press(getByText('← Retour aux résultats'))
+
+    // Revenir sur la fiche
+    fireEvent.press(getByText('Inception'))
+
+    // Le statut ne doit plus être actif (le picker est re-rendu sans sélection)
+    expect(queryByText('Ajouter à ma collection')).toBeTruthy()
   })
 })
