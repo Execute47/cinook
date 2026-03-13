@@ -385,9 +385,15 @@ export default function WatchDateModal({
             false,
           )}
 
-          <View className="flex-row gap-3 justify-end mt-2">
+          <View className="flex-row gap-3 justify-end mt-2 flex-wrap">
             <TouchableOpacity onPress={onCancel} className="px-4 py-2">
               <Text className="text-[#6B5E5E]">Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onValidate()}
+              className="px-4 py-2 rounded-lg border border-[#3D3535]"
+            >
+              <Text className="text-[#6B5E5E] font-medium">Sans date</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleValidate}

@@ -53,6 +53,15 @@ describe('WatchDateModal — film', () => {
     expect(onValidate).not.toHaveBeenCalled()
   })
 
+  it('"Sans date" appelle onValidate sans aucun argument', () => {
+    const { getByText } = render(
+      <WatchDateModal visible type="film" onValidate={onValidate} onCancel={onCancel} />
+    )
+    fireEvent.press(getByText('Sans date'))
+    expect(onValidate).toHaveBeenCalledWith()
+    expect(onValidate.mock.calls[0]).toHaveLength(0)
+  })
+
   it('affiche le sélecteur de précision avec 3 options', () => {
     const { getByText } = render(
       <WatchDateModal visible type="film" onValidate={onValidate} onCancel={onCancel} />
