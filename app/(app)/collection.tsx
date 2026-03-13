@@ -118,9 +118,10 @@ export default function CollectionScreen() {
         />
         <TouchableOpacity
           onPress={() => setFilterModalVisible(true)}
-          className={`px-3 py-2 rounded-lg border ${
+          className={`px-3 rounded-lg border ${
             hasActiveFilters ? 'bg-amber-500 border-amber-500' : 'bg-[#1C1717] border-[#3D3535]'
           }`}
+          style={{ alignSelf: 'stretch', justifyContent: 'center' }}
         >
           <Ionicons
             name="options-outline"
