@@ -1,8 +1,9 @@
-import { Alert, Platform, TouchableOpacity, Text, View } from 'react-native'
+import { TouchableOpacity, Text, View } from 'react-native'
 import { setDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
 import { Ionicons } from '@expo/vector-icons'
 import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
+import { useAlert } from '@/hooks/useAlert'
 import type { MediaItem, MediaType } from '@/types/media'
 
 interface Props {
@@ -13,18 +14,11 @@ interface Props {
 const getLabel = (type: MediaType): string =>
   type === 'livre' ? 'Coin lecture' : 'Cinéclub'
 
-const showAlert = (title: string, message: string) => {
-  if (Platform.OS === 'web') {
-    window.alert(`${title}\n\n${message}`)
-  } else {
-    Alert.alert(title, message, [{ text: 'OK' }])
-  }
-}
-
 export default function CineclubButton({ item, currentCineclubItemId }: Props) {
   const uid = useAuthStore((s) => s.uid)
   const displayName = useAuthStore((s) => s.displayName)
   const circleId = useAuthStore((s) => s.activeCircleId)
+  const { alert } = useAlert()
 
   if (!circleId) return null
 
@@ -48,7 +42,7 @@ export default function CineclubButton({ item, currentCineclubItemId }: Props) {
       postedBy: displayName ?? uid,
       postedAt: serverTimestamp(),
     })
-    showAlert(label, `\u00AB\u00A0${item.title}\u00A0\u00BB a été mis en avant pour votre cercle.`)
+    alert(label, `\u00AB\u00A0${item.title}\u00A0\u00BB a été mis en avant pour votre cercle.`)
   }
 
   const handleRemove = async () => {

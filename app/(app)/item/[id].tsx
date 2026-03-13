@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, Image, TouchableOpacity, ScrollView,
-  TextInput, Alert, ActivityIndicator, Platform,
+  TextInput, ActivityIndicator,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -20,9 +20,11 @@ import MemberOpinions from '@/components/circle/MemberOpinions'
 import RecoComposer from '@/components/circle/RecoComposer'
 import CineclubButton from '@/components/circle/CineclubButton'
 import { useCineclub } from '@/hooks/useCineclub'
+import { useAlert } from '@/hooks/useAlert'
 import { usePlaylists } from '@/hooks/usePlaylists'
 import { addItemToPlaylist, removeItemFromPlaylist } from '@/lib/playlists'
-import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
+import type { MediaType, ItemStatus, TierLevel, DatePrecision } from '@/types/media'
+import { formatPartialDate } from '@/lib/dateUtils'
 import { deleteField, Timestamp } from 'firebase/firestore'
 
 const TYPE_LABEL: Record<string, string> = { film: 'Film', serie: 'Série', livre: 'Livre' }
@@ -40,6 +42,7 @@ export default function ItemDetailScreen() {
   const { playlists } = usePlaylists()
   const item = items.find((i) => i.id === id)
 
+  const { confirm } = useAlert()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showLoanModal, setShowLoanModal] = useState(false)
@@ -98,15 +101,22 @@ export default function ItemDetailScreen() {
     } as never)
   }
 
-  const handleWatchDateValidate = async (endedAt?: Timestamp, startedAt?: Timestamp) => {
+  const handleWatchDateValidate = async (
+    endedAt?: Timestamp,
+    startedAt?: Timestamp,
+    endedAtPrecision?: DatePrecision,
+    startedAtPrecision?: DatePrecision,
+  ) => {
     if (!uid || !item) return
     setShowWatchDateModal(false)
-    const newStatuses = item.statuses.includes('watched') 
-      ? item.statuses 
+    const newStatuses = item.statuses.includes('watched')
+      ? item.statuses
       : [...item.statuses, 'watched' as ItemStatus]
     const updates: Record<string, unknown> = { statuses: newStatuses }
     updates.endedAt = endedAt || deleteField()
     updates.startedAt = startedAt || deleteField()
+    updates.endedAtPrecision = endedAtPrecision || deleteField()
+    updates.startedAtPrecision = startedAtPrecision || deleteField()
     await updateItem(uid, item.id, updates as never)
   }
 
@@ -149,18 +159,10 @@ export default function ItemDetailScreen() {
 
   const handleDelete = () => {
     if (!uid || !item) return
-    const doDelete = async () => {
+    confirm('Supprimer cet item', 'Cette action est irréversible.', async () => {
       await deleteItem(uid, item.id)
       router.push('/(app)/collection')
-    }
-    if (Platform.OS === 'web') {
-      if (window.confirm('Supprimer cet item ?\n\nCette action est irréversible.')) doDelete()
-    } else {
-      Alert.alert('Supprimer cet item', 'Cette action est irréversible.', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
-      ])
-    }
+    }, { confirmLabel: 'Supprimer', destructive: true })
   }
 
   if (collectionLoading) {
@@ -352,17 +354,17 @@ export default function ItemDetailScreen() {
               <>
                 {item.type === 'film' ? (
                   <Text className="text-[#6B5E5E] text-sm">
-                    Vu le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                    Vu le : <Text className="text-white">{formatPartialDate(item.endedAt.toDate(), item.endedAtPrecision ?? 'day')}</Text>
                   </Text>
                 ) : (
                   <>
                     {item.startedAt && (
                       <Text className="text-[#6B5E5E] text-sm">
-                        Commencé le : <Text className="text-white">{item.startedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                        Commencé le : <Text className="text-white">{formatPartialDate(item.startedAt.toDate(), item.startedAtPrecision ?? 'day')}</Text>
                       </Text>
                     )}
                     <Text className="text-[#6B5E5E] text-sm mt-0.5">
-                      Terminé le : <Text className="text-white">{item.endedAt.toDate().toLocaleDateString('fr-FR')}</Text>
+                      Terminé le : <Text className="text-white">{formatPartialDate(item.endedAt.toDate(), item.endedAtPrecision ?? 'day')}</Text>
                     </Text>
                   </>
                 )}
@@ -392,6 +394,8 @@ export default function ItemDetailScreen() {
         type={item.type}
         initialEndedAt={item.endedAt}
         initialStartedAt={item.startedAt}
+        initialEndedAtPrecision={item.endedAtPrecision}
+        initialStartedAtPrecision={item.startedAtPrecision}
         onValidate={handleWatchDateValidate}
         onCancel={() => setShowWatchDateModal(false)}
       />

@@ -1,6 +1,10 @@
 import React from 'react'
 import { render, fireEvent, waitFor } from '@testing-library/react-native'
-import { Alert } from 'react-native'
+
+const mockShowAlert = jest.fn()
+jest.mock('@/hooks/useAlert', () => ({
+  useAlert: () => ({ alert: mockShowAlert, confirm: jest.fn() }),
+}))
 
 const mockSetDoc = jest.fn()
 const mockDeleteDoc = jest.fn()
@@ -40,7 +44,6 @@ const fakeLivre: MediaItem = {
 beforeEach(() => {
   jest.clearAllMocks()
   mockCircleId = 'circle-1'
-  jest.spyOn(Alert, 'alert').mockImplementation(jest.fn())
 })
 
 describe('CineclubButton — label', () => {
@@ -69,17 +72,16 @@ describe('CineclubButton — mise en avant', () => {
     })
   })
 
-  it('appelle Alert.alert après setDoc réussi', async () => {
+  it('affiche une alerte après setDoc réussi', async () => {
     mockSetDoc.mockResolvedValueOnce(undefined)
 
     const { getByText } = render(<CineclubButton item={fakeFilm} />)
     fireEvent.press(getByText('Mettre en Cinéclub'))
 
     await waitFor(() => {
-      expect(Alert.alert).toHaveBeenCalledWith(
+      expect(mockShowAlert).toHaveBeenCalledWith(
         'Cinéclub',
-        expect.stringContaining('Matrix'),
-        expect.anything()
+        expect.stringContaining('Matrix')
       )
     })
   })

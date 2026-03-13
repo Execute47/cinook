@@ -6,6 +6,7 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { useFonts } from 'expo-font'
 import { Ionicons } from '@expo/vector-icons'
 import { ToastContainer } from '@/components/ui/Toast'
+import { AlertModal } from '@/components/ui/AlertModal'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
@@ -75,6 +76,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} />
       <ToastContainer />
+      <AlertModal />
     </SafeAreaProvider>
   )
 }

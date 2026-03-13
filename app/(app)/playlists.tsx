@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, TouchableOpacity, FlatList,
-  TextInput, Modal, Alert, Platform, ActivityIndicator,
+  TextInput, Modal, ActivityIndicator,
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -9,10 +9,12 @@ import { usePlaylists } from '@/hooks/usePlaylists'
 import { createPlaylist, updatePlaylist, deletePlaylist } from '@/lib/playlists'
 import { useAuthStore } from '@/stores/authStore'
 import type { Playlist } from '@/types/playlist'
+import { useAlert } from '@/hooks/useAlert'
 
 export default function PlaylistsScreen() {
   const uid = useAuthStore((s) => s.uid)
   const { playlists, loading } = usePlaylists()
+  const { confirm } = useAlert()
 
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
@@ -41,15 +43,12 @@ export default function PlaylistsScreen() {
 
   const handleDelete = (playlist: Playlist) => {
     if (!uid) return
-    const doDelete = async () => { await deletePlaylist(uid, playlist.id) }
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Supprimer la playlist "${playlist.name}" ?`)) doDelete()
-    } else {
-      Alert.alert('Supprimer la playlist', `Supprimer "${playlist.name}" ?`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
-      ])
-    }
+    confirm(
+      'Supprimer la playlist',
+      `Supprimer "${playlist.name}" ?`,
+      () => deletePlaylist(uid, playlist.id),
+      { confirmLabel: 'Supprimer', destructive: true }
+    )
   }
 
   return (

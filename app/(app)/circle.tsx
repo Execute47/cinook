@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator, Share,
-  ScrollView, Alert, Platform,
+  ScrollView,
 } from 'react-native'
 import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { router } from 'expo-router'
@@ -12,6 +12,7 @@ import {
   removeMember, promoteMember, leaveCircle, deleteCircle, updateCircleName,
 } from '@/lib/circle'
 import { useCircle } from '@/hooks/useCircle'
+import { useAlert } from '@/hooks/useAlert'
 import MemberList from '@/components/circle/MemberList'
 import LeaveCircleModal from '@/components/circle/LeaveCircleModal'
 
@@ -22,17 +23,6 @@ interface CircleSummary {
   name: string
   adminId: string
   memberCount: number
-}
-
-const confirm = (title: string, message: string, onConfirm: () => void) => {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${title}\n\n${message}`)) onConfirm()
-  } else {
-    Alert.alert(title, message, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Confirmer', style: 'destructive', onPress: onConfirm },
-    ])
-  }
 }
 
 export default function CircleScreen() {
@@ -60,6 +50,7 @@ export default function CircleScreen() {
   const [editNameValue, setEditNameValue] = useState('')
 
   const { members, isAdmin, adminId, loading: circleLoading } = useCircle()
+  const { confirm } = useAlert()
 
   const circleDisplayName = (s: CircleSummary) => s.name || 'Cercle sans nom'
 
@@ -156,7 +147,8 @@ export default function CircleScreen() {
         } catch {
           setInitError("Impossible d'expulser ce membre.")
         }
-      }
+      },
+      { confirmLabel: 'Expulser', destructive: true }
     )
   }
 
@@ -197,7 +189,8 @@ export default function CircleScreen() {
           } catch {
             setInitError('Impossible de quitter le cercle.')
           }
-        }
+        },
+        { confirmLabel: 'Quitter', destructive: true }
       )
     } else if (otherMembers.length === 0) {
       confirm(
@@ -212,7 +205,8 @@ export default function CircleScreen() {
           } catch {
             setInitError('Impossible de supprimer le cercle.')
           }
-        }
+        },
+        { confirmLabel: 'Supprimer', destructive: true }
       )
     } else {
       setShowLeaveModal(true)
