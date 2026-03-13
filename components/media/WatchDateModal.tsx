@@ -267,7 +267,7 @@ export default function WatchDateModal({
         <Text className="text-[#6B5E5E] text-sm mb-2">{label}</Text>
         {renderPrecisionSelector(precision, setPrecision)}
 
-        {precision === 'day' && (
+        {precision === 'day' && Platform.OS !== 'web' && (
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => {
@@ -330,23 +330,29 @@ export default function WatchDateModal({
               }
             }}
             style={{
-              marginTop: 8, width: '100%', background: '#0E0B0B', color: 'white',
-              border: '1px solid #3D3535', borderRadius: 8, padding: '12px 16px',
+              marginTop: 8, width: '100%',
+              background: '#0E0B0B',
+              color: 'white',
+              border: '1px solid #3D3535',
+              borderRadius: 8,
+              padding: '12px 16px',
               fontSize: 14,
+              colorScheme: 'dark',
+              outline: 'none',
+              cursor: 'pointer',
             } as React.CSSProperties}
           />
         )}
 
         {/* iOS inline picker */}
         {Platform.OS === 'ios' && iosPickerField === field && precision === 'day' && (
-            <DateTimePicker
-              value={date ?? new Date()}
-              mode="date"
-              display="spinner"
-              onChange={(e, d) => handleDateChange(e, d, field)}
-              textColor="white"
-            />
-          )
+          <DateTimePicker
+            value={date ?? new Date()}
+            mode="date"
+            display="spinner"
+            onChange={(e, d) => handleDateChange(e, d, field)}
+            textColor="white"
+          />
         )}
       </View>
     )

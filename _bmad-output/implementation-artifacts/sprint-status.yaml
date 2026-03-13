@@ -55,6 +55,7 @@ development_status:
   # Epic 2 : Ma Collection — Ajouter & Gérer
   # ─────────────────────────────────────────────────────
   2-7-prevention-des-doublons: done
+  2-8-pagination-de-la-collection: in-progress
   epic-2: in-progress
   2-1-configuration-firebase-functions-proxy-api: done
   2-2-ajout-dun-item-via-scan-de-code-barres: done
@@ -73,6 +74,7 @@ development_status:
   3-3-enregistrement-et-suivi-des-prets: done
   3-4-dates-de-visionnage-et-de-lecture: done
   3-5-statistiques-et-bilan-annuel: review
+  3-6-amelioration-date-picker-mobile-et-saisie-partielle: review
   epic-3: in-progress
   epic-3-retrospective: optional
 
