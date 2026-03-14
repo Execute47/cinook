@@ -555,6 +555,33 @@ Afin de partager un coup de cœur ou un film à l'affiche avec mon entourage.
 **When** un membre voit la bannière
 **Then** il peut ajouter l'item à sa liste "À voir" en un tap depuis la bannière
 
+### Story 4.9 : Visibilité de la collection par cercle
+
+En tant qu'utilisatrice,
+Je veux choisir auprès de quels cercles ma collection est visible,
+Afin de contrôler ma vie privée et décider avec qui je partage mes données.
+
+**Acceptance Criteria :**
+
+**Given** l'écran Paramètres (`app/(app)/settings.tsx`) ou l'écran Cercle
+**When** j'accède aux réglages de confidentialité de ma collection
+**Then** je vois la liste de tous les cercles dont je suis membre
+**And** chaque cercle affiche un toggle "Ma collection est visible"
+
+**Given** le toggle d'un cercle est activé (par défaut)
+**When** un membre de ce cercle consulte la liste des membres
+**Then** il peut accéder à ma collection normalement
+
+**Given** le toggle d'un cercle est désactivé
+**When** un membre de ce cercle tente d'accéder à ma collection
+**Then** ma collection n'est pas accessible (écran vide ou message "Collection privée")
+**And** les Firestore Security Rules rejettent la lecture de mes items pour ce cercle
+
+**Given** un changement de visibilité effectué
+**When** je sauvegarde le réglage
+**Then** le champ `collectionVisibility` de mon profil `/users/{uid}` est mis à jour avec la liste des cercles autorisés
+**And** le changement est pris en compte immédiatement sans rechargement
+
 ---
 
 ## Epic 5 : Découverte — Films à l'affiche
