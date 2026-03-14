@@ -9,6 +9,7 @@ export const STATUS_OPTIONS: { value: ItemStatus; label: string; color: string }
   { value: 'borrowed', label: 'Emprunté', color: '#22D3EE' },
   { value: 'wishlist', label: 'À voir', color: '#A78BFA' },
   { value: 'favorite', label: 'Favori', color: '#F87171' },
+  { value: 'wanted', label: 'Souhaité', color: '#FB923C' },
 ]
 
 interface Props {

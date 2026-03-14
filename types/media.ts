@@ -5,7 +5,7 @@ export type { DatePrecision }
 
 export type MediaType = 'film' | 'serie' | 'livre'
 
-export type ItemStatus = 'owned' | 'watched' | 'loaned' | 'borrowed' | 'wishlist' | 'favorite'
+export type ItemStatus = 'owned' | 'watched' | 'loaned' | 'borrowed' | 'wishlist' | 'favorite' | 'wanted'
 
 export type TierLevel = 'none' | 'disliked' | 'bronze' | 'silver' | 'gold' | 'diamond'
 

@@ -7,6 +7,7 @@ export const STATUS_OPTIONS: Record<ItemStatus, { label: string; icon: string; c
   borrowed: { label: 'Emprunté', icon: 'arrow-undo-outline', color: '#22D3EE' },
   wishlist: { label: 'À voir', icon: 'bookmark-outline', color: '#A78BFA' },
   favorite: { label: 'Favori', icon: 'heart-outline', color: '#F87171' },
+  wanted: { label: 'Souhaité', icon: 'gift-outline', color: '#FB923C' },
 }
 
 export function getStatusLabel(status: ItemStatus, mediaType: MediaType): string {
