@@ -11,7 +11,8 @@ import { useCollection } from '@/hooks/useCollection'
 import { useFiltersStore } from '@/stores/filtersStore'
 import ItemCard from '@/components/media/ItemCard'
 import EmptyState from '@/components/ui/EmptyState'
-import type { MediaType, ItemStatus } from '@/types/media'
+import type { MediaType, ItemStatus, TierLevel } from '@/types/media'
+import { STATUS_OPTIONS } from '@/constants/statuses'
 
 const TYPE_OPTIONS: { value: MediaType; label: string }[] = [
   { value: 'film', label: 'Films' },
@@ -19,12 +20,12 @@ const TYPE_OPTIONS: { value: MediaType; label: string }[] = [
   { value: 'livre', label: 'Livres' },
 ]
 
-const STATUS_OPTIONS: { value: ItemStatus; label: string }[] = [
-  { value: 'owned', label: 'Possédé' },
-  { value: 'watched', label: 'Vu' },
-  { value: 'wishlist', label: 'Souhaité' },
-  { value: 'loaned', label: 'Prêté' },
-  { value: 'favorite', label: 'Favori' },
+const TIER_OPTIONS: { value: TierLevel; label: string }[] = [
+  { value: 'disliked', label: "J'ai pas aimé" },
+  { value: 'bronze', label: 'Bronze' },
+  { value: 'silver', label: 'Argent' },
+  { value: 'gold', label: 'Or' },
+  { value: 'diamond', label: 'Diamant' },
 ]
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
@@ -45,7 +46,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 export default function CollectionScreen() {
   const router = useRouter()
   const { items, loading } = useCollection()
-  const { searchQuery, mediaType, status, setSearchQuery, setMediaType, setStatus, clearFilters } =
+  const { searchQuery, mediaType, status, tier, setSearchQuery, setMediaType, setStatus, setTier, clearFilters } =
     useFiltersStore()
   const [filterModalVisible, setFilterModalVisible] = useState(false)
 
@@ -64,14 +65,17 @@ export default function CollectionScreen() {
       ? fuse.search(searchQuery).map((r) => r.item)
       : items
 
-    return searched.filter((item) => {
-      const matchesType = !mediaType || item.type === mediaType
-      const matchesStatus = !status || item.statuses.includes(status)
-      return matchesType && matchesStatus
-    })
-  }, [fuse, items, searchQuery, mediaType, status])
+    return searched
+      .filter((item) => {
+        const matchesType = !mediaType || item.type === mediaType
+        const matchesStatus = !status || item.statuses.includes(status)
+        const matchesTier = !tier || item.tier === tier
+        return matchesType && matchesStatus && matchesTier
+      })
+      .sort((a, b) => (b.endedAt?.toMillis() ?? -Infinity) - (a.endedAt?.toMillis() ?? -Infinity))
+  }, [fuse, items, searchQuery, mediaType, status, tier])
 
-  const hasActiveFilters = !!mediaType || !!status
+  const hasActiveFilters = !!mediaType || !!status || !!tier
 
   return (
     <View className="flex-1 bg-[#0E0B0B]">
@@ -197,13 +201,26 @@ export default function CollectionScreen() {
 
           {/* Statut */}
           <Text className="text-[#6B5E5E] text-xs font-semibold uppercase mb-2 tracking-wider">Statut</Text>
-          <View className="flex-row flex-wrap mb-5">
-            {STATUS_OPTIONS.map((s) => (
+          <View className="flex-row flex-wrap mb-4">
+            {Object.entries(STATUS_OPTIONS).map(([value, { label }]) => (
               <Chip
-                key={s.value}
-                label={s.label}
-                active={status === s.value}
-                onPress={() => setStatus(status === s.value ? null : s.value)}
+                key={value}
+                label={label}
+                active={status === value}
+                onPress={() => setStatus(status === (value as ItemStatus) ? null : (value as ItemStatus))}
+              />
+            ))}
+          </View>
+
+          {/* Tier */}
+          <Text className="text-[#6B5E5E] text-xs font-semibold uppercase mb-2 tracking-wider">Tier</Text>
+          <View className="flex-row flex-wrap mb-5">
+            {TIER_OPTIONS.map((t) => (
+              <Chip
+                key={t.value}
+                label={t.label}
+                active={tier === t.value}
+                onPress={() => setTier(tier === t.value ? null : t.value)}
               />
             ))}
           </View>

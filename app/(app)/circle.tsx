@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import {
   createCircle, getCircle, generateInviteToken, joinCircle,
-  removeMember, promoteMember, leaveCircle, deleteCircle, updateCircleName,
+  removeMember, addAdmin, demoteAdmin, leaveCircle, deleteCircle, updateCircleName,
 } from '@/lib/circle'
 import { useCircle } from '@/hooks/useCircle'
 import { useAlert } from '@/hooks/useAlert'
@@ -21,7 +21,7 @@ const INVITE_BASE_URL = 'https://cinook-caf55.web.app/invite'
 interface CircleSummary {
   id: string
   name: string
-  adminId: string
+  adminIds: string[]
   memberCount: number
 }
 
@@ -49,7 +49,7 @@ export default function CircleScreen() {
   const [editingName, setEditingName] = useState(false)
   const [editNameValue, setEditNameValue] = useState('')
 
-  const { members, isAdmin, adminId, loading: circleLoading } = useCircle()
+  const { members, isAdmin, adminIds, loading: circleLoading } = useCircle()
   const { confirm } = useAlert()
 
   const circleDisplayName = (s: CircleSummary) => s.name || 'Cercle sans nom'
@@ -59,10 +59,13 @@ export default function CircleScreen() {
       ids.map(async (cid) => {
         const circle = await getCircle(cid)
         if (!circle) return null
+        const resolvedAdminIds = Array.isArray(circle.adminIds) && circle.adminIds.length > 0
+          ? circle.adminIds
+          : circle.adminId ? [circle.adminId] : []
         return {
           id: cid,
           name: circle.name ?? '',
-          adminId: circle.adminId,
+          adminIds: resolvedAdminIds,
           memberCount: circle.members.length,
         } as CircleSummary
       })
@@ -152,17 +155,17 @@ export default function CircleScreen() {
     )
   }
 
-  const handlePromoteMember = (targetUid: string) => {
+  const handleAddAdmin = (targetUid: string) => {
     if (!activeCircleId) return
     confirm(
       'Promouvoir en admin',
-      'Cet utilisateur deviendra admin. Vous resterez membre.',
+      'Cet utilisateur deviendra également administrateur du cercle.',
       async () => {
         try {
-          await promoteMember(activeCircleId, targetUid)
+          await addAdmin(activeCircleId, targetUid)
           setCircleSummaries((prev) =>
             prev.map((s) =>
-              s.id === activeCircleId ? { ...s, adminId: targetUid } : s
+              s.id === activeCircleId ? { ...s, adminIds: [...s.adminIds, targetUid] } : s
             )
           )
         } catch {
@@ -172,11 +175,35 @@ export default function CircleScreen() {
     )
   }
 
+  const handleDemoteAdmin = (targetUid: string) => {
+    if (!activeCircleId) return
+    confirm(
+      'Rétrograder cet admin',
+      'Cet utilisateur redeviendra simple membre.',
+      async () => {
+        try {
+          await demoteAdmin(activeCircleId, targetUid)
+          setCircleSummaries((prev) =>
+            prev.map((s) =>
+              s.id === activeCircleId
+                ? { ...s, adminIds: s.adminIds.filter((id) => id !== targetUid) }
+                : s
+            )
+          )
+        } catch {
+          setInitError("Impossible de rétrograder ce membre.")
+        }
+      }
+    )
+  }
+
   const handleLeaveCircle = () => {
     if (!activeCircleId || !uid) return
     const otherMembers = members.filter((m) => m.uid !== uid)
+    const isLastAdmin = isAdmin && adminIds.length === 1
 
-    if (!isAdmin) {
+    if (!isAdmin || (isAdmin && !isLastAdmin)) {
+      // Membre simple ou co-admin : départ libre
       confirm(
         'Quitter le cercle',
         'Vous quitterez ce cercle. Votre collection reste intacte.',
@@ -193,6 +220,7 @@ export default function CircleScreen() {
         { confirmLabel: 'Quitter', destructive: true }
       )
     } else if (otherMembers.length === 0) {
+      // Dernier admin, seul membre : suppression du cercle
       confirm(
         'Quitter le cercle',
         'Vous êtes seul dans ce cercle. Le quitter supprimera le cercle définitivement.',
@@ -209,6 +237,7 @@ export default function CircleScreen() {
         { confirmLabel: 'Supprimer', destructive: true }
       )
     } else {
+      // Dernier admin avec d'autres membres : successeur requis
       setShowLeaveModal(true)
     }
   }
@@ -221,7 +250,7 @@ export default function CircleScreen() {
       addCircleId(newCircleId)
       setCircleSummaries((prev) => [
         ...prev,
-        { id: newCircleId, name: newCircleName.trim(), adminId: uid, memberCount: 1 },
+        { id: newCircleId, name: newCircleName.trim(), adminIds: [uid], memberCount: 1 },
       ])
       setNewCircleName('')
       setShowCreateForm(false)
@@ -410,13 +439,14 @@ export default function CircleScreen() {
       </Text>
       <MemberList
         members={members}
-        adminId={adminId}
+        adminIds={adminIds}
         currentUid={uid}
         isCurrentUserAdmin={isAdmin}
         onPress={(memberId) => router.push(`/(app)/member/${memberId}` as never)}
         onAdminAction={isAdmin ? (targetUid, action) => {
-          if (action === 'remove') handleRemoveMember(targetUid)
-          else handlePromoteMember(targetUid)
+          if (action === 'addAdmin') handleAddAdmin(targetUid)
+          else if (action === 'demoteAdmin') handleDemoteAdmin(targetUid)
+          else handleRemoveMember(targetUid)
         } : undefined}
       />
 

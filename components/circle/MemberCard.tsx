@@ -5,14 +5,15 @@ import type { Member } from '@/hooks/useCircle'
 interface Props {
   member: Member
   isAdmin: boolean
+  canDemote?: boolean
   onPress: (uid: string) => void
-  onAdminAction?: (action: 'remove' | 'promote') => void
+  onAdminAction?: (action: 'addAdmin' | 'demoteAdmin' | 'remove') => void
 }
 
 const getInitials = (name: string | null, email: string): string =>
   (name ?? email).charAt(0).toUpperCase()
 
-export default function MemberCard({ member, isAdmin, onPress, onAdminAction }: Props) {
+export default function MemberCard({ member, isAdmin, canDemote, onPress, onAdminAction }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const initials = getInitials(member.displayName, member.email)
 
@@ -54,12 +55,22 @@ export default function MemberCard({ member, isAdmin, onPress, onAdminAction }: 
       </View>
       {menuOpen && onAdminAction && (
         <View className="mt-2 border-t border-[#3D3535] pt-2 gap-1">
-          <TouchableOpacity
-            onPress={() => { setMenuOpen(false); onAdminAction('promote') }}
-            className="py-2 px-3 rounded"
-          >
-            <Text className="text-amber-400 text-sm">Promouvoir admin</Text>
-          </TouchableOpacity>
+          {isAdmin && canDemote && (
+            <TouchableOpacity
+              onPress={() => { setMenuOpen(false); onAdminAction('demoteAdmin') }}
+              className="py-2 px-3 rounded"
+            >
+              <Text className="text-orange-400 text-sm">Rétrograder</Text>
+            </TouchableOpacity>
+          )}
+          {!isAdmin && (
+            <TouchableOpacity
+              onPress={() => { setMenuOpen(false); onAdminAction('addAdmin') }}
+              className="py-2 px-3 rounded"
+            >
+              <Text className="text-amber-400 text-sm">Promouvoir admin</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={() => { setMenuOpen(false); onAdminAction('remove') }}
             className="py-2 px-3 rounded"

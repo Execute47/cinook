@@ -4,16 +4,18 @@ import type { Member } from '@/hooks/useCircle'
 
 interface Props {
   members: Member[]
-  adminId: string | null
+  adminIds: string[]
   currentUid?: string | null
   isCurrentUserAdmin?: boolean
   onPress: (uid: string) => void
-  onAdminAction?: (targetUid: string, action: 'remove' | 'promote') => void
+  onAdminAction?: (targetUid: string, action: 'addAdmin' | 'demoteAdmin' | 'remove') => void
 }
 
 export default function MemberList({
-  members, adminId, currentUid, isCurrentUserAdmin, onPress, onAdminAction,
+  members, adminIds, currentUid, isCurrentUserAdmin, onPress, onAdminAction,
 }: Props) {
+  const canDemote = adminIds.length > 1
+
   return (
     <FlatList
       data={members}
@@ -22,7 +24,8 @@ export default function MemberList({
       renderItem={({ item }) => (
         <MemberCard
           member={item}
-          isAdmin={item.uid === adminId}
+          isAdmin={adminIds.includes(item.uid)}
+          canDemote={canDemote}
           onPress={onPress}
           onAdminAction={
             isCurrentUserAdmin && item.uid !== currentUid

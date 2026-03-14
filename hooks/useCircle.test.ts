@@ -23,7 +23,12 @@ beforeEach(() => {
   mockOnSnapshot.mockReturnValue(mockUnsubscribe)
 })
 
-const makeCircleSnap = (adminId: string, members: string[]) => ({
+const makeCircleSnap = (adminIds: string[], members: string[]) => ({
+  exists: () => true,
+  data: () => ({ adminIds, members }),
+})
+
+const makeCircleSnapLegacy = (adminId: string, members: string[]) => ({
   exists: () => true,
   data: () => ({ adminId, members }),
 })
@@ -57,7 +62,7 @@ describe('useCircle', () => {
 
     await act(async () => {
       const snapshotCallback = mockOnSnapshot.mock.calls[0][1]
-      await snapshotCallback(makeCircleSnap('uid-1', ['uid-1', 'uid-2']))
+      await snapshotCallback(makeCircleSnap(['uid-1'], ['uid-1', 'uid-2']))
     })
 
     expect(result.current.loading).toBe(false)
@@ -66,30 +71,73 @@ describe('useCircle', () => {
     expect(result.current.members[1]).toMatchObject({ uid: 'uid-2', displayName: null, email: 'bob@test.com' })
   })
 
-  it('isAdmin est true si uid === adminId', async () => {
+  it('isAdmin est true si uid est dans adminIds (seul admin)', async () => {
     mockGetDoc.mockResolvedValueOnce(makeUserSnap('Alice', 'a@test.com'))
 
     const { result } = renderHook(() => useCircle())
 
     await act(async () => {
       const snapshotCallback = mockOnSnapshot.mock.calls[0][1]
-      await snapshotCallback(makeCircleSnap('uid-1', ['uid-1']))
+      await snapshotCallback(makeCircleSnap(['uid-1'], ['uid-1']))
     })
 
     expect(result.current.isAdmin).toBe(true)
   })
 
-  it('isAdmin est false si uid !== adminId', async () => {
+  it('isAdmin est true si uid est dans adminIds avec plusieurs admins', async () => {
+    mockGetDoc
+      .mockResolvedValueOnce(makeUserSnap('Alice', 'a@test.com'))
+      .mockResolvedValueOnce(makeUserSnap('Bob', 'b@test.com'))
+
+    const { result } = renderHook(() => useCircle())
+
+    await act(async () => {
+      const snapshotCallback = mockOnSnapshot.mock.calls[0][1]
+      await snapshotCallback(makeCircleSnap(['uid-1', 'uid-2'], ['uid-1', 'uid-2']))
+    })
+
+    expect(result.current.isAdmin).toBe(true)
+    expect(result.current.adminIds).toEqual(['uid-1', 'uid-2'])
+  })
+
+  it('isAdmin est false si uid n\'est pas dans adminIds', async () => {
     mockGetDoc.mockResolvedValueOnce(makeUserSnap('Bob', 'b@test.com'))
 
     const { result } = renderHook(() => useCircle())
 
     await act(async () => {
       const snapshotCallback = mockOnSnapshot.mock.calls[0][1]
-      await snapshotCallback(makeCircleSnap('other-uid', ['uid-1']))
+      await snapshotCallback(makeCircleSnap(['other-uid'], ['uid-1']))
     })
 
     expect(result.current.isAdmin).toBe(false)
+  })
+
+  it('rétrocompat : adminId legacy (sans adminIds) → isAdmin true pour uid-1', async () => {
+    mockGetDoc.mockResolvedValueOnce(makeUserSnap('Alice', 'a@test.com'))
+
+    const { result } = renderHook(() => useCircle())
+
+    await act(async () => {
+      const snapshotCallback = mockOnSnapshot.mock.calls[0][1]
+      await snapshotCallback(makeCircleSnapLegacy('uid-1', ['uid-1']))
+    })
+
+    expect(result.current.isAdmin).toBe(true)
+    expect(result.current.adminIds).toEqual(['uid-1'])
+  })
+
+  it('expose adminIds comme tableau', async () => {
+    mockGetDoc.mockResolvedValueOnce(makeUserSnap('Alice', 'a@test.com'))
+
+    const { result } = renderHook(() => useCircle())
+
+    await act(async () => {
+      const snapshotCallback = mockOnSnapshot.mock.calls[0][1]
+      await snapshotCallback(makeCircleSnap(['uid-1'], ['uid-1']))
+    })
+
+    expect(Array.isArray(result.current.adminIds)).toBe(true)
   })
 
   it('appelle unsubscribe au démontage (cleanup)', () => {

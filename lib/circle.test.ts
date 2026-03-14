@@ -24,12 +24,12 @@ jest.mock('firebase/firestore', () => ({
   serverTimestamp: jest.fn(() => 'SERVER_TIMESTAMP'),
 }))
 
-import { createCircle, generateInviteToken, joinCircle, removeMember, promoteMember, leaveCircle, deleteCircle, updateCircleName } from './circle'
+import { createCircle, generateInviteToken, joinCircle, removeMember, addAdmin, demoteAdmin, leaveCircle, deleteCircle, updateCircleName } from './circle'
 
 beforeEach(() => jest.clearAllMocks())
 
 describe('createCircle', () => {
-  it('crée un doc circle avec le nom et ajoute le circleId dans circleIds[]', async () => {
+  it('crée un doc circle avec adminIds[] et ajoute le circleId dans circleIds[]', async () => {
     mockAddDoc.mockResolvedValueOnce({ id: 'circle-1' })
     mockUpdateDoc.mockResolvedValue(undefined)
 
@@ -38,7 +38,11 @@ describe('createCircle', () => {
     expect(circleId).toBe('circle-1')
     expect(mockAddDoc).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ name: 'Famille', members: ['uid-1'], adminId: 'uid-1' })
+      expect.objectContaining({ name: 'Famille', members: ['uid-1'], adminIds: ['uid-1'] })
+    )
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.not.objectContaining({ adminId: expect.anything() })
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'users/uid-1' }),
@@ -79,7 +83,7 @@ describe('joinCircle', () => {
   it('retourne circleId, ajoute le membre et met à jour circleIds[] si token valide', async () => {
     mockGetDocs.mockResolvedValueOnce({
       empty: false,
-      docs: [{ id: 'circle-2', data: () => ({ adminId: 'admin-uid', members: [] }) }],
+      docs: [{ id: 'circle-2', data: () => ({ adminIds: ['admin-uid'], members: [] }) }],
     })
     mockUpdateDoc.mockResolvedValue(undefined)
 
@@ -99,7 +103,7 @@ describe('joinCircle', () => {
   it('retourne circleId sans updateDoc si déjà membre', async () => {
     mockGetDocs.mockResolvedValueOnce({
       empty: false,
-      docs: [{ id: 'circle-2', data: () => ({ adminId: 'admin-uid', members: ['uid-2'] }) }],
+      docs: [{ id: 'circle-2', data: () => ({ adminIds: ['admin-uid'], members: ['uid-2'] }) }],
     })
 
     const result = await joinCircle('uid-2', 'valid-token')
@@ -135,25 +139,88 @@ describe('removeMember', () => {
   })
 })
 
-describe('promoteMember', () => {
-  it('met à jour adminId avec le nouveau uid', async () => {
+describe('addAdmin', () => {
+  it('ajoute uid dans adminIds via arrayUnion', async () => {
     mockUpdateDoc.mockResolvedValue(undefined)
 
-    await promoteMember('circle-1', 'uid-new-admin')
+    await addAdmin('circle-1', 'uid-new-admin')
 
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),
-      { adminId: 'uid-new-admin' }
+      { adminIds: expect.objectContaining({ __arrayUnion: 'uid-new-admin' }) }
+    )
+  })
+})
+
+describe('demoteAdmin', () => {
+  it('happy path (2 admins) : retire uid via arrayRemove', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'circle-1',
+      data: () => ({ adminIds: ['uid-admin', 'uid-co'], members: ['uid-admin', 'uid-co'] }),
+    })
+    mockUpdateDoc.mockResolvedValue(undefined)
+
+    await demoteAdmin('circle-1', 'uid-co')
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'circles/circle-1' }),
+      { adminIds: expect.objectContaining({ __arrayRemove: 'uid-co' }) }
+    )
+  })
+
+  it('garde dernier admin : lève une erreur sans updateDoc', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'circle-1',
+      data: () => ({ adminIds: ['uid-admin'], members: ['uid-admin', 'uid-member'] }),
+    })
+
+    await expect(demoteAdmin('circle-1', 'uid-admin')).rejects.toThrow(
+      'Impossible de rétrograder le dernier administrateur'
+    )
+    expect(mockUpdateDoc).not.toHaveBeenCalled()
+  })
+
+  it('auto-rétrogradation (self-demote, 2 admins) : doit réussir', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'circle-1',
+      data: () => ({ adminIds: ['uid-admin', 'uid-self'], members: ['uid-admin', 'uid-self'] }),
+    })
+    mockUpdateDoc.mockResolvedValue(undefined)
+
+    await demoteAdmin('circle-1', 'uid-self')
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'circles/circle-1' }),
+      { adminIds: expect.objectContaining({ __arrayRemove: 'uid-self' }) }
     )
   })
 })
 
 describe('leaveCircle', () => {
-  it('sans successeur : prend le premier membre ≠ uid comme successeur', async () => {
+  it('dernier admin, successeur fourni : promeut ce successeur', async () => {
     mockGetDoc.mockResolvedValueOnce({
       exists: () => true,
       id: 'circle-1',
-      data: () => ({ members: ['uid-admin', 'uid-other'], adminId: 'uid-admin' }),
+      data: () => ({ members: ['uid-admin', 'uid-a', 'uid-b'], adminIds: ['uid-admin'] }),
+    })
+    mockUpdateDoc.mockResolvedValue(undefined)
+
+    await leaveCircle('circle-1', 'uid-admin', 'uid-b')
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'circles/circle-1' }),
+      { adminIds: expect.objectContaining({ __arrayUnion: 'uid-b' }) }
+    )
+  })
+
+  it('dernier admin, sans successeur : prend le premier membre ≠ uid', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'circle-1',
+      data: () => ({ members: ['uid-admin', 'uid-other'], adminIds: ['uid-admin'] }),
     })
     mockUpdateDoc.mockResolvedValue(undefined)
 
@@ -161,7 +228,7 @@ describe('leaveCircle', () => {
 
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),
-      { adminId: 'uid-other' }
+      { adminIds: expect.objectContaining({ __arrayUnion: 'uid-other' }) }
     )
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),
@@ -173,19 +240,52 @@ describe('leaveCircle', () => {
     )
   })
 
-  it('avec successeur fourni : promeut ce successeur', async () => {
+  it('co-admin (plusieurs admins) : départ libre sans successeur', async () => {
     mockGetDoc.mockResolvedValueOnce({
       exists: () => true,
       id: 'circle-1',
-      data: () => ({ members: ['uid-admin', 'uid-a', 'uid-b'], adminId: 'uid-admin' }),
+      data: () => ({ members: ['uid-admin', 'uid-co'], adminIds: ['uid-admin', 'uid-co'] }),
     })
     mockUpdateDoc.mockResolvedValue(undefined)
 
-    await leaveCircle('circle-1', 'uid-admin', 'uid-b')
+    await leaveCircle('circle-1', 'uid-admin')
 
+    // Retire de adminIds
     expect(mockUpdateDoc).toHaveBeenCalledWith(
       expect.objectContaining({ path: 'circles/circle-1' }),
-      { adminId: 'uid-b' }
+      { adminIds: expect.objectContaining({ __arrayRemove: 'uid-admin' }) }
+    )
+    // Retire de members
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'circles/circle-1' }),
+      { members: expect.objectContaining({ __arrayRemove: 'uid-admin' }) }
+    )
+    // Retire de circleIds
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'users/uid-admin' }),
+      { circleIds: expect.objectContaining({ __arrayRemove: 'circle-1' }) }
+    )
+    // Pas d'addAdmin appelé
+    expect(mockUpdateDoc).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ adminIds: expect.objectContaining({ __arrayUnion: expect.anything() }) })
+    )
+  })
+
+  it('rétrocompat : adminId legacy (sans adminIds) → successeur requis', async () => {
+    mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'circle-1',
+      data: () => ({ members: ['uid-admin', 'uid-other'], adminId: 'uid-admin' }),
+    })
+    mockUpdateDoc.mockResolvedValue(undefined)
+
+    await leaveCircle('circle-1', 'uid-admin')
+
+    // Doit se comporter comme si adminIds = ['uid-admin'] → successeur requis
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'circles/circle-1' }),
+      { adminIds: expect.objectContaining({ __arrayUnion: 'uid-other' }) }
     )
   })
 })
@@ -195,7 +295,7 @@ describe('deleteCircle', () => {
     mockGetDoc.mockResolvedValueOnce({
       exists: () => true,
       id: 'circle-1',
-      data: () => ({ members: ['uid-admin', 'uid-member'], adminId: 'uid-admin' }),
+      data: () => ({ members: ['uid-admin', 'uid-member'], adminIds: ['uid-admin'] }),
     })
     mockDeleteDoc.mockResolvedValue(undefined)
     mockUpdateDoc.mockResolvedValue(undefined)

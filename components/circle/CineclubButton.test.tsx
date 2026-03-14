@@ -20,10 +20,16 @@ jest.mock('firebase/firestore', () => ({
 
 jest.mock('@/lib/firebase', () => ({ db: {} }))
 
+const mockGetCircle = jest.fn()
+jest.mock('@/lib/circle', () => ({
+  getCircle: (...args: unknown[]) => mockGetCircle(...args),
+}))
+
 let mockCircleId: string | null = 'circle-1'
+let mockCircleIds: string[] = ['circle-1']
 jest.mock('@/stores/authStore', () => ({
   useAuthStore: (selector: (s: object) => unknown) =>
-    selector({ uid: 'uid-me', displayName: 'Moi', activeCircleId: mockCircleId }),
+    selector({ uid: 'uid-me', displayName: 'Moi', activeCircleId: mockCircleId, circleIds: mockCircleIds }),
 }))
 
 import CineclubButton from './CineclubButton'
@@ -44,6 +50,7 @@ const fakeLivre: MediaItem = {
 beforeEach(() => {
   jest.clearAllMocks()
   mockCircleId = 'circle-1'
+  mockCircleIds = ['circle-1']
 })
 
 describe('CineclubButton — label', () => {
@@ -134,5 +141,112 @@ describe('CineclubButton — sans circleId', () => {
     mockCircleId = null
     const { queryByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
     expect(queryByText(/Cinéclub/)).toBeNull()
+  })
+})
+
+describe('CineclubButton — sélecteur de cercle', () => {
+  it('1 cercle : setDoc appelé directement sans modal', async () => {
+    mockCircleIds = ['circle-1']
+    mockSetDoc.mockResolvedValueOnce(undefined)
+
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+
+    await waitFor(() => {
+      expect(mockSetDoc).toHaveBeenCalled()
+      expect(mockGetCircle).not.toHaveBeenCalled()
+    })
+  })
+
+  it('2 cercles : modal affichée avec les noms après clic', async () => {
+    mockCircleIds = ['circle-1', 'circle-2']
+    mockGetCircle
+      .mockResolvedValueOnce({ id: 'circle-1', name: 'Famille', members: [], adminIds: ['uid-me'] })
+      .mockResolvedValueOnce({ id: 'circle-2', name: 'Cinéphiles', members: [], adminIds: ['uid-me'] })
+
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+
+    await waitFor(() => {
+      expect(getByText('Famille')).toBeTruthy()
+      expect(getByText('Cinéphiles')).toBeTruthy()
+    })
+  })
+
+  it('sélection d\'un cercle : setDoc appelé avec le circleId choisi', async () => {
+    mockCircleIds = ['circle-1', 'circle-2']
+    mockGetCircle
+      .mockResolvedValueOnce({ id: 'circle-1', name: 'Famille', members: [], adminIds: ['uid-me'] })
+      .mockResolvedValueOnce({ id: 'circle-2', name: 'Cinéphiles', members: [], adminIds: ['uid-me'] })
+    mockSetDoc.mockResolvedValueOnce(undefined)
+
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+
+    await waitFor(() => expect(getByText('Cinéphiles')).toBeTruthy())
+    fireEvent.press(getByText('Cinéphiles'))
+
+    await waitFor(() => {
+      expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'circles', 'circle-2', 'cineclub', 'item-1')
+    })
+  })
+
+  it('annulation : modal fermée, setDoc non appelé', async () => {
+    mockCircleIds = ['circle-1', 'circle-2']
+    mockGetCircle
+      .mockResolvedValueOnce({ id: 'circle-1', name: 'Famille', members: [], adminIds: ['uid-me'] })
+      .mockResolvedValueOnce({ id: 'circle-2', name: 'Cinéphiles', members: [], adminIds: ['uid-me'] })
+
+    const { getByText, queryByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+
+    await waitFor(() => expect(getByText('Annuler')).toBeTruthy())
+    fireEvent.press(getByText('Annuler'))
+
+    await waitFor(() => {
+      expect(mockSetDoc).not.toHaveBeenCalled()
+      expect(queryByText('Famille')).toBeNull()
+    })
+  })
+
+  it('erreur getCircle : alerte affichée, modal non ouverte', async () => {
+    mockCircleIds = ['circle-1', 'circle-2']
+    mockGetCircle.mockRejectedValueOnce(new Error('network'))
+
+    const { getByText, queryByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+
+    await waitFor(() => {
+      expect(mockShowAlert).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Impossible')
+      )
+    })
+    expect(queryByText('Choisir un cercle')).toBeNull()
+    expect(mockSetDoc).not.toHaveBeenCalled()
+  })
+
+  it('cache : getCircle appelé une seule fois sur ouvertures successives', async () => {
+    mockCircleIds = ['circle-1', 'circle-2']
+    mockGetCircle
+      .mockResolvedValueOnce({ id: 'circle-1', name: 'Famille', members: [], adminIds: ['uid-me'] })
+      .mockResolvedValueOnce({ id: 'circle-2', name: 'Cinéphiles', members: [], adminIds: ['uid-me'] })
+
+    const { getByText } = render(<CineclubButton item={fakeFilm} cineclubItemIds={[]} />)
+
+    // Première ouverture
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+    await waitFor(() => expect(getByText('Annuler')).toBeTruthy())
+
+    // Fermer
+    fireEvent.press(getByText('Annuler'))
+    await waitFor(() => expect(getByText('Mettre en Cinéclub')).toBeTruthy())
+
+    // Deuxième ouverture
+    fireEvent.press(getByText('Mettre en Cinéclub'))
+    await waitFor(() => expect(getByText('Famille')).toBeTruthy())
+
+    // getCircle doit n'avoir été appelé qu'une seule fois au total (2 appels pour 2 cercles)
+    expect(mockGetCircle).toHaveBeenCalledTimes(2)
   })
 })

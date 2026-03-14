@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, waitFor } from '@testing-library/react-native'
+import { render, waitFor, fireEvent } from '@testing-library/react-native'
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ uid: 'member-uid' }),
@@ -7,6 +7,11 @@ jest.mock('expo-router', () => ({
 }))
 
 jest.mock('@/lib/firebase', () => ({ db: {} }))
+
+jest.mock('@shopify/flash-list', () => {
+  const { FlatList } = require('react-native')
+  return { FlashList: FlatList }
+})
 
 const mockGetDocs = jest.fn()
 jest.mock('firebase/firestore', () => ({
@@ -27,6 +32,11 @@ jest.mock('@/hooks/useCircle', () => ({
     error: null,
   }),
 }))
+
+jest.mock('@/components/media/ItemCard', () => {
+  const { Text } = require('react-native')
+  return ({ item }: { item: { title: string } }) => <Text testID="item-card">{item.title}</Text>
+})
 
 import MemberCollectionScreen from './[uid]'
 
@@ -53,7 +63,7 @@ describe('MemberCollectionScreen', () => {
     })
   })
 
-  it('affiche "Collection vide" quand il n\'y a pas d\'items', async () => {
+  it("affiche 'Collection vide' quand il n'y a pas d'items", async () => {
     mockGetDocs.mockResolvedValueOnce({ docs: [] })
     const { getByText } = render(<MemberCollectionScreen />)
 
@@ -68,7 +78,7 @@ describe('MemberCollectionScreen', () => {
         {
           id: 'item-1',
           data: () => ({
-            title: 'Inception', type: 'film', status: 'watched',
+            title: 'Inception', type: 'film', statuses: ['watched'],
             tier: 'gold', addedVia: 'search',
             addedAt: { toDate: () => new Date() },
           }),
@@ -79,6 +89,72 @@ describe('MemberCollectionScreen', () => {
 
     await waitFor(() => {
       expect(getByText('Inception')).toBeTruthy()
+    })
+  })
+})
+
+describe('MemberCollectionScreen — filtrage et recherche', () => {
+  it('filtre par type film', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'a', data: () => ({ title: 'Inception', type: 'film', statuses: ['watched'], tier: 'none', addedVia: 'search' }) },
+        { id: 'b', data: () => ({ title: 'Dune', type: 'livre', statuses: ['owned'], tier: 'none', addedVia: 'scan' }) },
+      ],
+    })
+    const { getAllByTestId, getByText, getByTestId } = render(<MemberCollectionScreen />)
+
+    await waitFor(() => {
+      expect(getAllByTestId('item-card')).toHaveLength(2)
+    })
+
+    fireEvent.press(getByTestId('filter-button'))
+    await waitFor(() => expect(getByText('Films')).toBeTruthy())
+    fireEvent.press(getByText('Films'))
+
+    await waitFor(() => {
+      expect(getAllByTestId('item-card')).toHaveLength(1)
+      expect(getAllByTestId('item-card')[0].props.children).toBe('Inception')
+    })
+  })
+
+  it('recherche floue filtre par titre', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'a', data: () => ({ title: 'Inception', type: 'film', statuses: ['watched'], tier: 'none', addedVia: 'search' }) },
+        { id: 'b', data: () => ({ title: 'Matrix', type: 'film', statuses: ['owned'], tier: 'none', addedVia: 'search' }) },
+      ],
+    })
+    const { getAllByTestId, getByPlaceholderText } = render(<MemberCollectionScreen />)
+
+    await waitFor(() => {
+      expect(getAllByTestId('item-card')).toHaveLength(2)
+    })
+
+    fireEvent.changeText(getByPlaceholderText('Rechercher dans cette collection...'), 'Incep')
+
+    await waitFor(() => {
+      const titles = getAllByTestId('item-card').map((c) => c.props.children)
+      expect(titles).toContain('Inception')
+      expect(titles).not.toContain('Matrix')
+    })
+  })
+
+  it('affiche vide quand aucun item ne correspond', async () => {
+    mockGetDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'a', data: () => ({ title: 'Inception', type: 'film', statuses: ['watched'], tier: 'none', addedVia: 'search' }) },
+      ],
+    })
+    const { getByText, getByPlaceholderText } = render(<MemberCollectionScreen />)
+
+    await waitFor(() => {
+      expect(getByText('Inception')).toBeTruthy()
+    })
+
+    fireEvent.changeText(getByPlaceholderText('Rechercher dans cette collection...'), 'xyzxyz')
+
+    await waitFor(() => {
+      expect(getByText('Aucun item ne correspond.')).toBeTruthy()
     })
   })
 })

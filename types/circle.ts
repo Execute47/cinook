@@ -10,7 +10,8 @@ export interface CircleData {
   id: string
   name: string
   members: string[]
-  adminId: string
+  adminIds: string[]
+  adminId?: string // deprecated, kept for Firestore legacy documents (retrocompat)
   inviteToken?: string
   createdAt: Timestamp
 }

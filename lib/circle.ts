@@ -19,7 +19,8 @@ export interface Circle {
   id: string
   name: string
   members: string[]
-  adminId: string
+  adminIds: string[]
+  adminId?: string // deprecated, kept for Firestore legacy documents (retrocompat)
   inviteToken?: string
 }
 
@@ -27,7 +28,7 @@ export async function createCircle(uid: string, name: string): Promise<string> {
   const ref = await addDoc(collection(db, 'circles'), {
     name,
     members: [uid],
-    adminId: uid,
+    adminIds: [uid],
     createdAt: serverTimestamp(),
   })
   await updateDoc(doc(db, 'users', uid), { circleIds: arrayUnion(ref.id) })
@@ -55,17 +56,38 @@ export async function removeMember(circleId: string, targetUid: string): Promise
   await updateDoc(doc(db, 'users', targetUid), { circleIds: arrayRemove(circleId) })
 }
 
-export async function promoteMember(circleId: string, newAdminUid: string): Promise<void> {
-  await updateDoc(doc(db, 'circles', circleId), { adminId: newAdminUid })
+export async function addAdmin(circleId: string, uid: string): Promise<void> {
+  await updateDoc(doc(db, 'circles', circleId), { adminIds: arrayUnion(uid) })
+}
+
+export async function demoteAdmin(circleId: string, uid: string): Promise<void> {
+  const circle = await getCircle(circleId)
+  if (!circle) return
+  const adminIds = Array.isArray(circle.adminIds) && circle.adminIds.length > 0
+    ? circle.adminIds
+    : circle.adminId ? [circle.adminId] : []
+  if (adminIds.length <= 1) {
+    throw new Error('Impossible de rétrograder le dernier administrateur')
+  }
+  await updateDoc(doc(db, 'circles', circleId), { adminIds: arrayRemove(uid) })
 }
 
 export async function leaveCircle(circleId: string, uid: string, successorUid?: string): Promise<void> {
   const circle = await getCircle(circleId)
   if (!circle) return
-  if (circle.adminId === uid) {
-    const successor = successorUid ?? circle.members.find(m => m !== uid)
-    if (!successor) throw new Error('Aucun successeur disponible')
-    await promoteMember(circleId, successor)
+  const adminIds = Array.isArray(circle.adminIds) && circle.adminIds.length > 0
+    ? circle.adminIds
+    : circle.adminId ? [circle.adminId] : []
+  if (adminIds.includes(uid)) {
+    if (adminIds.length > 1) {
+      // co-admin : départ libre, retirer de adminIds
+      await updateDoc(doc(db, 'circles', circleId), { adminIds: arrayRemove(uid) })
+    } else {
+      // dernier admin : successeur requis
+      const successor = successorUid ?? circle.members.find(m => m !== uid)
+      if (!successor) throw new Error('Aucun successeur disponible')
+      await addAdmin(circleId, successor)
+    }
   }
   await updateDoc(doc(db, 'circles', circleId), { members: arrayRemove(uid) })
   await updateDoc(doc(db, 'users', uid), { circleIds: arrayRemove(circleId) })

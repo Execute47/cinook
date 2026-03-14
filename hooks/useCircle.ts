@@ -13,11 +13,11 @@ export function useCircle() {
   const circleId = useAuthStore((s) => s.activeCircleId)
   const uid = useAuthStore((s) => s.uid)
   const [members, setMembers] = useState<Member[]>([])
-  const [adminId, setAdminId] = useState<string | null>(null)
+  const [adminIds, setAdminIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const isAdmin = adminId === uid
+  const isAdmin = adminIds.includes(uid ?? '')
 
   useEffect(() => {
     if (!circleId) {
@@ -35,7 +35,10 @@ export function useCircle() {
           return
         }
         const data = snap.data()
-        setAdminId(data.adminId)
+        const resolvedAdminIds = Array.isArray(data.adminIds) && data.adminIds.length > 0
+          ? data.adminIds
+          : data.adminId ? [data.adminId] : []
+        setAdminIds(resolvedAdminIds)
         try {
           const memberProfiles = await Promise.all(
             (data.members as string[]).map(async (memberId: string) => {
@@ -63,5 +66,5 @@ export function useCircle() {
     return unsub
   }, [circleId, uid])
 
-  return { members, isAdmin, adminId, loading, error }
+  return { members, isAdmin, adminIds, loading, error }
 }
